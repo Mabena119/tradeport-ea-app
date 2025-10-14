@@ -13,7 +13,7 @@ export default function TabLayout() {
         tabBarStyle: isFirstTime ? {
           display: 'none',
         } : {
-          backgroundColor: '#0A0A0A',
+          backgroundColor: '#000000',
           borderTopColor: '#FF0000',
           borderTopWidth: 1,
         },

@@ -32,9 +32,12 @@ export function CustomLoadingScreen({ message = "Loading Trade Port EA..." }: Cu
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#0A0A0A',
+        backgroundColor: '#000000',
         justifyContent: 'center',
         alignItems: 'center',
+        ...(Platform.OS === 'web' && {
+            backgroundImage: 'linear-gradient(to bottom, rgba(255, 0, 0, 0.05) 0%, rgba(0, 0, 0, 1) 100%)',
+        }),
     },
     content: {
         alignItems: 'center',

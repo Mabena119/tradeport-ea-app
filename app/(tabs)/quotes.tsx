@@ -372,7 +372,10 @@ export default function QuotesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#000000',
+    ...(Platform.OS === 'web' && {
+      backgroundImage: 'linear-gradient(to bottom, rgba(255, 0, 0, 0.05) 0%, rgba(0, 0, 0, 1) 100%)',
+    }),
   },
   header: {
     flexDirection: 'row',

@@ -351,7 +351,10 @@ const { width } = Dimensions.get('window');
 const styles = StyleSheet.create({
   splashContainer: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#000000',
+    ...(Platform.OS === 'web' && {
+      backgroundImage: 'linear-gradient(to bottom, rgba(255, 0, 0, 0.1) 0%, rgba(0, 0, 0, 1) 100%)',
+    }),
   },
   splashContent: {
     flex: 1,
@@ -403,7 +406,10 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#000000',
+    ...(Platform.OS === 'web' && {
+      backgroundImage: 'linear-gradient(to bottom, rgba(255, 0, 0, 0.05) 0%, rgba(0, 0, 0, 1) 100%)',
+    }),
   },
   content: {
     flex: 1,
@@ -418,17 +424,23 @@ const styles = StyleSheet.create({
   hero: {
     width: '100%',
     height: 500,
+    ...(Platform.OS === 'web' && {
+      backgroundBlendMode: 'overlay',
+      filter: 'brightness(0.8) contrast(1.1)',
+    }),
   },
   heroOverlay: {
     ...StyleSheet.absoluteFillObject,
+    ...(Platform.OS === 'web' && {
+      backgroundBlendMode: 'multiply',
+    }),
   },
   gradientOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.01)',
-    backdropFilter: 'blur(1px)',
+    backgroundColor: 'transparent',
     ...(Platform.OS === 'web' && {
-      backgroundImage: 'linear-gradient(to bottom, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.005) 100%)',
-      backdropFilter: 'blur(1px)',
+      backgroundImage: 'linear-gradient(to bottom, rgba(255, 0, 0, 0.7) 0%, rgba(255, 0, 0, 0.3) 25%, rgba(255, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0.8) 75%, rgba(0, 0, 0, 0.95) 100%)',
+      mixBlendMode: 'overlay',
     }),
   },
   fadeGradient: {
@@ -443,12 +455,14 @@ const styles = StyleSheet.create({
   heroFallback: {
     width: '100%',
     height: 500,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    borderWidth: 1,
-    borderColor: '#FF0000',
+    ...(Platform.OS === 'web' && {
+      backgroundImage: 'linear-gradient(to bottom, rgba(255, 0, 0, 0.6) 0%, rgba(255, 0, 0, 0.2) 50%, rgba(0, 0, 0, 0.8) 100%)',
+      backgroundBlendMode: 'overlay',
+    }),
   },
   fallbackIcon: {
     width: 160,
