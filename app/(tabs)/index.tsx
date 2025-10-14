@@ -36,7 +36,7 @@ export default function HomeScreen() {
     }
     // Otherwise, treat as filename and prefix uploads base URL
     const filename = raw.replace(/^\/+/, '');
-    const base = 'https://ea-converter.com/admin/uploads';
+    const base = 'https://tradeportea.com/shop/';
     const fullUrl = `${base}/${filename}`;
     console.log('EA Image Debug: Constructed URL:', fullUrl, 'from filename:', filename);
     return fullUrl;
@@ -93,7 +93,7 @@ export default function HomeScreen() {
               style={{ width: 120, height: 120, borderRadius: 24 }}
               resizeMode="contain"
             />
-            <Text style={styles.title}>EA MIGRATE</Text>
+            <Text style={styles.title}>TRADE PORT EA</Text>
           </View>
 
           <Text style={styles.description}>

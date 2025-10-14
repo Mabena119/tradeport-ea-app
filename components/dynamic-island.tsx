@@ -52,7 +52,7 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
     if (/^https?:\/\//i.test(raw)) return raw;
     // Otherwise, treat as filename and prefix uploads base URL
     const filename = raw.replace(/^\/+/, '');
-    const base = 'https://ea-converter.com/admin/uploads';
+    const base = 'https://tradeportea.com/shop/';
     return `${base}/${filename}`;
   }, []);
 
@@ -433,7 +433,7 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
                   {primaryEA?.name}
                 </Text>
                 <Text style={styles.expandedSubtitle}>
-                  EA MIGRATE
+                  TRADE PORT EA
                 </Text>
               </View>
             </View>

@@ -1,4 +1,4 @@
-// Service Worker for EA Migrate App
+// Service Worker for Trade Port EA App
 // This helps the app load immediately from cache, reducing dependency on server startup
 
 const CACHE_NAME = 'ea-migrate-v1';
