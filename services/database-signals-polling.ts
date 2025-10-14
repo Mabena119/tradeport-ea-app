@@ -2,7 +2,7 @@ import { Platform } from 'react-native';
 
 // Database configuration
 const dbConfig = {
-  host: '173.201.181.251.host.secureserver.net',
+  host: '173.201.181.251',
   user: 'eauser',
   password: 'snVO2i%fZSG%',
   database: 'eaconverter',
