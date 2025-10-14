@@ -30,28 +30,32 @@ export function CustomLoadingScreen({ message = "Loading Trade Port EA..." }: Cu
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#000000',
-        justifyContent: 'center',
-        alignItems: 'center',
-        ...(Platform.OS === 'web' && {
-            backgroundImage: 'linear-gradient(to bottom, rgba(255, 0, 0, 0.8) 0%, rgba(0, 0, 0, 1) 100%)',
-        }),
-    },
+  container: {
+    flex: 1,
+    backgroundColor: '#000000',
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...(Platform.OS === 'web' && {
+      backgroundImage: 'linear-gradient(135deg, rgba(255, 26, 26, 0.9) 0%, rgba(255, 26, 26, 0.5) 30%, rgba(255, 26, 26, 0.1) 65%, rgba(0, 0, 0, 0.95) 90%, rgba(0, 0, 0, 1) 100%)',
+    }),
+  },
     content: {
         alignItems: 'center',
         paddingHorizontal: 24,
     },
     title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#FF0000',
-        marginTop: 20,
-        letterSpacing: 2,
-        textShadowColor: '#FF0000',
+        fontSize: 28,
+        fontWeight: '800',
+        color: '#FF1A1A',
+        marginTop: 24,
+        letterSpacing: 3,
+        textShadowColor: '#FF1A1A',
         textShadowOffset: { width: 0, height: 0 },
         textShadowRadius: 15,
+        textAlign: 'center',
+        ...(Platform.OS === 'web' && {
+          filter: 'drop-shadow(0 0 10px rgba(255, 26, 26, 0.6))',
+        }),
     },
     message: {
         fontSize: 16,
@@ -66,14 +70,14 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     dot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: '#FF0000',
-        marginHorizontal: 4,
-        shadowColor: '#FF0000',
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        backgroundColor: '#FF1A1A',
+        marginHorizontal: 6,
+        shadowColor: '#FF1A1A',
         shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 1,
+        shadowOpacity: 0.8,
         shadowRadius: 8,
     },
     dot1: {

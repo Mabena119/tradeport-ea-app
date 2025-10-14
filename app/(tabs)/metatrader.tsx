@@ -2158,7 +2158,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
     ...(Platform.OS === 'web' && {
-      backgroundImage: 'linear-gradient(to bottom, rgba(255, 0, 0, 0.8) 0%, rgba(0, 0, 0, 1) 100%)',
+      backgroundImage: 'linear-gradient(135deg, rgba(255, 26, 26, 0.9) 0%, rgba(255, 26, 26, 0.5) 30%, rgba(255, 26, 26, 0.1) 65%, rgba(0, 0, 0, 0.95) 90%, rgba(0, 0, 0, 1) 100%)',
     }),
   },
   keyboardAvoidingView: {
