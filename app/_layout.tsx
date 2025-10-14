@@ -16,7 +16,7 @@ if (typeof window !== 'undefined' && Platform.OS === 'web') {
   const originalError = console.error;
   const originalLog = console.log;
 
-  function shouldSuppress(message) {
+  function shouldSuppress(message: any) {
     return message.includes('interactive-widget') ||
       message.includes('viewport') ||
       message.includes('Viewport argument key') ||
@@ -100,7 +100,7 @@ class ErrorBoundary extends Component<
 const errorStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#CC0000',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
@@ -317,8 +317,8 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <AppProvider>
-        <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#000000' }}>
-          <StatusBar style="light" backgroundColor="#000000" translucent={false} />
+        <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#CC0000' }}>
+          <StatusBar style="light" backgroundColor="#CC0000" translucent={false} />
           <RootLayoutNav />
         </GestureHandlerRootView>
       </AppProvider>

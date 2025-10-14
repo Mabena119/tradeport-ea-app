@@ -173,7 +173,7 @@ export default function LicenseScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: '#CC0000',
   },
   keyboardAvoidingView: {
     flex: 1,
