@@ -372,7 +372,7 @@ export default function QuotesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#a83248',
+    backgroundColor: '#0A0A0A',
   },
   header: {
     flexDirection: 'row',
@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#8a2a3c',
+    borderBottomColor: '#FF0000',
   },
   backButton: {
     marginRight: 16,
@@ -395,11 +395,14 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   headerTitle: {
-    color: '#FFFFFF',
+    color: '#FF0000',
     fontSize: 18,
     fontWeight: 'bold',
     letterSpacing: 1,
     marginRight: 12,
+    textShadowColor: '#FF0000',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
   },
   statusContainer: {
     flexDirection: 'row',
@@ -465,7 +468,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   retryButton: {
-    backgroundColor: '#6b1e2f',
+    backgroundColor: '#1A1A1A',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -493,12 +496,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   quoteCard: {
-    backgroundColor: '#8a2a3c',
+    backgroundColor: '#1A1A1A',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#6b1e2f',
+    borderColor: '#FF0000',
   },
   quoteHeader: {
     flexDirection: 'row',

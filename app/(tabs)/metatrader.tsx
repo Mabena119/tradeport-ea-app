@@ -2156,7 +2156,7 @@ export default function MetaTraderScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#a83248',
+    backgroundColor: '#0A0A0A',
   },
   keyboardAvoidingView: {
     flex: 1,
@@ -2175,15 +2175,19 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 20,
-    backgroundColor: '#8a2a3c',
+    backgroundColor: '#1A1A1A',
     marginHorizontal: 4,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#6b1e2f',
+    borderWidth: 2,
+    borderColor: '#800000',
   },
   activeTab: {
-    backgroundColor: '#6b1e2f',
-    borderColor: '#4d1521',
+    backgroundColor: '#1A1A1A',
+    borderColor: '#FF0000',
+    shadowColor: '#FF0000',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
   },
   tabText: {
     fontSize: 12,
@@ -2191,7 +2195,7 @@ const styles = StyleSheet.create({
     color: '#CCCCCC',
   },
   activeTabText: {
-    color: '#FFFFFF',
+    color: '#FF0000',
   },
   statusContainer: {
     flexDirection: 'row',
@@ -2248,9 +2252,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   input: {
-    backgroundColor: '#8a2a3c',
-    borderWidth: 1,
-    borderColor: '#6b1e2f',
+    backgroundColor: '#1A1A1A',
+    borderWidth: 2,
+    borderColor: '#FF0000',
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -2261,9 +2265,9 @@ const styles = StyleSheet.create({
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#8a2a3c',
+    backgroundColor: '#1A1A1A',
     borderWidth: 1,
-    borderColor: '#6b1e2f',
+    borderColor: '#FF0000',
     borderRadius: 8,
     marginBottom: 16,
   },
@@ -2277,14 +2281,14 @@ const styles = StyleSheet.create({
   eyeButton: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#6b1e2f',
+    backgroundColor: '#1A1A1A',
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#4d1521',
     marginLeft: 8,
   },
   linkButton: {
-    backgroundColor: '#8a2a3c',
+    backgroundColor: '#1A1A1A',
     paddingVertical: 16,
     borderRadius: 8,
     marginTop: 20,
@@ -2332,9 +2336,9 @@ const styles = StyleSheet.create({
   serverInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#8a2a3c',
+    backgroundColor: '#1A1A1A',
     borderWidth: 1,
-    borderColor: '#6b1e2f',
+    borderColor: '#FF0000',
     borderRadius: 8,
   },
   serverIcon: {
@@ -2350,7 +2354,7 @@ const styles = StyleSheet.create({
   clearButton: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#6b1e2f',
+    backgroundColor: '#1A1A1A',
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#4d1521',
@@ -2365,9 +2369,9 @@ const styles = StyleSheet.create({
     top: 50,
     left: 0,
     right: 0,
-    backgroundColor: '#8a2a3c',
+    backgroundColor: '#1A1A1A',
     borderWidth: 1,
-    borderColor: '#6b1e2f',
+    borderColor: '#FF0000',
     borderRadius: 8,
     maxHeight: 300,
     shadowColor: '#000',
@@ -2386,7 +2390,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#6b1e2f',
+    borderBottomColor: '#FF0000',
   },
   brokerListTitle: {
     fontSize: 14,
@@ -2395,7 +2399,7 @@ const styles = StyleSheet.create({
   },
   closeBrokerList: {
     padding: 4,
-    backgroundColor: '#6b1e2f',
+    backgroundColor: '#1A1A1A',
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#4d1521',
@@ -2486,7 +2490,7 @@ const styles = StyleSheet.create({
   refreshButton: {
     padding: 4,
     marginRight: 8,
-    backgroundColor: '#6b1e2f',
+    backgroundColor: '#1A1A1A',
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#4d1521',

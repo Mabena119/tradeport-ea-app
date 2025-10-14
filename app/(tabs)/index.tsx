@@ -351,7 +351,7 @@ const { width } = Dimensions.get('window');
 const styles = StyleSheet.create({
   splashContainer: {
     flex: 1,
-    backgroundColor: '#a83248',
+    backgroundColor: '#0A0A0A',
   },
   splashContent: {
     flex: 1,
@@ -366,9 +366,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#FF0000',
     marginTop: 16,
     letterSpacing: 2,
+    textShadowColor: '#FF0000',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
   },
   description: {
     fontSize: 14,
@@ -379,21 +382,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   splashStartButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1A1A1A',
     paddingHorizontal: 60,
     paddingVertical: 16,
     borderRadius: 8,
     minWidth: 200,
+    borderWidth: 2,
+    borderColor: '#FF0000',
+    shadowColor: '#FF0000',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 10,
   },
   startButtonText: {
-    color: '#000000',
+    color: '#FF0000',
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
   },
   container: {
     flex: 1,
-    backgroundColor: '#a83248',
+    backgroundColor: '#0A0A0A',
   },
   content: {
     flex: 1,
@@ -433,10 +443,12 @@ const styles = StyleSheet.create({
   heroFallback: {
     width: '100%',
     height: 500,
-    backgroundColor: '#8a2a3c',
+    backgroundColor: '#1A1A1A',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+    borderWidth: 1,
+    borderColor: '#FF0000',
   },
   fallbackIcon: {
     width: 160,
@@ -635,7 +647,7 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     position: 'relative',
     marginTop: 0,
-    backgroundColor: '#a83248',
+    backgroundColor: '#0A0A0A',
     overflow: 'hidden',
     zIndex: 10,
   },

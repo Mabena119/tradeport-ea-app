@@ -32,7 +32,7 @@ export function CustomLoadingScreen({ message = "Loading Trade Port EA..." }: Cu
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#000000',
+        backgroundColor: '#0A0A0A',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -43,9 +43,12 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#FFFFFF',
+        color: '#FF0000',
         marginTop: 20,
         letterSpacing: 2,
+        textShadowColor: '#FF0000',
+        textShadowOffset: { width: 0, height: 0 },
+        textShadowRadius: 15,
     },
     message: {
         fontSize: 16,
@@ -63,8 +66,12 @@ const styles = StyleSheet.create({
         width: 8,
         height: 8,
         borderRadius: 4,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#FF0000',
         marginHorizontal: 4,
+        shadowColor: '#FF0000',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 1,
+        shadowRadius: 8,
     },
     dot1: {
         opacity: 0.4,

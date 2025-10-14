@@ -629,7 +629,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#a83248',
+    backgroundColor: '#0A0A0A',
     overflow: 'hidden',
   },
   collapsedLogo: {
