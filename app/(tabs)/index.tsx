@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
     ...(Platform.OS === 'web' && {
-      backgroundImage: 'linear-gradient(135deg, rgba(255, 26, 26, 0.9) 0%, rgba(255, 26, 26, 0.6) 25%, rgba(255, 26, 26, 0.3) 50%, rgba(255, 26, 26, 0.15) 70%, rgba(255, 26, 26, 0.05) 85%, rgba(0, 0, 0, 0.9) 95%, rgba(0, 0, 0, 1) 100%)',
+      backgroundImage: 'linear-gradient(135deg, rgba(255, 26, 26, 0.9) 0%, rgba(255, 26, 26, 0.7) 20%, rgba(255, 26, 26, 0.5) 35%, rgba(255, 26, 26, 0.3) 50%, rgba(255, 26, 26, 0.2) 65%, rgba(255, 26, 26, 0.15) 80%, rgba(255, 26, 26, 0.1) 90%, rgba(0, 0, 0, 0.7) 95%, rgba(0, 0, 0, 1) 100%)',
     }),
   },
   content: {
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'transparent',
     ...(Platform.OS === 'web' && {
-      backgroundImage: 'linear-gradient(135deg, rgba(255, 26, 26, 0.6) 0%, rgba(255, 26, 26, 0.3) 30%, rgba(255, 26, 26, 0.1) 60%, rgba(255, 26, 26, 0.05) 80%, rgba(0, 0, 0, 0.6) 90%, rgba(0, 0, 0, 0.8) 100%)',
+      backgroundImage: 'linear-gradient(135deg, rgba(255, 26, 26, 0.4) 0%, rgba(255, 26, 26, 0.2) 30%, rgba(255, 26, 26, 0.1) 50%, rgba(255, 26, 26, 0.05) 70%, rgba(255, 26, 26, 0.02) 85%, rgba(0, 0, 0, 0.3) 95%, rgba(0, 0, 0, 0.6) 100%)',
       mixBlendMode: 'overlay',
     }),
   },
@@ -559,23 +559,23 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 16,
     minHeight: 96,
-    backgroundColor: 'rgba(255, 26, 26, 0.15)',
+    backgroundColor: 'rgba(255, 26, 26, 0.08)',
     borderWidth: 2,
-    borderColor: 'rgba(255, 26, 26, 0.8)',
-    backdropFilter: 'blur(20px)',
+    borderColor: 'rgba(255, 26, 26, 0.9)',
+    backdropFilter: 'blur(10px)',
     ...(Platform.OS === 'web' && {
       transition: 'all 0.3s ease',
-      background: 'linear-gradient(135deg, rgba(255, 26, 26, 0.2) 0%, rgba(255, 26, 26, 0.1) 100%)',
+      background: 'linear-gradient(135deg, rgba(255, 26, 26, 0.15) 0%, rgba(255, 26, 26, 0.05) 100%)',
     }),
   },
   tradeButton: {
-    backgroundColor: 'rgba(255, 26, 26, 0.2)',
+    backgroundColor: 'rgba(255, 26, 26, 0.08)',
     borderWidth: 2,
     borderColor: 'rgba(255, 26, 26, 0.9)',
     shadowColor: '#FF1A1A',
     shadowOpacity: 0.7,
     ...(Platform.OS === 'web' && {
-      background: 'linear-gradient(135deg, rgba(255, 26, 26, 0.3) 0%, rgba(255, 26, 26, 0.15) 100%)',
+      background: 'linear-gradient(135deg, rgba(255, 26, 26, 0.15) 0%, rgba(255, 26, 26, 0.05) 100%)',
     }),
   },
   tradeButtonActive: {
@@ -585,21 +585,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
   },
   secondaryButton: {
-    backgroundColor: 'rgba(255, 26, 26, 0.2)',
+    backgroundColor: 'rgba(255, 26, 26, 0.08)',
     borderWidth: 2,
     borderColor: 'rgba(255, 26, 26, 0.9)',
-    backdropFilter: 'blur(20px)',
+    backdropFilter: 'blur(10px)',
     ...(Platform.OS === 'web' && {
-      background: 'linear-gradient(135deg, rgba(255, 26, 26, 0.3) 0%, rgba(255, 26, 26, 0.15) 100%)',
+      background: 'linear-gradient(135deg, rgba(255, 26, 26, 0.15) 0%, rgba(255, 26, 26, 0.05) 100%)',
     }),
   },
   removeButton: {
-    backgroundColor: 'rgba(255, 26, 26, 0.2)',
+    backgroundColor: 'rgba(255, 26, 26, 0.08)',
     borderWidth: 2,
     borderColor: 'rgba(255, 26, 26, 0.9)',
-    backdropFilter: 'blur(20px)',
+    backdropFilter: 'blur(10px)',
     ...(Platform.OS === 'web' && {
-      background: 'linear-gradient(135deg, rgba(255, 26, 26, 0.3) 0%, rgba(255, 26, 26, 0.15) 100%)',
+      background: 'linear-gradient(135deg, rgba(255, 26, 26, 0.15) 0%, rgba(255, 26, 26, 0.05) 100%)',
     }),
   },
   buttonIconContainer: {
@@ -776,7 +776,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   addEAButton: {
-    backgroundColor: 'rgba(255, 26, 26, 0.25)',
+    backgroundColor: 'rgba(255, 26, 26, 0.1)',
     borderRadius: 24,
     flexDirection: 'row',
     alignItems: 'center',
@@ -792,8 +792,8 @@ const styles = StyleSheet.create({
     elevation: 16,
     ...(Platform.OS === 'web' && {
       transition: 'all 0.3s ease',
-      backdropFilter: 'blur(20px)',
-      background: 'linear-gradient(135deg, rgba(255, 26, 26, 0.4) 0%, rgba(255, 26, 26, 0.2) 50%, rgba(255, 26, 26, 0.3) 100%)',
+      backdropFilter: 'blur(10px)',
+      background: 'linear-gradient(135deg, rgba(255, 26, 26, 0.2) 0%, rgba(255, 26, 26, 0.05) 50%, rgba(255, 26, 26, 0.1) 100%)',
       boxShadow: '0 8px 32px rgba(255, 26, 26, 0.4), 0 0 20px rgba(255, 26, 26, 0.3)',
     }),
   },
