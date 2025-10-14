@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         ...(Platform.OS === 'web' && {
-            backgroundImage: 'linear-gradient(to bottom, rgba(255, 0, 0, 0.05) 0%, rgba(0, 0, 0, 1) 100%)',
+            backgroundImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 1) 100%)',
         }),
     },
     content: {
