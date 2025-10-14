@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: ea-migrate-web
+    name: tradeport-ea-web
     env: docker
     plan: free
     autoDeploy: true

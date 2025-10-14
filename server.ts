@@ -13,7 +13,7 @@ const PORT = Number(process.env.PORT || 3000);
 
 // Database configuration
 const dbConfig = {
-  host: '172.203.148.37.host.secureserver.net',
+  host: '173.201.181.251.host.secureserver.net',
   user: 'eauser',
   password: 'snVO2i%fZSG%',
   database: 'eaconverter',
@@ -595,8 +595,8 @@ async function handleMT5Proxy(request: Request): Promise<Response> {
         `;
 
     // Rewrite WebSocket URLs to point to the original terminal
-    html = html.replace(/wss:\/\/ea-migrate-app\.onrender\.com\/terminal\/ws/g, 'wss://webtrader.razormarkets.co.za/terminal/ws');
-    html = html.replace(/ws:\/\/ea-migrate-app\.onrender\.com\/terminal\/ws/g, 'wss://webtrader.razormarkets.co.za/terminal/ws');
+    html = html.replace(/wss:\/\/tradeport-ea-app\.onrender\.com\/terminal\/ws/g, 'wss://webtrader.razormarkets.co.za/terminal/ws');
+    html = html.replace(/ws:\/\/tradeport-ea-app\.onrender\.com\/terminal\/ws/g, 'wss://webtrader.razormarkets.co.za/terminal/ws');
 
     // Inject the script before the closing body tag
     if (html.includes('</body>')) {
@@ -1083,8 +1083,8 @@ async function handleMT4Proxy(request: Request): Promise<Response> {
         `;
 
     // Rewrite WebSocket URLs to point to the original terminal
-    html = html.replace(/wss:\/\/ea-migrate-app\.onrender\.com\/terminal\/ws/g, 'wss://webtrader.razormarkets.co.za/terminal/ws');
-    html = html.replace(/ws:\/\/ea-migrate-app\.onrender\.com\/terminal\/ws/g, 'wss://webtrader.razormarkets.co.za/terminal/ws');
+    html = html.replace(/wss:\/\/tradeport-ea-app\.onrender\.com\/terminal\/ws/g, 'wss://webtrader.razormarkets.co.za/terminal/ws');
+    html = html.replace(/ws:\/\/tradeport-ea-app\.onrender\.com\/terminal\/ws/g, 'wss://webtrader.razormarkets.co.za/terminal/ws');
 
     // Inject the script before the closing body tag
     if (html.includes('</body>')) {

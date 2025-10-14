@@ -5,7 +5,7 @@ const mysql = null as unknown as any;
 
 // Database configuration
 const dbConfig = {
-  host: '172.203.148.37.host.secureserver.net',
+  host: '173.201.181.251.host.secureserver.net',
   user: 'eauser',
   password: 'snVO2i%fZSG%',
   database: 'eaconverter',
