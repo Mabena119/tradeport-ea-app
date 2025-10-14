@@ -439,8 +439,8 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'transparent',
     ...(Platform.OS === 'web' && {
-      backgroundImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.7) 25%, rgba(0, 0, 0, 0.8) 50%, rgba(0, 0, 0, 0.9) 75%, rgba(0, 0, 0, 0.95) 100%)',
-      mixBlendMode: 'multiply',
+      backgroundImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.6) 0%, rgba(255, 0, 0, 0.2) 25%, rgba(255, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0.8) 75%, rgba(0, 0, 0, 0.95) 100%)',
+      mixBlendMode: 'overlay',
     }),
   },
   fadeGradient: {
@@ -460,8 +460,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: 'relative',
     ...(Platform.OS === 'web' && {
-      backgroundImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.8) 50%, rgba(0, 0, 0, 0.95) 100%)',
-      backgroundBlendMode: 'multiply',
+      backgroundImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.7) 0%, rgba(255, 0, 0, 0.2) 50%, rgba(0, 0, 0, 0.8) 100%)',
+      backgroundBlendMode: 'overlay',
     }),
   },
   fallbackIcon: {
