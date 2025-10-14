@@ -410,9 +410,9 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: 'transparent',
     ...(Platform.OS === 'web' && {
-      backgroundImage: 'linear-gradient(135deg, rgba(255, 26, 26, 0.95) 0%, rgba(255, 26, 26, 0.85) 10%, rgba(255, 26, 26, 0.75) 20%, rgba(255, 26, 26, 0.65) 30%, rgba(255, 26, 26, 0.55) 40%, rgba(255, 26, 26, 0.45) 50%, rgba(255, 26, 26, 0.35) 60%, rgba(255, 26, 26, 0.25) 70%, rgba(255, 26, 26, 0.15) 80%, rgba(255, 26, 26, 0.08) 90%, rgba(255, 26, 26, 0.03) 95%, rgba(0, 0, 0, 1) 100%)',
+      backgroundImage: 'linear-gradient(135deg, rgba(255, 26, 26, 0.95) 0%, rgba(255, 26, 26, 0.85) 10%, rgba(255, 26, 26, 0.75) 20%, rgba(255, 26, 26, 0.65) 30%, rgba(255, 26, 26, 0.55) 40%, rgba(255, 26, 26, 0.45) 50%, rgba(255, 26, 26, 0.35) 60%, rgba(255, 26, 26, 0.25) 70%, rgba(255, 26, 26, 0.15) 80%, rgba(255, 26, 26, 0.08) 90%, rgba(255, 26, 26, 0.03) 95%, rgba(255, 26, 26, 0.01) 100%)',
     }),
   },
   content: {
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'transparent',
     ...(Platform.OS === 'web' && {
-      backgroundImage: 'linear-gradient(135deg, rgba(255, 26, 26, 0.3) 0%, rgba(255, 26, 26, 0.25) 15%, rgba(255, 26, 26, 0.2) 30%, rgba(255, 26, 26, 0.15) 45%, rgba(255, 26, 26, 0.1) 60%, rgba(255, 26, 26, 0.05) 75%, rgba(255, 26, 26, 0.02) 90%, rgba(0, 0, 0, 0.1) 95%, rgba(0, 0, 0, 0.3) 100%)',
+      backgroundImage: 'linear-gradient(135deg, rgba(255, 26, 26, 0.3) 0%, rgba(255, 26, 26, 0.25) 15%, rgba(255, 26, 26, 0.2) 30%, rgba(255, 26, 26, 0.15) 45%, rgba(255, 26, 26, 0.1) 60%, rgba(255, 26, 26, 0.05) 75%, rgba(255, 26, 26, 0.02) 90%, rgba(255, 26, 26, 0.01) 95%, rgba(255, 26, 26, 0.005) 100%)',
       mixBlendMode: 'overlay',
     }),
   },
@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: 'relative',
     ...(Platform.OS === 'web' && {
-      backgroundImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.7) 0%, rgba(255, 0, 0, 0.2) 50%, rgba(0, 0, 0, 0.8) 100%)',
+      backgroundImage: 'linear-gradient(to bottom, rgba(255, 26, 26, 0.4) 0%, rgba(255, 0, 0, 0.2) 50%, rgba(255, 26, 26, 0.3) 100%)',
       backgroundBlendMode: 'overlay',
     }),
   },
@@ -677,8 +677,6 @@ const styles = StyleSheet.create({
     position: 'relative',
     marginTop: 0,
     backgroundColor: 'transparent',
-    overflow: 'hidden',
-    zIndex: 10,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -773,13 +771,13 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: 'rgba(255, 26, 26, 1)',
     shadowColor: '#FF1A1A',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.8,
-    shadowRadius: 20,
-    elevation: 16,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.6,
+    shadowRadius: 12,
+    elevation: 8,
     ...(Platform.OS === 'web' && {
       transition: 'all 0.3s ease',
-      boxShadow: '0 8px 32px rgba(255, 26, 26, 0.4), 0 0 20px rgba(255, 26, 26, 0.3)',
+      boxShadow: '0 4px 16px rgba(255, 26, 26, 0.3), 0 0 12px rgba(255, 26, 26, 0.2)',
     }),
   },
   addEATextContainer: {
