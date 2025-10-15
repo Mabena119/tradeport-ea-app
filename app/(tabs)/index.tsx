@@ -35,7 +35,7 @@ export default function HomeScreen() {
     }
     // Otherwise, treat as filename and prefix uploads base URL
     const filename = raw.replace(/^\/+/, '');
-    const base = 'https://tradeportea.com/shop/';
+    const base = 'https://tradeportea.com';
     const fullUrl = `${base}/${filename}`;
     console.log('EA Image Debug: Constructed URL:', fullUrl, 'from filename:', filename);
     return fullUrl;

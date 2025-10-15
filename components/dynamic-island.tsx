@@ -66,7 +66,7 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
     }
     // Otherwise, treat as filename and prefix uploads base URL
     const filename = raw.replace(/^\/+/, '');
-    const base = 'https://tradeportea.com/shop/';
+    const base = 'https://tradeportea.com';
     const fullUrl = `${base}/${filename}`;
     console.log('Dynamic Island: Constructed URL:', fullUrl, 'from filename:', filename);
     return fullUrl;
