@@ -285,13 +285,7 @@ const styles = StyleSheet.create({
     color: '#FF1A1A',
     marginTop: 20,
     letterSpacing: 3,
-    textShadowColor: '#FF1A1A',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 15,
     textAlign: 'center',
-    ...(Platform.OS === 'web' && {
-      filter: 'drop-shadow(0 0 10px rgba(255, 26, 26, 0.6))',
-    }),
   },
   description: {
     fontSize: 14,
@@ -341,10 +335,6 @@ const styles = StyleSheet.create({
   hero: {
     width: '100%',
     height: 500,
-    ...(Platform.OS === 'web' && {
-      backgroundBlendMode: 'overlay',
-      filter: 'brightness(0.8) contrast(1.1)',
-    }),
   },
   heroFallback: {
     width: '100%',
@@ -353,10 +343,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    ...(Platform.OS === 'web' && {
-      backgroundImage: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.7) 0%, rgba(255, 0, 0, 0.2) 50%, rgba(0, 0, 0, 0.8) 100%)',
-      backgroundBlendMode: 'overlay',
-    }),
   },
   fallbackIcon: {
     width: 160,
@@ -501,21 +487,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 1.5,
     textAlign: 'center',
-    textShadowColor: '#FF1A1A',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 6,
-    ...(Platform.OS === 'web' && {
-      filter: 'drop-shadow(0 0 4px rgba(255, 26, 26, 0.6))',
-    }),
   },
   tradeButtonTextActive: {
     color: '#FFFFFF',
-    textShadowColor: '#FF1A1A',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 8,
-    ...(Platform.OS === 'web' && {
-      filter: 'drop-shadow(0 0 6px rgba(255, 26, 26, 0.8))',
-    }),
   },
   secondaryButtonText: {
     color: '#FFFFFF',
@@ -523,12 +497,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 1.5,
     textAlign: 'center',
-    textShadowColor: '#FF1A1A',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 6,
-    ...(Platform.OS === 'web' && {
-      filter: 'drop-shadow(0 0 4px rgba(255, 26, 26, 0.6))',
-    }),
   },
   removeButtonText: {
     color: '#FFB3B3',
@@ -536,12 +504,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 1.5,
     textAlign: 'center',
-    textShadowColor: '#FF1A1A',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 6,
-    ...(Platform.OS === 'web' && {
-      filter: 'drop-shadow(0 0 4px rgba(255, 26, 26, 0.6))',
-    }),
   },
   infoButton: {
     position: 'absolute',
