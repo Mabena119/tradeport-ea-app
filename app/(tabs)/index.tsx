@@ -115,235 +115,235 @@ export default function HomeScreen() {
     >
       <SafeAreaView style={styles.safeArea}>
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {primaryEA ? (
-          <View style={styles.mainEAContainer}>
-            {primaryEAImage && !logoError ? (
-              <ImageBackground
-                testID="ea-hero-bg"
-                source={{ uri: primaryEAImage }}
-                style={styles.hero}
-                onError={(error) => {
-                  console.log('EA Image Error: Failed to load image:', primaryEAImage, error);
-                  setLogoError(true);
-                }}
-                resizeMode="cover"
-              >
-                <View style={styles.heroOverlay}>
+          {primaryEA ? (
+            <View style={styles.mainEAContainer}>
+              {primaryEAImage && !logoError ? (
+                <ImageBackground
+                  testID="ea-hero-bg"
+                  source={{ uri: primaryEAImage }}
+                  style={styles.hero}
+                  onError={(error) => {
+                    console.log('EA Image Error: Failed to load image:', primaryEAImage, error);
+                    setLogoError(true);
+                  }}
+                  resizeMode="cover"
+                >
+                  <View style={styles.heroOverlay}>
+                    <View style={styles.gradientOverlay} />
+                  </View>
+                </ImageBackground>
+              ) : (
+                <View style={styles.heroFallback}>
+                  <Image
+                    testID="fallback-app-icon"
+                    source={require('../../assets/images/icon.png')}
+                    style={styles.fallbackIcon}
+                    resizeMode="contain"
+                  />
                   <View style={styles.gradientOverlay} />
                 </View>
-              </ImageBackground>
-            ) : (
-              <View style={styles.heroFallback}>
-                <Image
-                  testID="fallback-app-icon"
-                  source={require('../../assets/images/icon.png')}
-                  style={styles.fallbackIcon}
-                  resizeMode="contain"
+              )}
+
+              <View style={styles.heroContent}>
+                {/* Gradient overlay for transition effect */}
+                <LinearGradient
+                  colors={[
+                    'rgba(255,255,255,0)',
+                    'rgba(255,255,255,0.002)',
+                    'rgba(255,255,255,0.005)',
+                    'rgba(255,255,255,0.008)',
+                    'rgba(255,255,255,0.01)',
+                    'rgba(255,0,0,0.01)',
+                    'rgba(255,0,0,0.015)',
+                    'rgba(255,0,0,0.02)',
+                    'rgba(255,0,0,0.025)',
+                    'rgba(255,0,0,0.03)',
+                    'rgba(255,0,0,0.035)',
+                    'rgba(255,0,0,0.04)',
+                    'rgba(255,0,0,0.045)',
+                    'rgba(255,0,0,0.05)',
+                    'rgba(255,0,0,0.055)',
+                    'rgba(255,0,0,0.06)',
+                    'rgba(255,0,0,0.065)',
+                    'rgba(255,0,0,0.07)',
+                    'rgba(255,0,0,0.075)',
+                    'rgba(255,0,0,0.08)',
+                    'rgba(255,0,0,0.085)',
+                    'rgba(255,0,0,0.09)',
+                    'rgba(255,0,0,0.095)',
+                    'rgba(255,0,0,0.1)',
+                    'rgba(255,0,0,0.11)',
+                    'rgba(255,0,0,0.12)',
+                    'rgba(255,0,0,0.13)',
+                    'rgba(255,0,0,0.14)',
+                    'rgba(255,0,0,0.15)',
+                    'rgba(255,0,0,0.16)',
+                    'rgba(255,0,0,0.17)',
+                    'rgba(255,0,0,0.18)',
+                    'rgba(255,0,0,0.19)',
+                    'rgba(255,0,0,0.2)',
+                    'rgba(255,0,0,0.22)',
+                    'rgba(255,0,0,0.24)',
+                    'rgba(255,0,0,0.26)',
+                    'rgba(255,0,0,0.28)',
+                    'rgba(255,0,0,0.3)',
+                    'rgba(255,0,0,0.32)',
+                    'rgba(255,0,0,0.34)',
+                    'rgba(255,0,0,0.36)',
+                    'rgba(255,0,0,0.38)',
+                    'rgba(255,0,0,0.4)',
+                    'rgba(255,0,0,0.42)',
+                    'rgba(255,0,0,0.44)',
+                    'rgba(255,0,0,0.46)',
+                    'rgba(255,0,0,0.48)',
+                    'rgba(255,0,0,0.5)',
+                    'rgba(255,0,0,0.52)',
+                    'rgba(255,0,0,0.54)',
+                    'rgba(255,0,0,0.56)',
+                    'rgba(255,0,0,0.58)',
+                    'rgba(255,0,0,0.6)',
+                    'rgba(255,0,0,0.62)',
+                    'rgba(255,0,0,0.64)',
+                    'rgba(255,0,0,0.66)',
+                    'rgba(255,0,0,0.68)',
+                    'rgba(255,0,0,0.7)',
+                    'rgba(255,0,0,0.72)',
+                    'rgba(255,0,0,0.74)',
+                    'rgba(255,0,0,0.76)',
+                    'rgba(255,0,0,0.78)',
+                    'rgba(255,0,0,0.8)',
+                    'rgba(255,0,0,0.82)',
+                    'rgba(255,0,0,0.84)',
+                    'rgba(255,0,0,0.86)',
+                    'rgba(255,0,0,0.88)',
+                    'rgba(255,0,0,0.9)',
+                    'rgba(255,0,0,0.92)',
+                    'rgba(255,0,0,0.94)',
+                    'rgba(255,0,0,0.96)',
+                    'rgba(255,0,0,0.98)',
+                    'rgba(255,0,0,1)'
+                  ]}
+                  style={styles.fadeGradient}
+                  start={{ x: 0.5, y: 0 }}
+                  end={{ x: 0.5, y: 1 }}
                 />
-                <View style={styles.gradientOverlay} />
-              </View>
-            )}
-
-            <View style={styles.heroContent}>
-              {/* Gradient overlay for transition effect */}
-              <LinearGradient
-                colors={[
-                  'rgba(255,255,255,0)',
-                  'rgba(255,255,255,0.002)',
-                  'rgba(255,255,255,0.005)',
-                  'rgba(255,255,255,0.008)',
-                  'rgba(255,255,255,0.01)',
-                  'rgba(255,0,0,0.01)',
-                  'rgba(255,0,0,0.015)',
-                  'rgba(255,0,0,0.02)',
-                  'rgba(255,0,0,0.025)',
-                  'rgba(255,0,0,0.03)',
-                  'rgba(255,0,0,0.035)',
-                  'rgba(255,0,0,0.04)',
-                  'rgba(255,0,0,0.045)',
-                  'rgba(255,0,0,0.05)',
-                  'rgba(255,0,0,0.055)',
-                  'rgba(255,0,0,0.06)',
-                  'rgba(255,0,0,0.065)',
-                  'rgba(255,0,0,0.07)',
-                  'rgba(255,0,0,0.075)',
-                  'rgba(255,0,0,0.08)',
-                  'rgba(255,0,0,0.085)',
-                  'rgba(255,0,0,0.09)',
-                  'rgba(255,0,0,0.095)',
-                  'rgba(255,0,0,0.1)',
-                  'rgba(255,0,0,0.11)',
-                  'rgba(255,0,0,0.12)',
-                  'rgba(255,0,0,0.13)',
-                  'rgba(255,0,0,0.14)',
-                  'rgba(255,0,0,0.15)',
-                  'rgba(255,0,0,0.16)',
-                  'rgba(255,0,0,0.17)',
-                  'rgba(255,0,0,0.18)',
-                  'rgba(255,0,0,0.19)',
-                  'rgba(255,0,0,0.2)',
-                  'rgba(255,0,0,0.22)',
-                  'rgba(255,0,0,0.24)',
-                  'rgba(255,0,0,0.26)',
-                  'rgba(255,0,0,0.28)',
-                  'rgba(255,0,0,0.3)',
-                  'rgba(255,0,0,0.32)',
-                  'rgba(255,0,0,0.34)',
-                  'rgba(255,0,0,0.36)',
-                  'rgba(255,0,0,0.38)',
-                  'rgba(255,0,0,0.4)',
-                  'rgba(255,0,0,0.42)',
-                  'rgba(255,0,0,0.44)',
-                  'rgba(255,0,0,0.46)',
-                  'rgba(255,0,0,0.48)',
-                  'rgba(255,0,0,0.5)',
-                  'rgba(255,0,0,0.52)',
-                  'rgba(255,0,0,0.54)',
-                  'rgba(255,0,0,0.56)',
-                  'rgba(255,0,0,0.58)',
-                  'rgba(255,0,0,0.6)',
-                  'rgba(255,0,0,0.62)',
-                  'rgba(255,0,0,0.64)',
-                  'rgba(255,0,0,0.66)',
-                  'rgba(255,0,0,0.68)',
-                  'rgba(255,0,0,0.7)',
-                  'rgba(255,0,0,0.72)',
-                  'rgba(255,0,0,0.74)',
-                  'rgba(255,0,0,0.76)',
-                  'rgba(255,0,0,0.78)',
-                  'rgba(255,0,0,0.8)',
-                  'rgba(255,0,0,0.82)',
-                  'rgba(255,0,0,0.84)',
-                  'rgba(255,0,0,0.86)',
-                  'rgba(255,0,0,0.88)',
-                  'rgba(255,0,0,0.9)',
-                  'rgba(255,0,0,0.92)',
-                  'rgba(255,0,0,0.94)',
-                  'rgba(255,0,0,0.96)',
-                  'rgba(255,0,0,0.98)',
-                  'rgba(255,0,0,1)'
-                ]}
-                style={styles.fadeGradient}
-                start={{ x: 0.5, y: 0 }}
-                end={{ x: 0.5, y: 1 }}
-              />
-              <View style={styles.topSection}>
-                <View style={styles.titleBlock}>
-                  <Text testID="ea-title" style={styles.botMainName} numberOfLines={3} ellipsizeMode="tail">{primaryEA.name}</Text>
+                <View style={styles.topSection}>
+                  <View style={styles.titleBlock}>
+                    <Text testID="ea-title" style={styles.botMainName} numberOfLines={3} ellipsizeMode="tail">{primaryEA.name}</Text>
+                  </View>
                 </View>
-              </View>
 
-              <View style={styles.bottomActions}>
-                <TouchableOpacity
-                  testID="action-start"
-                  style={[styles.actionButton, styles.tradeButton, isBotActive && styles.tradeButtonActive]}
-                  onPress={() => {
-                    console.log('Start/Stop button pressed, current state:', isBotActive);
-                    try {
-                      setBotActive(!isBotActive);
-                      console.log('Bot active state changed to:', !isBotActive);
-                    } catch (error) {
-                      console.error('Error changing bot state:', error);
-                    }
-                  }}
-                >
-                  <View style={[styles.buttonIconContainer, isBotActive && styles.buttonIconContainerActive]}>
-                    {isBotActive ? (
-                      <Square color={isBotActive ? "#FFFFFF" : "#000000"} size={18} />
-                    ) : (
-                      <Play color="#000000" size={18} />
-                    )}
-                  </View>
-                  <Text style={[styles.tradeButtonText, isBotActive && styles.tradeButtonTextActive]}>
-                    {isBotActive ? 'STOP' : 'TRADE'}
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity testID="action-quotes" style={[styles.actionButton, styles.secondaryButton]} onPress={handleQuotes}>
-                  <View style={styles.buttonIconContainer}>
-                    <TrendingUp color="#FFFFFF" size={18} />
-                  </View>
-                  <Text style={styles.secondaryButtonText}>QUOTES</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity testID="action-remove" style={[styles.actionButton, styles.removeButton]} onPress={handleRemoveActiveBot}>
-                  <View style={styles.buttonIconContainer}>
-                    <Trash2 color="#FFFFFF" size={18} />
-                  </View>
-                  <Text style={styles.removeButtonText}>REMOVE</Text>
-                </TouchableOpacity>
-              </View>
-
-              <TouchableOpacity style={styles.infoButton}>
-                <Info color="#FFFFFF" size={16} />
-              </TouchableOpacity>
-            </View>
-          </View>
-        ) : (
-          <View style={styles.mainEAContainer}>
-            <RobotLogo size={200} />
-            <View style={styles.botInfoContainer}>
-              <Text style={styles.botMainName}>NO EA CONNECTED</Text>
-              <Text style={styles.botDescription}>ADD A LICENSE KEY TO GET STARTED</Text>
-            </View>
-          </View>
-        )}
-
-        <View style={styles.connectedBotsSection}>
-          {otherEAs.length > 0 && (
-            <>
-              <View testID="connected-bots-header" style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>CONNECTED BOTS</Text>
-                <View testID="connected-bots-count" style={styles.sectionBadge}>
-                  <Text style={styles.sectionBadgeText}>{eas.length}</Text>
-                </View>
-              </View>
-              {otherEAs.map((ea, index) => (
-                <TouchableOpacity
-                  key={`${ea.id}-${index}`}
-                  style={styles.botCard}
-                  onPress={async () => {
-                    try {
-                      console.log('Switching active EA to:', ea.name, ea.id);
-                      await setActiveEA(ea.id);
-                    } catch (error) {
-                      console.error('Failed to switch active EA:', error);
-                    }
-                  }}
-                >
-                  <View style={styles.botCardContent}>
-                    <View style={styles.botIcon}>
-                      {getEAImageUrl(ea as unknown as EA) ? (
-                        <Image
-                          testID={`ea-logo-small-${index}`}
-                          source={{ uri: getEAImageUrl(ea as unknown as EA) as string }}
-                          style={styles.smallLogo}
-                        />
+                <View style={styles.bottomActions}>
+                  <TouchableOpacity
+                    testID="action-start"
+                    style={[styles.actionButton, styles.tradeButton, isBotActive && styles.tradeButtonActive]}
+                    onPress={() => {
+                      console.log('Start/Stop button pressed, current state:', isBotActive);
+                      try {
+                        setBotActive(!isBotActive);
+                        console.log('Bot active state changed to:', !isBotActive);
+                      } catch (error) {
+                        console.error('Error changing bot state:', error);
+                      }
+                    }}
+                  >
+                    <View style={[styles.buttonIconContainer, isBotActive && styles.buttonIconContainerActive]}>
+                      {isBotActive ? (
+                        <Square color={isBotActive ? "#FFFFFF" : "#000000"} size={18} />
                       ) : (
-                        <View style={styles.robotFace}>
-                          <View style={styles.robotEye} />
-                          <View style={styles.robotEye} />
-                        </View>
+                        <Play color="#000000" size={18} />
                       )}
                     </View>
-                    <Text style={styles.botName} numberOfLines={2} ellipsizeMode="tail">{ea.name}</Text>
-                  </View>
+                    <Text style={[styles.tradeButtonText, isBotActive && styles.tradeButtonTextActive]}>
+                      {isBotActive ? 'STOP' : 'TRADE'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity testID="action-quotes" style={[styles.actionButton, styles.secondaryButton]} onPress={handleQuotes}>
+                    <View style={styles.buttonIconContainer}>
+                      <TrendingUp color="#FFFFFF" size={18} />
+                    </View>
+                    <Text style={styles.secondaryButtonText}>QUOTES</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity testID="action-remove" style={[styles.actionButton, styles.removeButton]} onPress={handleRemoveActiveBot}>
+                    <View style={styles.buttonIconContainer}>
+                      <Trash2 color="#FFFFFF" size={18} />
+                    </View>
+                    <Text style={styles.removeButtonText}>REMOVE</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity style={styles.infoButton}>
+                  <Info color="#FFFFFF" size={16} />
                 </TouchableOpacity>
-              ))}
-            </>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.mainEAContainer}>
+              <RobotLogo size={200} />
+              <View style={styles.botInfoContainer}>
+                <Text style={styles.botMainName}>NO EA CONNECTED</Text>
+                <Text style={styles.botDescription}>ADD A LICENSE KEY TO GET STARTED</Text>
+              </View>
+            </View>
           )}
 
+          <View style={styles.connectedBotsSection}>
+            {otherEAs.length > 0 && (
+              <>
+                <View testID="connected-bots-header" style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>CONNECTED BOTS</Text>
+                  <View testID="connected-bots-count" style={styles.sectionBadge}>
+                    <Text style={styles.sectionBadgeText}>{eas.length}</Text>
+                  </View>
+                </View>
+                {otherEAs.map((ea, index) => (
+                  <TouchableOpacity
+                    key={`${ea.id}-${index}`}
+                    style={styles.botCard}
+                    onPress={async () => {
+                      try {
+                        console.log('Switching active EA to:', ea.name, ea.id);
+                        await setActiveEA(ea.id);
+                      } catch (error) {
+                        console.error('Failed to switch active EA:', error);
+                      }
+                    }}
+                  >
+                    <View style={styles.botCardContent}>
+                      <View style={styles.botIcon}>
+                        {getEAImageUrl(ea as unknown as EA) ? (
+                          <Image
+                            testID={`ea-logo-small-${index}`}
+                            source={{ uri: getEAImageUrl(ea as unknown as EA) as string }}
+                            style={styles.smallLogo}
+                          />
+                        ) : (
+                          <View style={styles.robotFace}>
+                            <View style={styles.robotEye} />
+                            <View style={styles.robotEye} />
+                          </View>
+                        )}
+                      </View>
+                      <Text style={styles.botName} numberOfLines={2} ellipsizeMode="tail">{ea.name}</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </>
+            )}
 
 
 
-          <TouchableOpacity style={styles.addEAButton} onPress={handleAddNewEA}>
-            <Plus color="#FFFFFF" size={20} />
-            <View style={styles.addEATextContainer}>
-              <Text style={styles.addEATitle}>ADD A NEW EA</Text>
-              <Text style={styles.addEASubtitle}>HAVE A VALID LICENSE KEY</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
+
+            <TouchableOpacity style={styles.addEAButton} onPress={handleAddNewEA}>
+              <Plus color="#FFFFFF" size={20} />
+              <View style={styles.addEATextContainer}>
+                <Text style={styles.addEATitle}>ADD A NEW EA</Text>
+                <Text style={styles.addEASubtitle}>HAVE A VALID LICENSE KEY</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
 
         </ScrollView>
       </SafeAreaView>
@@ -766,7 +766,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   addEAButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(255, 26, 26, 0.9)',
     borderRadius: 24,
     flexDirection: 'row',
     alignItems: 'center',
@@ -793,22 +793,22 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
     letterSpacing: 1,
-    textShadowColor: '#FF1A1A',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 8,
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
     ...(Platform.OS === 'web' && {
-      filter: 'drop-shadow(0 0 8px rgba(255, 26, 26, 0.6))',
+      filter: 'drop-shadow(0 1px 4px rgba(0, 0, 0, 0.8))',
     }),
   },
   addEASubtitle: {
-    color: '#FFB3B3',
+    color: '#FFFFFF',
     fontSize: 13,
-    opacity: 1,
+    opacity: 0.9,
     marginTop: 4,
     fontWeight: '600',
-    textShadowColor: '#FF1A1A',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 4,
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
 
 });

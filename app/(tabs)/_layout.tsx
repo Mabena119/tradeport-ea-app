@@ -13,13 +13,13 @@ export default function TabLayout() {
         tabBarStyle: isFirstTime ? {
           display: 'none',
         } : {
-          backgroundColor: 'rgba(204, 0, 0, 0.95)',
-          borderTopColor: '#FF1A1A',
+          backgroundColor: 'rgba(255, 26, 26, 0.95)',
+          borderTopColor: '#FFFFFF',
           borderTopWidth: 2,
           backdropFilter: 'blur(20px)',
         },
-        tabBarActiveTintColor: '#FF1A1A',
-        tabBarInactiveTintColor: '#808080',
+        tabBarActiveTintColor: '#FFFFFF',
+        tabBarInactiveTintColor: '#FFB3B3',
         tabBarLabelStyle: {
           fontSize: 10,
           fontWeight: '600',
