@@ -1253,6 +1253,8 @@ async function handleApi(request: Request): Promise<Response> {
           let query: string;
           let params: any[];
 
+          console.log('🔍 Server: Getting signals for EA:', eaId, 'since:', since);
+
           if (since) {
             // Get signals since a specific time
             query = `
@@ -1273,10 +1275,14 @@ async function handleApi(request: Request): Promise<Response> {
             params = [eaId];
           }
 
+          console.log('🔍 Server: Executing query:', query);
+          console.log('🔍 Server: Query params:', params);
+
           const [rows] = await pool.execute(query, params);
 
           const result = rows as any[];
-          console.log(`Found ${result.length} new signals for EA ${eaId} since ${since || 'beginning'}`);
+          console.log(`🔍 Server: Found ${result.length} signals for EA ${eaId} since ${since || 'beginning'}`);
+          console.log('🔍 Server: Signal results:', result);
 
           return new Response(JSON.stringify({ signals: result }), {
             headers: { 'Content-Type': 'application/json' },

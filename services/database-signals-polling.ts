@@ -192,11 +192,13 @@ class DatabaseSignalsPollingService {
   // Get EA from license key via API
   private async getEAFromLicense(licenseKey: string): Promise<string | null> {
     try {
+      console.log('🔍 Fetching EA ID for license:', licenseKey);
       const response = await fetch(`/api/get-ea-from-license?licenseKey=${encodeURIComponent(licenseKey)}`);
       if (!response.ok) {
         throw new Error(`API call failed: ${response.status}`);
       }
       const data = await response.json();
+      console.log('🔍 EA ID retrieved from license:', data.eaId);
       return data.eaId;
     } catch (error) {
       console.error('Error fetching EA from license via API:', error);
@@ -207,16 +209,24 @@ class DatabaseSignalsPollingService {
   // Get new signals for EA since last poll
   private async getNewSignalsForEA(ea: string): Promise<DatabaseSignal[]> {
     try {
+      const sinceTime = this.lastPollTime || new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      console.log('🔍 Fetching signals for EA:', ea, 'since:', sinceTime);
+
       const params = new URLSearchParams({
         eaId: ea,
-        since: this.lastPollTime || new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() // Default to 24 hours ago
+        since: sinceTime
       });
 
-      const response = await fetch(`/api/get-new-signals?${params}`);
+      const apiUrl = `/api/get-new-signals?${params}`;
+      console.log('🔍 API URL:', apiUrl);
+
+      const response = await fetch(apiUrl);
       if (!response.ok) {
         throw new Error(`API call failed: ${response.status}`);
       }
       const data = await response.json();
+      console.log('🔍 Signals retrieved for EA', ea, ':', data.signals?.length || 0, 'signals');
+      console.log('🔍 Signal details:', data.signals);
       return data.signals;
     } catch (error) {
       console.error('Error fetching new signals via API:', error);
