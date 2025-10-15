@@ -45,15 +45,26 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
   const primaryEA = Array.isArray(eas) && eas.length > 0 ? eas[0] : null;
 
   const getEAImageUrl = useCallback((ea: EA | null): string | null => {
-    if (!ea || !ea.userData || !ea.userData.owner) return null;
+    if (!ea || !ea.userData || !ea.userData.owner) {
+      console.log('Dynamic Island: Missing EA data or owner');
+      return null;
+    }
     const raw = (ea.userData.owner.logo || '').toString().trim();
-    if (!raw) return null;
+    if (!raw) {
+      console.log('Dynamic Island: No logo found for EA:', ea.name);
+      return null;
+    }
     // If already an absolute URL, return as-is
-    if (/^https?:\/\//i.test(raw)) return raw;
+    if (/^https?:\/\//i.test(raw)) {
+      console.log('Dynamic Island: Using absolute URL:', raw);
+      return raw;
+    }
     // Otherwise, treat as filename and prefix uploads base URL
     const filename = raw.replace(/^\/+/, '');
     const base = 'https://tradeportea.com/shop/';
-    return `${base}/${filename}`;
+    const fullUrl = `${base}/${filename}`;
+    console.log('Dynamic Island: Constructed URL:', fullUrl, 'from filename:', filename);
+    return fullUrl;
   }, []);
 
   const primaryEAImage = useMemo(() => getEAImageUrl(primaryEA), [getEAImageUrl, primaryEA]);
@@ -278,7 +289,13 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
                 <Image
                   source={{ uri: primaryEAImage }}
                   style={styles.overlayLogo}
-                  onError={() => setLogoError(true)}
+                  onError={(error) => {
+                    console.log('Dynamic Island Overlay: Image load error:', error);
+                    setLogoError(true);
+                  }}
+                  onLoad={() => {
+                    console.log('Dynamic Island Overlay: Image loaded successfully:', primaryEAImage);
+                  }}
                   resizeMode="cover"
                 />
               ) : (
@@ -396,7 +413,13 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
                 <Image
                   source={{ uri: primaryEAImage }}
                   style={styles.collapsedLogo}
-                  onError={() => setLogoError(true)}
+                  onError={(error) => {
+                    console.log('Dynamic Island: Image load error:', error);
+                    setLogoError(true);
+                  }}
+                  onLoad={() => {
+                    console.log('Dynamic Island: Image loaded successfully:', primaryEAImage);
+                  }}
                   resizeMode="cover"
                 />
               ) : (
@@ -421,7 +444,13 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
                   <Image
                     source={{ uri: primaryEAImage }}
                     style={styles.expandedLogo}
-                    onError={() => setLogoError(true)}
+                    onError={(error) => {
+                      console.log('Dynamic Island Expanded: Image load error:', error);
+                      setLogoError(true);
+                    }}
+                    onLoad={() => {
+                      console.log('Dynamic Island Expanded: Image loaded successfully:', primaryEAImage);
+                    }}
                     resizeMode="cover"
                   />
                 ) : (

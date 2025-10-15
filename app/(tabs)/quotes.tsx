@@ -496,12 +496,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   quoteCard: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: 'transparent',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#FF0000',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 26, 26, 0.9)',
   },
   quoteHeader: {
     flexDirection: 'row',
