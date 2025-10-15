@@ -680,15 +680,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     borderWidth: 3,
     borderColor: 'rgba(255, 26, 26, 1)',
-    shadowColor: '#FF1A1A',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.8,
-    shadowRadius: 20,
-    elevation: 16,
-    ...(Platform.OS === 'web' && {
-      transition: 'all 0.3s ease',
-      boxShadow: '0 8px 32px rgba(255, 26, 26, 0.4), 0 0 20px rgba(255, 26, 26, 0.3)',
-    }),
   },
   addEATextContainer: {
     marginLeft: 12,
@@ -698,12 +689,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
     letterSpacing: 1,
-    textShadowColor: '#FF1A1A',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 8,
-    ...(Platform.OS === 'web' && {
-      filter: 'drop-shadow(0 0 8px rgba(255, 26, 26, 0.6))',
-    }),
   },
   addEASubtitle: {
     color: '#FFB3B3',
@@ -711,9 +696,6 @@ const styles = StyleSheet.create({
     opacity: 1,
     marginTop: 4,
     fontWeight: '600',
-    textShadowColor: '#FF1A1A',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 4,
   },
 
 });
