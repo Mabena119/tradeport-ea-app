@@ -123,9 +123,6 @@ export default function HomeScreen() {
                 }}
                 resizeMode="cover"
               >
-                <View style={styles.heroOverlay}>
-                  <View style={styles.gradientOverlay} />
-                </View>
               </ImageBackground>
             ) : (
               <View style={styles.heroFallback}>
@@ -135,7 +132,6 @@ export default function HomeScreen() {
                   style={styles.fallbackIcon}
                   resizeMode="contain"
                 />
-                <View style={styles.gradientOverlay} />
               </View>
             )}
 
@@ -348,20 +344,6 @@ const styles = StyleSheet.create({
     ...(Platform.OS === 'web' && {
       backgroundBlendMode: 'overlay',
       filter: 'brightness(0.8) contrast(1.1)',
-    }),
-  },
-  heroOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    ...(Platform.OS === 'web' && {
-      backgroundBlendMode: 'multiply',
-    }),
-  },
-  gradientOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'transparent',
-    ...(Platform.OS === 'web' && {
-      backgroundImage: 'linear-gradient(135deg, rgba(255, 26, 26, 0.3) 0%, rgba(255, 26, 26, 0.25) 15%, rgba(255, 26, 26, 0.2) 30%, rgba(255, 26, 26, 0.15) 45%, rgba(255, 26, 26, 0.1) 60%, rgba(255, 26, 26, 0.05) 75%, rgba(255, 26, 26, 0.02) 90%, rgba(0, 0, 0, 0.1) 95%, rgba(0, 0, 0, 0.3) 100%)',
-      mixBlendMode: 'overlay',
     }),
   },
   heroFallback: {
