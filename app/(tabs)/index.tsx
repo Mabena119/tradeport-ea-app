@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, ImageBackground, Platform, Dimensions, SafeAreaView } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Play, Square, TrendingUp, Trash2, Plus, Info } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { RobotLogo } from '@/components/robot-logo';
@@ -141,88 +140,6 @@ export default function HomeScreen() {
             )}
 
             <View style={styles.heroContent}>
-              {/* Gradient overlay for transition effect */}
-              <LinearGradient
-                colors={[
-                  'rgba(255,255,255,0)',
-                  'rgba(255,255,255,0.002)',
-                  'rgba(255,255,255,0.005)',
-                  'rgba(255,255,255,0.008)',
-                  'rgba(255,255,255,0.01)',
-                  'rgba(255,0,0,0.01)',
-                  'rgba(255,0,0,0.015)',
-                  'rgba(255,0,0,0.02)',
-                  'rgba(255,0,0,0.025)',
-                  'rgba(255,0,0,0.03)',
-                  'rgba(255,0,0,0.035)',
-                  'rgba(255,0,0,0.04)',
-                  'rgba(255,0,0,0.045)',
-                  'rgba(255,0,0,0.05)',
-                  'rgba(255,0,0,0.055)',
-                  'rgba(255,0,0,0.06)',
-                  'rgba(255,0,0,0.065)',
-                  'rgba(255,0,0,0.07)',
-                  'rgba(255,0,0,0.075)',
-                  'rgba(255,0,0,0.08)',
-                  'rgba(255,0,0,0.085)',
-                  'rgba(255,0,0,0.09)',
-                  'rgba(255,0,0,0.095)',
-                  'rgba(255,0,0,0.1)',
-                  'rgba(255,0,0,0.11)',
-                  'rgba(255,0,0,0.12)',
-                  'rgba(255,0,0,0.13)',
-                  'rgba(255,0,0,0.14)',
-                  'rgba(255,0,0,0.15)',
-                  'rgba(255,0,0,0.16)',
-                  'rgba(255,0,0,0.17)',
-                  'rgba(255,0,0,0.18)',
-                  'rgba(255,0,0,0.19)',
-                  'rgba(255,0,0,0.2)',
-                  'rgba(255,0,0,0.22)',
-                  'rgba(255,0,0,0.24)',
-                  'rgba(255,0,0,0.26)',
-                  'rgba(255,0,0,0.28)',
-                  'rgba(255,0,0,0.3)',
-                  'rgba(255,0,0,0.32)',
-                  'rgba(255,0,0,0.34)',
-                  'rgba(255,0,0,0.36)',
-                  'rgba(255,0,0,0.38)',
-                  'rgba(255,0,0,0.4)',
-                  'rgba(255,0,0,0.42)',
-                  'rgba(255,0,0,0.44)',
-                  'rgba(255,0,0,0.46)',
-                  'rgba(255,0,0,0.48)',
-                  'rgba(255,0,0,0.5)',
-                  'rgba(255,0,0,0.52)',
-                  'rgba(255,0,0,0.54)',
-                  'rgba(255,0,0,0.56)',
-                  'rgba(255,0,0,0.58)',
-                  'rgba(255,0,0,0.6)',
-                  'rgba(255,0,0,0.62)',
-                  'rgba(255,0,0,0.64)',
-                  'rgba(255,0,0,0.66)',
-                  'rgba(255,0,0,0.68)',
-                  'rgba(255,0,0,0.7)',
-                  'rgba(255,0,0,0.72)',
-                  'rgba(255,0,0,0.74)',
-                  'rgba(255,0,0,0.76)',
-                  'rgba(255,0,0,0.78)',
-                  'rgba(255,0,0,0.8)',
-                  'rgba(255,0,0,0.82)',
-                  'rgba(255,0,0,0.84)',
-                  'rgba(255,0,0,0.86)',
-                  'rgba(255,0,0,0.88)',
-                  'rgba(255,0,0,0.9)',
-                  'rgba(255,0,0,0.92)',
-                  'rgba(255,0,0,0.94)',
-                  'rgba(255,0,0,0.96)',
-                  'rgba(255,0,0,0.98)',
-                  'rgba(255,0,0,1)'
-                ]}
-                style={styles.fadeGradient}
-                start={{ x: 0.5, y: 0 }}
-                end={{ x: 0.5, y: 1 }}
-              />
               <View style={styles.topSection}>
                 <View style={styles.titleBlock}>
                   <Text testID="ea-title" style={styles.botMainName} numberOfLines={3} ellipsizeMode="tail">{primaryEA.name}</Text>
@@ -446,15 +363,6 @@ const styles = StyleSheet.create({
       backgroundImage: 'linear-gradient(135deg, rgba(255, 26, 26, 0.3) 0%, rgba(255, 26, 26, 0.25) 15%, rgba(255, 26, 26, 0.2) 30%, rgba(255, 26, 26, 0.15) 45%, rgba(255, 26, 26, 0.1) 60%, rgba(255, 26, 26, 0.05) 75%, rgba(255, 26, 26, 0.02) 90%, rgba(0, 0, 0, 0.1) 95%, rgba(0, 0, 0, 0.3) 100%)',
       mixBlendMode: 'overlay',
     }),
-  },
-  fadeGradient: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 500,
-    width: width,
-    zIndex: -1,
   },
   heroFallback: {
     width: '100%',
