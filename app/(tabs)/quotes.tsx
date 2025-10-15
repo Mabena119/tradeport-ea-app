@@ -372,9 +372,9 @@ export default function QuotesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#CC0000',
+    backgroundColor: '#000000',
     ...(Platform.OS === 'web' && {
-      backgroundImage: 'linear-gradient(135deg, rgba(255, 26, 26, 0.9) 0%, rgba(255, 26, 26, 0.5) 30%, rgba(255, 26, 26, 0.1) 65%, rgba(204, 0, 0, 0.95) 90%, rgba(204, 0, 0, 1) 100%)',
+      backgroundImage: 'linear-gradient(135deg, rgba(255, 26, 26, 0.9) 0%, rgba(255, 26, 26, 0.5) 30%, rgba(255, 26, 26, 0.1) 65%, rgba(0, 0, 0, 0.95) 90%, rgba(0, 0, 0, 1) 100%)',
     }),
   },
   header: {

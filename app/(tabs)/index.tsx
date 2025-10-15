@@ -109,12 +109,8 @@ export default function HomeScreen() {
   }
 
   return (
-    <LinearGradient
-      colors={['rgba(255, 26, 26, 0.95)', 'rgba(255, 26, 26, 0.85)', 'rgba(255, 26, 26, 0.75)', 'rgba(255, 26, 26, 0.65)', 'rgba(255, 26, 26, 0.55)', 'rgba(255, 26, 26, 0.45)', 'rgba(255, 26, 26, 0.35)', 'rgba(255, 26, 26, 0.25)', 'rgba(255, 26, 26, 0.15)', 'rgba(255, 26, 26, 0.08)', 'rgba(255, 26, 26, 0.03)', '#000000']}
-      style={styles.container}
-    >
-      <SafeAreaView style={styles.safeArea}>
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {primaryEA ? (
           <View style={styles.mainEAContainer}>
             {primaryEAImage && !logoError ? (
@@ -345,9 +341,8 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        </ScrollView>
-      </SafeAreaView>
-    </LinearGradient>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -415,9 +410,10 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-  },
-  safeArea: {
-    flex: 1,
+    backgroundColor: '#000000',
+    ...(Platform.OS === 'web' && {
+      backgroundImage: 'linear-gradient(135deg, rgba(255, 26, 26, 0.95) 0%, rgba(255, 26, 26, 0.85) 10%, rgba(255, 26, 26, 0.75) 20%, rgba(255, 26, 26, 0.65) 30%, rgba(255, 26, 26, 0.55) 40%, rgba(255, 26, 26, 0.45) 50%, rgba(255, 26, 26, 0.35) 60%, rgba(255, 26, 26, 0.25) 70%, rgba(255, 26, 26, 0.15) 80%, rgba(255, 26, 26, 0.08) 90%, rgba(255, 26, 26, 0.03) 95%, rgba(0, 0, 0, 1) 100%)',
+    }),
   },
   content: {
     flex: 1,
@@ -680,6 +676,7 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     position: 'relative',
     marginTop: 0,
+    backgroundColor: 'transparent',
     overflow: 'hidden',
     zIndex: 10,
   },
@@ -734,13 +731,11 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 26, 26, 0.9)',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
     overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 26, 26, 1)',
   },
   smallLogo: {
     width: 40,

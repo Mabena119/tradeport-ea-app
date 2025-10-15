@@ -191,9 +191,9 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#CC0000',
+    backgroundColor: '#000000',
     ...(Platform.OS === 'web' && {
-      backgroundImage: 'linear-gradient(135deg, rgba(255, 26, 26, 0.9) 0%, rgba(255, 26, 26, 0.5) 30%, rgba(255, 26, 26, 0.1) 65%, rgba(204, 0, 0, 0.95) 90%, rgba(204, 0, 0, 1) 100%)',
+      backgroundImage: 'linear-gradient(135deg, rgba(255, 26, 26, 0.9) 0%, rgba(255, 26, 26, 0.5) 30%, rgba(255, 26, 26, 0.1) 65%, rgba(0, 0, 0, 0.95) 90%, rgba(0, 0, 0, 1) 100%)',
     }),
   },
   keyboardAvoidingView: {
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#FF1A1A',
+    color: '#000000',
     marginTop: 20,
     letterSpacing: 2,
     textShadowColor: '#FF1A1A',
