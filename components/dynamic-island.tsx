@@ -44,6 +44,11 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
 
   const primaryEA = Array.isArray(eas) && eas.length > 0 ? eas[0] : null;
 
+  // Debug logging for EA data
+  console.log('Dynamic Island: Primary EA:', primaryEA);
+  console.log('Dynamic Island: EA userData:', primaryEA?.userData);
+  console.log('Dynamic Island: EA owner:', primaryEA?.userData?.owner);
+
   const getEAImageUrl = useCallback((ea: EA | null): string | null => {
     if (!ea || !ea.userData || !ea.userData.owner) {
       console.log('Dynamic Island: Missing EA data or owner');
@@ -69,6 +74,10 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
 
   const primaryEAImage = useMemo(() => getEAImageUrl(primaryEA), [getEAImageUrl, primaryEA]);
   const [logoError, setLogoError] = useState<boolean>(false);
+
+  // Debug logging for image URL and error state
+  console.log('Dynamic Island: Primary EA Image URL:', primaryEAImage);
+  console.log('Dynamic Island: Logo Error State:', logoError);
 
   // Simple circular collapsed state
   const collapsedSize = 50;
@@ -255,8 +264,11 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
 
   // Only show when bot is active
   if (!visible || !isBotActive || !primaryEA) {
+    console.log('Dynamic Island: Not rendering - visible:', visible, 'isBotActive:', isBotActive, 'primaryEA:', !!primaryEA);
     return null;
   }
+
+  console.log('Dynamic Island: Rendering with EA:', primaryEA.name);
 
   // In overlay mode, show a persistent floating widget
   if (isOverlayMode) {
@@ -416,6 +428,11 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
                   onError={(error) => {
                     console.log('Dynamic Island: Image load error:', error);
                     setLogoError(true);
+                    // Reset error state after 5 seconds to retry
+                    setTimeout(() => {
+                      console.log('Dynamic Island: Retrying image load after error');
+                      setLogoError(false);
+                    }, 5000);
                   }}
                   onLoad={() => {
                     console.log('Dynamic Island: Image loaded successfully:', primaryEAImage);
