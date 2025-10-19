@@ -1,16 +1,7 @@
 import { Platform } from 'react-native';
 
-// Database configuration
-const dbConfig = {
-  host: '173.201.181.251',
-  user: 'eauser',
-  password: 'snVO2i%fZSG%',
-  database: 'eaconverter',
-  port: 3306,
-  connectTimeout: 60000,
-  acquireTimeout: 60000,
-  timeout: 60000,
-};
+// Use server API instead of direct database connection
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || '';
 
 export interface DatabaseSignal {
   id: string;
@@ -47,7 +38,6 @@ export interface SignalPollingCallback {
 }
 
 class DatabaseSignalsPollingService {
-  private isEnabled: boolean = true;
   private intervalId: ReturnType<typeof setInterval> | null = null;
   private onSignalFound?: (signal: DatabaseSignal) => void;
   private onError?: (error: string) => void;
@@ -55,17 +45,15 @@ class DatabaseSignalsPollingService {
   private currentEA: string | null = null;
   private lastPollTime: string | null = null;
 
-  // Enable database connections
+  // Service is always enabled (uses server API)
   enableDatabaseConnections() {
-    this.isEnabled = true;
-    console.log('Database connections enabled for signals polling service');
+    console.log('Signals polling service enabled (using server API)');
   }
 
-  // Disable database connections
+  // Service is always enabled (uses server API)
   disableDatabaseConnections() {
-    this.isEnabled = false;
     this.stopPolling();
-    console.log('Database connections disabled for signals polling service');
+    console.log('Signals polling service disabled');
   }
 
   // Start polling for signals
@@ -84,15 +72,9 @@ class DatabaseSignalsPollingService {
     this.currentLicenseKey = licenseKey;
     this.lastPollTime = new Date().toISOString();
 
-    console.log('Starting database signals polling for license:', licenseKey);
+    console.log('Starting signals polling for license:', licenseKey);
 
-    if (!this.isEnabled) {
-      console.log('Database connections disabled - using mock data for testing');
-      this.startMockPolling(licenseKey);
-      return;
-    }
-
-    // Start real database polling
+    // Always use server API (no direct database connection)
     this.startRealPolling(licenseKey);
   }
 
@@ -108,32 +90,6 @@ class DatabaseSignalsPollingService {
     console.log('Database signals polling stopped');
   }
 
-  // Mock polling for testing (when database is disabled)
-  private startMockPolling(licenseKey: string) {
-    console.log('Starting mock database signals polling for license:', licenseKey);
-
-    // Simulate finding a signal every 30 seconds for testing
-    this.intervalId = setInterval(() => {
-      const mockSignal: DatabaseSignal = {
-        id: 'mock-' + Date.now(),
-        ea: 'MockEA',
-        asset: 'XAUUSD',
-        latestupdate: new Date().toISOString(),
-        type: 'TRADE',
-        action: Math.random() > 0.5 ? 'BUY' : 'SELL',
-        price: (Math.random() * 1000 + 2000).toFixed(2),
-        tp: (Math.random() * 50 + 10).toFixed(2),
-        sl: (Math.random() * 30 + 5).toFixed(2),
-        time: new Date().toISOString(),
-        results: 'PENDING'
-      };
-
-      console.log('Mock database signal found:', mockSignal);
-      if (this.onSignalFound) {
-        this.onSignalFound(mockSignal);
-      }
-    }, 30000); // Check every 30 seconds
-  }
 
   // Real database polling
   private startRealPolling(licenseKey: string) {
@@ -193,7 +149,10 @@ class DatabaseSignalsPollingService {
   private async getEAFromLicense(licenseKey: string): Promise<string | null> {
     try {
       console.log('🔍 Fetching EA ID for license:', licenseKey);
-      const response = await fetch(`/api/get-ea-from-license?licenseKey=${encodeURIComponent(licenseKey)}`);
+      const apiUrl = `${API_BASE_URL}/api/get-ea-from-license?licenseKey=${encodeURIComponent(licenseKey)}`;
+      console.log('🔍 EA API URL:', apiUrl);
+      
+      const response = await fetch(apiUrl);
       if (!response.ok) {
         throw new Error(`API call failed: ${response.status}`);
       }
@@ -211,14 +170,17 @@ class DatabaseSignalsPollingService {
     try {
       const sinceTime = this.lastPollTime || new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       console.log('🔍 Fetching signals for EA:', ea, 'since:', sinceTime);
+      console.log('🔍 Last poll time:', this.lastPollTime);
+      console.log('🔍 Current time:', new Date().toISOString());
 
+      // First try without timestamp filter to get all active signals
       const params = new URLSearchParams({
-        eaId: ea,
-        since: sinceTime
+        eaId: ea
+        // Remove since parameter to get all active signals
       });
 
-      const apiUrl = `/api/get-new-signals?${params}`;
-      console.log('🔍 API URL:', apiUrl);
+      const apiUrl = `${API_BASE_URL}/api/get-new-signals?${params}`;
+      console.log('🔍 API URL (no timestamp filter):', apiUrl);
 
       const response = await fetch(apiUrl);
       if (!response.ok) {
@@ -246,7 +208,7 @@ class DatabaseSignalsPollingService {
       licenseKey: this.currentLicenseKey,
       ea: this.currentEA,
       lastPollTime: this.lastPollTime,
-      isEnabled: this.isEnabled
+      isEnabled: true // Always enabled (uses server API)
     };
   }
 }
