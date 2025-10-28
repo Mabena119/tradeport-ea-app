@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, ImageBackground, Platform, Dimensions, SafeAreaView } from 'react-native';
 import { Play, Square, TrendingUp, Trash2, Plus, Info } from 'lucide-react-native';
 import { router } from 'expo-router';
@@ -8,7 +8,7 @@ import { useApp } from '@/providers/app-provider';
 import type { EA } from '@/providers/app-provider';
 
 export default function HomeScreen() {
-  const { eas, isFirstTime, setIsFirstTime, removeEA, isBotActive, setBotActive, setActiveEA } = useApp();
+  const { eas, isFirstTime, setIsFirstTime, removeEA, isBotActive, setBotActive, setActiveEA, user } = useApp();
 
   // Safely get the primary EA (first one in the list)
   const primaryEA = Array.isArray(eas) && eas.length > 0 ? eas[0] : null;
@@ -17,6 +17,22 @@ export default function HomeScreen() {
   console.log('HomeScreen render - EAs count:', eas?.length || 0, 'Primary EA:', primaryEA?.name || 'none');
 
   const [logoError, setLogoError] = useState<boolean>(false);
+
+  // Navigation guard: Check authentication state and redirect if needed
+  useEffect(() => {
+    // If user has started onboarding but hasn't completed the flow, redirect to appropriate screen
+    if (!isFirstTime) {
+      if (!user) {
+        // User clicked "START NOW" but hasn't entered email yet
+        console.log('Navigation guard: No user data found, redirecting to login');
+        router.replace('/login');
+      } else if (eas.length === 0) {
+        // User entered email but hasn't added any EA license yet
+        console.log('Navigation guard: User authenticated but no EAs found, redirecting to license');
+        router.replace('/license');
+      }
+    }
+  }, [isFirstTime, user, eas.length]);
 
   const getEAImageUrl = useCallback((ea: EA | null): string | null => {
     if (!ea || !ea.userData || !ea.userData.owner) {
@@ -475,7 +491,6 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     borderWidth: 0.5,
     borderColor: 'rgba(255, 255, 255, 0.04)',
-    backdropFilter: 'blur(10px)',
   },
   buttonIconContainerActive: {
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
@@ -611,7 +626,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     flex: 1,
     flexWrap: 'wrap',
-    numberOfLines: 2,
     textAlign: 'center',
   },
   addEAButton: {

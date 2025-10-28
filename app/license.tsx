@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, Alert, ActivityIndicator, Image, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
@@ -8,11 +8,19 @@ import { apiService } from '@/services/api';
 export default function LicenseScreen() {
   const [licenseKey, setLicenseKey] = useState<string>('');
   const [isActivating, setIsActivating] = useState<boolean>(false);
-  const { addEA, eas } = useApp();
+  const { addEA, eas, user, isFirstTime } = useApp();
   const hasActiveBots = eas.length > 0;
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [modalTitle, setModalTitle] = useState<string>('');
   const [modalMessage, setModalMessage] = useState<string>('');
+
+  // Navigation guard: If no user is authenticated (and we're not in first-time flow), redirect to login
+  useEffect(() => {
+    if (!isFirstTime && !user && !hasActiveBots) {
+      console.log('License screen: No user authenticated and no active bots, redirecting to login');
+      router.replace('/login');
+    }
+  }, [user, isFirstTime, hasActiveBots]);
 
   const handleActivate = async () => {
     if (!licenseKey.trim()) {

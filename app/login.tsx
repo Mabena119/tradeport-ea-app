@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, Alert, ActivityIndicator, Image, Linking, Platform, KeyboardAvoidingView, ScrollView } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { router } from 'expo-router';
@@ -17,7 +17,22 @@ export default function LoginScreen() {
   const [modalMessage, setModalMessage] = useState<string>('');
   const [paymentVisible, setPaymentVisible] = useState<boolean>(false);
   const [paymentUrl, setPaymentUrl] = useState<string>('');
-  const { setUser } = useApp();
+  const { setUser, user, eas } = useApp();
+
+  // Navigation guard: If user is already authenticated, redirect to license or home
+  useEffect(() => {
+    if (user) {
+      if (eas.length === 0) {
+        // User is authenticated but hasn't added any EA yet
+        console.log('Login screen: User authenticated, redirecting to license');
+        router.replace('/license');
+      } else {
+        // User is fully authenticated with EAs, go to home
+        console.log('Login screen: User fully authenticated, redirecting to home');
+        router.replace('/(tabs)');
+      }
+    }
+  }, [user, eas.length]);
 
   const handleProceed = async () => {
     if (!mentorId.trim() || !email.trim()) {

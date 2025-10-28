@@ -26,16 +26,18 @@ export async function POST(request: Request): Promise<Response> {
             let used: number = Number(result.used ?? 0);
             const paid: number = Number(result.paid ?? 0);
 
-            // If it's the user's first login (used=0), mark as used immediately
+            // If it's the user's first login (used=0), mark as used and allow them through once
+            // Return used=0 to allow first login, but set used=1 in database for future checks
+            const shouldAllowLogin = used === 0;
             if (used === 0) {
                 await conn.execute('UPDATE members SET used = 1 WHERE email = ?', [email]);
-                used = 0;
             }
 
             // Note: mentor validation not enforced currently; include flag for client compatibility
             const invalidMentor = 0;
 
-            return Response.json({ found: 1, used, paid, invalidMentor });
+            // Return used=0 for first login to allow access, used=1 for subsequent attempts
+            return Response.json({ found: 1, used: shouldAllowLogin ? 0 : used, paid, invalidMentor });
         } finally {
             conn.release();
         }
