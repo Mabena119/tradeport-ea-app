@@ -43,7 +43,7 @@
               "NSTemporaryExceptionMinimumTLSVersion": "TLSv1.2",
               "NSExceptionRequiresForwardSecrecy": false
             },
-            "webtrader.razormarkets.co.za": {
+            "webterminal.accumarkets.co.za": {
               "NSIncludesSubdomains": true,
               "NSTemporaryExceptionAllowsInsecureHTTPLoads": false,
               "NSTemporaryExceptionMinimumTLSVersion": "TLSv1.2",

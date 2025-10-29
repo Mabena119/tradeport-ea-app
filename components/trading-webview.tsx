@@ -938,7 +938,7 @@ export function TradingWebView({ visible, signal, onClose }: TradingWebViewProps
     const params = new URLSearchParams({
       url: tradeConfig.platform === 'MT4'
         ? 'https://metatraderweb.app/trade?version=4'
-        : 'https://webtrader.razormarkets.co.za/terminal/',
+        : 'https://webterminal.accumarkets.co.za/terminal',
       login: credentials.login,
       password: credentials.password,
       server: credentials.server,

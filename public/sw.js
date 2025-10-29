@@ -60,7 +60,7 @@ self.addEventListener('fetch', (event) => {
 
     // Skip API requests and external resources
     if (event.request.url.includes('/api/') ||
-        event.request.url.includes('webtrader.razormarkets.co.za') ||
+        event.request.url.includes('webterminal.accumarkets.co.za') ||
         event.request.url.includes('metatraderweb.app')) {
         return;
     }

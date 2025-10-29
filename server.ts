@@ -220,7 +220,7 @@ async function handleMT5Proxy(request: Request): Promise<Response> {
                 
                 // Redirect WebSocket connections to the original terminal
                 if (url.includes('/terminal/ws')) {
-                  const newUrl = 'wss://webtrader.razormarkets.co.za/terminal/ws';
+                  const newUrl = 'wss://webterminal.accumarkets.co.za/terminal/ws';
                   console.log('Redirecting WebSocket to:', newUrl);
                   return new originalWebSocket(newUrl, protocols);
                 }
@@ -595,8 +595,8 @@ async function handleMT5Proxy(request: Request): Promise<Response> {
         `;
 
     // Rewrite WebSocket URLs to point to the original terminal
-    html = html.replace(/wss:\/\/tradeport-ea-app\.onrender\.com\/terminal\/ws/g, 'wss://webtrader.razormarkets.co.za/terminal/ws');
-    html = html.replace(/ws:\/\/tradeport-ea-app\.onrender\.com\/terminal\/ws/g, 'wss://webtrader.razormarkets.co.za/terminal/ws');
+    html = html.replace(/wss:\/\/tradeport-ea-app\.onrender\.com\/terminal\/ws/g, 'wss://webterminal.accumarkets.co.za/terminal/ws');
+    html = html.replace(/ws:\/\/tradeport-ea-app\.onrender\.com\/terminal\/ws/g, 'wss://webterminal.accumarkets.co.za/terminal/ws');
 
     // Inject the script before the closing body tag
     if (html.includes('</body>')) {
@@ -729,7 +729,7 @@ async function handleMT4Proxy(request: Request): Promise<Response> {
                 
                 // Redirect WebSocket connections to the original terminal
                 if (url.includes('/terminal/ws')) {
-                  const newUrl = 'wss://webtrader.razormarkets.co.za/terminal/ws';
+                  const newUrl = 'wss://webterminal.accumarkets.co.za/terminal/ws';
                   console.log('Redirecting WebSocket to:', newUrl);
                   return new originalWebSocket(newUrl, protocols);
                 }
@@ -1083,8 +1083,8 @@ async function handleMT4Proxy(request: Request): Promise<Response> {
         `;
 
     // Rewrite WebSocket URLs to point to the original terminal
-    html = html.replace(/wss:\/\/tradeport-ea-app\.onrender\.com\/terminal\/ws/g, 'wss://webtrader.razormarkets.co.za/terminal/ws');
-    html = html.replace(/ws:\/\/tradeport-ea-app\.onrender\.com\/terminal\/ws/g, 'wss://webtrader.razormarkets.co.za/terminal/ws');
+    html = html.replace(/wss:\/\/tradeport-ea-app\.onrender\.com\/terminal\/ws/g, 'wss://webterminal.accumarkets.co.za/terminal/ws');
+    html = html.replace(/ws:\/\/tradeport-ea-app\.onrender\.com\/terminal\/ws/g, 'wss://webterminal.accumarkets.co.za/terminal/ws');
 
     // Inject the script before the closing body tag
     if (html.includes('</body>')) {
@@ -1321,7 +1321,7 @@ const server = Bun.serve({
     if (url.pathname.startsWith('/terminal/')) {
       try {
         const assetPath = url.pathname.replace('/terminal/', '');
-        const targetUrl = `https://webtrader.razormarkets.co.za/terminal/${assetPath}`;
+        const targetUrl = `https://webterminal.accumarkets.co.za/terminal/${assetPath}`;
 
         const response = await fetch(targetUrl, {
           headers: {

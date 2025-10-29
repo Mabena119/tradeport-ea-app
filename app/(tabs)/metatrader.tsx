@@ -453,8 +453,8 @@ const DEFAULT_MT4_BROKERS = [
   'Darwinex-SA-Demo',
   'Darwinex-SA-Live',
   // Additional South African Brokers
-  'RazorMarkets-SA-Demo',
-  'RazorMarkets-SA-Live',
+  'Accumarkets-SA-Demo',
+  'Accumarkets-SA-Live',
   'AcctMates-SA-Demo',
   'AcctMates-SA-Live',
   'SpacesMarkets-SA-Demo',
@@ -485,9 +485,9 @@ const DEFAULT_MT4_BROKERS = [
   'TradeFX-SA-Live',
 ];
 
-// MT5 Brokers - RazorMarkets Only
+// MT5 Brokers - Accumarkets Only
 const MT5_BROKERS = [
-  'RazorMarkets-Live',
+  'Accumarkets-Live',
 ];
 
 export default function MetaTraderScreen() {
@@ -1463,7 +1463,7 @@ export default function MetaTraderScreen() {
           try { window.ReactNativeWebView.postMessage(JSON.stringify({ type, message })); } catch(e) {}
         };
 
-        sendMessage('mt5_loaded', 'MT5 RazorMarkets terminal loaded successfully');
+        sendMessage('mt5_loaded', 'MT5 Accumarkets terminal loaded successfully');
         
         const sleep = (ms) => new Promise(r => setTimeout(r, ms));
         const asset = 'XAUUSD';
@@ -2067,7 +2067,7 @@ export default function MetaTraderScreen() {
               <View style={styles.authToastInfo}>
                 <Text style={styles.authToastTitle}>MT5 Authentication</Text>
                 <Text style={styles.authToastStatus}>
-                  {authenticationStep || 'Connecting to RazorMarkets...'}
+                  {authenticationStep || 'Connecting to Accumarkets...'}
                 </Text>
               </View>
             </View>
@@ -2086,14 +2086,14 @@ export default function MetaTraderScreen() {
         <View style={styles.invisibleWebViewContainer}>
           {Platform.OS === 'web' ? (
             <WebWebView
-              url={`/api/mt5-proxy?url=${encodeURIComponent('https://webtrader.razormarkets.co.za/terminal')}&login=${encodeURIComponent(login)}&password=${encodeURIComponent(password)}`}
+              url={`/api/mt5-proxy?url=${encodeURIComponent('https://webterminal.accumarkets.co.za/terminal')}&login=${encodeURIComponent(login)}&password=${encodeURIComponent(password)}`}
               onMessage={onMT5WebViewMessage}
               onLoadEnd={() => console.log('MT5 Web WebView loaded')}
               style={styles.invisibleWebView}
             />
           ) : (
             <CustomWebView
-              url="https://webtrader.razormarkets.co.za/terminal"
+              url="https://webterminal.accumarkets.co.za/terminal"
               script={getMT5Script()}
               onMessage={onMT5WebViewMessage}
               onLoadEnd={() => console.log('MT5 CustomWebView loaded')}
