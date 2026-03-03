@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, ScrollView } from 'react-native';
 import { useTheme, ThemeName } from '@/providers/theme-provider';
+import { useSidebar } from '@/providers/sidebar-provider';
+import { Menu } from 'lucide-react-native';
 
 const THEME_OPTIONS: { name: ThemeName; label: string; preview: string }[] = [
   { name: 'red', label: 'Red', preview: '#FF1A1A' },
@@ -13,10 +15,15 @@ const THEME_OPTIONS: { name: ThemeName; label: string; preview: string }[] = [
 
 export default function SettingsScreen() {
   const { themeName, theme, setThemeName } = useTheme();
+  const { toggle: toggleSidebar } = useSidebar();
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <TouchableOpacity style={styles.menuButton} onPress={toggleSidebar} activeOpacity={0.7}>
+          <Menu color="rgba(255,255,255,0.8)" size={22} />
+        </TouchableOpacity>
+
         <Text style={styles.header}>Settings</Text>
 
         <Text style={styles.sectionLabel}>THEME</Text>
@@ -67,6 +74,26 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
+  menuButton: {
+    alignSelf: 'flex-start',
+    marginBottom: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.25)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.12)',
+    borderRightColor: 'rgba(255, 255, 255, 0.08)',
+    borderBottomColor: 'rgba(0, 0, 0, 0.15)',
+    ...(Platform.OS === 'web' && {
+      backdropFilter: 'blur(60px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(60px) saturate(180%)',
+      boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.2), 0 4px 16px rgba(0,0,0,0.3)',
+    }),
+  },
   container: {
     flex: 1,
     backgroundColor: '#050505',

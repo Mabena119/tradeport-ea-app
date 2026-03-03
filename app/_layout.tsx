@@ -5,6 +5,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
 import { AppProvider, useApp } from "@/providers/app-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
+import { SidebarProvider } from "@/providers/sidebar-provider";
 import { View, Platform, Text, TouchableOpacity, StyleSheet, AppState } from "react-native";
 import { DynamicIsland } from "@/components/dynamic-island";
 import { RobotLogo } from "@/components/robot-logo";
@@ -318,12 +319,14 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <ThemeProvider>
+      <SidebarProvider>
       <AppProvider>
         <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#000000' }}>
           <StatusBar style="light" backgroundColor="#000000" translucent={false} />
           <RootLayoutNav />
         </GestureHandlerRootView>
       </AppProvider>
+      </SidebarProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

@@ -1,16 +1,18 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, ImageBackground, Platform, Dimensions, SafeAreaView } from 'react-native';
-import { Play, Square, TrendingUp, Trash2, Plus } from 'lucide-react-native';
+import { Play, Square, TrendingUp, Trash2, Plus, Menu } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { RobotLogo } from '@/components/robot-logo';
 
 import { useApp } from '@/providers/app-provider';
 import { useTheme } from '@/providers/theme-provider';
+import { useSidebar } from '@/providers/sidebar-provider';
 import type { EA } from '@/providers/app-provider';
 
 export default function HomeScreen() {
   const { eas, isFirstTime, setIsFirstTime, removeEA, isBotActive, setBotActive, setActiveEA, user } = useApp();
   const { theme } = useTheme();
+  const { toggle: toggleSidebar } = useSidebar();
   const a = theme.accentRgb; // shorthand for rgba building
   const ac = theme.accent;
   const ag = theme.accentGlow;
@@ -155,15 +157,17 @@ export default function HomeScreen() {
                 </View>
               </View>
 
-              <View style={styles.bottomActions}>
+              <View style={[styles.tradingPanelCard, Platform.OS === 'web' && { boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.2), inset 0 -3px 6px rgba(0,0,0,0.2), 0 14px 50px rgba(0,0,0,0.5), 0 0 20px rgba(' + a + ', 0.08)' }]}>
+                <View style={styles.tradingPanelShine} />
+                <View style={styles.tradingPanelEdge} />
+                <View style={styles.tradingPanelShadow} />
+                <View style={styles.bottomActions}>
                 <TouchableOpacity testID="action-quotes" style={[styles.actionButton, styles.secondaryButton, Platform.OS === 'web' && { boxShadow: 'inset 0 2px 4px rgba(255, 255, 255, 0.4), inset 0 -3px 6px rgba(0, 0, 0, 0.25), 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 20px rgba(' + a + ', 0.15)' }]} onPress={handleQuotes}>
                   <View style={styles.buttonIconContainer}>
                     <TrendingUp color="#FFFFFF" size={18} />
                   </View>
                   <Text style={styles.secondaryButtonText}>QUOTES</Text>
-                    <View style={styles.glassShineTop} />
-                    <View style={styles.glassEdgeTop} />
-                    <View style={styles.glassShadowBottom} />
+
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -196,10 +200,9 @@ export default function HomeScreen() {
                     <Trash2 color="#FFFFFF" size={18} />
                   </View>
                   <Text style={styles.removeButtonText}>REMOVE</Text>
-                    <View style={styles.glassShineTop} />
-                    <View style={styles.glassEdgeTop} />
-                    <View style={styles.glassShadowBottom} />
+
                 </TouchableOpacity>
+              </View>
               </View>
             </View>
           </View>
@@ -455,6 +458,87 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.5,
   },
+
+  menuButton: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    zIndex: 100,
+    width: 44,
+    height: 44,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.25)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.12)',
+    borderRightColor: 'rgba(255, 255, 255, 0.08)',
+    borderBottomColor: 'rgba(0, 0, 0, 0.15)',
+    ...(Platform.OS === 'web' && {
+      backdropFilter: 'blur(60px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(60px) saturate(180%)',
+      boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.2), 0 4px 16px rgba(0,0,0,0.3)',
+    }),
+  },
+  tradingPanelCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.07)',
+    borderRadius: 28,
+    padding: 12,
+    borderWidth: 2.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.45)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.2)',
+    borderRightColor: 'rgba(255, 255, 255, 0.12)',
+    borderBottomColor: 'rgba(0, 0, 0, 0.25)',
+    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.55,
+    shadowRadius: 24,
+    elevation: 18,
+    ...(Platform.OS === 'web' && {
+      backdropFilter: 'blur(60px) saturate(200%)',
+      WebkitBackdropFilter: 'blur(60px) saturate(200%)',
+    }),
+  },
+  tradingPanelShine: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
+    ...(Platform.OS === 'web' && {
+      background: 'linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0) 100%)',
+      pointerEvents: 'none',
+    }),
+  },
+  tradingPanelEdge: {
+    position: 'absolute',
+    top: 0,
+    left: 12,
+    right: 12,
+    height: 2,
+    borderRadius: 2,
+    ...(Platform.OS === 'web' && {
+      background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.5) 20%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0.5) 80%, rgba(255,255,255,0) 100%)',
+      pointerEvents: 'none',
+    }),
+  },
+  tradingPanelShadow: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '35%',
+    borderBottomLeftRadius: 26,
+    borderBottomRightRadius: 26,
+    ...(Platform.OS === 'web' && {
+      background: 'linear-gradient(0deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.05) 60%, rgba(0,0,0,0) 100%)',
+      pointerEvents: 'none',
+    }),
+  },
   bottomActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -464,30 +548,25 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
-    paddingVertical: 20,
-    paddingHorizontal: 14,
-    borderRadius: 28,
+    paddingVertical: 18,
+    paddingHorizontal: 12,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'column',
-    gap: 10,
-    minHeight: 100,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 3,
-    borderTopColor: 'rgba(255, 255, 255, 0.55)',
-    borderLeftColor: 'rgba(255, 255, 255, 0.3)',
-    borderRightColor: 'rgba(255, 255, 255, 0.18)',
-    borderBottomColor: 'rgba(0, 0, 0, 0.3)',
+    gap: 8,
+    minHeight: 90,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.25)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.12)',
+    borderRightColor: 'rgba(255, 255, 255, 0.08)',
+    borderBottomColor: 'rgba(0, 0, 0, 0.15)',
     overflow: 'hidden',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 16,
     ...(Platform.OS === 'web' && {
-      backdropFilter: 'blur(60px) saturate(200%)',
-      WebkitBackdropFilter: 'blur(60px) saturate(200%)',
-      boxShadow: 'inset 0 2px 4px rgba(255, 255, 255, 0.4), inset 0 -3px 6px rgba(0, 0, 0, 0.25), 0 12px 40px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.3)',
+      backdropFilter: 'blur(30px)',
+      WebkitBackdropFilter: 'blur(30px)',
+      boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.2), inset 0 -1px 2px rgba(0,0,0,0.1)',
       transition: 'all 0.3s ease',
     }),
   },
@@ -719,28 +798,28 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   addEAButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.07)',
     borderRadius: 28,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 22,
     paddingHorizontal: 24,
     marginBottom: 24,
-    borderWidth: 3,
-    borderTopColor: 'rgba(255, 255, 255, 0.55)',
-    borderLeftColor: 'rgba(255, 255, 255, 0.3)',
-    borderRightColor: 'rgba(255, 255, 255, 0.18)',
-    borderBottomColor: 'rgba(0, 0, 0, 0.3)',
+    borderWidth: 2.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.45)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.2)',
+    borderRightColor: 'rgba(255, 255, 255, 0.12)',
+    borderBottomColor: 'rgba(0, 0, 0, 0.25)',
     overflow: 'hidden',
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 16,
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.55,
+    shadowRadius: 24,
+    elevation: 18,
     ...(Platform.OS === 'web' && {
       backdropFilter: 'blur(60px) saturate(200%)',
       WebkitBackdropFilter: 'blur(60px) saturate(200%)',
-      boxShadow: 'inset 0 2px 4px rgba(255, 255, 255, 0.4), inset 0 -3px 6px rgba(0, 0, 0, 0.25), 0 12px 40px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.3)',
+      boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.2), inset 0 -3px 6px rgba(0,0,0,0.2), 0 14px 50px rgba(0,0,0,0.5), 0 0 20px rgba(0,0,0,0.3)',
     }),
   },
   addEATextContainer: {

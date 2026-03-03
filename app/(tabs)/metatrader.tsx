@@ -6,9 +6,10 @@ import WebWebView from '../../components/web-webview';
 import SimpleWebView from '../../components/simple-webview';
 import InjectableWebView from '../../components/injectable-webview';
 import FallbackWebView from '../../components/fallback-webview';
-import { Eye, EyeOff, Search, Server, ExternalLink, Shield, RefreshCw, X } from 'lucide-react-native';
+import { Eye, EyeOff, Search, Server, ExternalLink, Shield, RefreshCw, X, Menu } from 'lucide-react-native';
 import { useApp } from '@/providers/app-provider';
 import { useTheme } from '@/providers/theme-provider';
+import { useSidebar } from '@/providers/sidebar-provider';
 
 // Default MT4 Brokers (will be updated from web terminal)
 const DEFAULT_MT4_BROKERS = [
@@ -521,6 +522,7 @@ export default function MetaTraderScreen() {
   const authFinalizedRef = useRef<boolean>(false);
   const { mtAccount, setMTAccount, mt4Account, setMT4Account, mt5Account, setMT5Account } = useApp();
   const { theme: thm } = useTheme();
+  const { toggle: toggleSidebar } = useSidebar();
   const a = thm.accentRgb;
   const ac = thm.accent;
   const ag = thm.accentGlow;
@@ -1781,6 +1783,11 @@ export default function MetaTraderScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Menu Button */}
+          <TouchableOpacity style={styles.menuButton} onPress={toggleSidebar} activeOpacity={0.7}>
+            <Menu color="rgba(255,255,255,0.8)" size={22} />
+          </TouchableOpacity>
+
           {/* Account Type Tabs */}
           <View style={styles.tabContainer}>
             <TouchableOpacity
@@ -2159,6 +2166,27 @@ export default function MetaTraderScreen() {
 }
 
 const styles = StyleSheet.create({
+  menuButton: {
+    alignSelf: 'flex-start',
+    marginLeft: 20,
+    marginBottom: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.25)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.12)',
+    borderRightColor: 'rgba(255, 255, 255, 0.08)',
+    borderBottomColor: 'rgba(0, 0, 0, 0.15)',
+    ...(Platform.OS === 'web' && {
+      backdropFilter: 'blur(60px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(60px) saturate(180%)',
+      boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.2), 0 4px 16px rgba(0,0,0,0.3)',
+    }),
+  },
   container: {
     flex: 1,
     backgroundColor: '#050505',
