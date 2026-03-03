@@ -128,7 +128,7 @@ export default function HomeScreen() {
               <ImageBackground
                 testID="ea-hero-bg"
                 source={{ uri: primaryEAImage }}
-                style={[styles.hero, { borderColor: 'rgba(' + a + ', 0.4)', shadowColor: ag }, Platform.OS === 'web' && { boxShadow: '0 0 15px rgba(' + a + ', 0.5), 0 0 30px rgba(' + a + ', 0.2), inset 0 0 15px rgba(' + a + ', 0.1)' }]}
+                style={[styles.hero, { borderColor: 'rgba(255, 255, 255, 0.2)', shadowColor: '#000000' }, Platform.OS === 'web' && { boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.2), 0 8px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(' + a + ', 0.15)' }]}
                 imageStyle={styles.heroImageStyle}
                 onError={(error) => {
                   console.log('EA Image Error: Failed to load image:', primaryEAImage, error);
@@ -138,7 +138,7 @@ export default function HomeScreen() {
               >
               </ImageBackground>
             ) : (
-              <View style={[styles.heroFallback, styles.heroImageStyle, { borderColor: 'rgba(' + a + ', 0.4)', shadowColor: ag }]}>
+              <View style={[styles.heroFallback, styles.heroImageStyle, { borderColor: 'rgba(255, 255, 255, 0.2)', shadowColor: '#000000' }]}>
                 <Image
                   testID="fallback-app-icon"
                   source={require('../../assets/images/icon.png')}
@@ -156,7 +156,7 @@ export default function HomeScreen() {
               </View>
 
               <View style={styles.bottomActions}>
-                <TouchableOpacity testID="action-quotes" style={[styles.actionButton, styles.secondaryButton, { borderColor: 'rgba(' + a + ', 0.35)', shadowColor: ag }, Platform.OS === 'web' && { boxShadow: '0 0 12px rgba(' + a + ', 0.4), 0 0 25px rgba(' + a + ', 0.15)' }]} onPress={handleQuotes}>
+                <TouchableOpacity testID="action-quotes" style={[styles.actionButton, styles.secondaryButton, { borderColor: 'rgba(255, 255, 255, 0.25)' }, Platform.OS === 'web' && { boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.3), inset 0 -1px 1px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 15px rgba(' + a + ', 0.2)' }]} onPress={handleQuotes}>
                   <View style={styles.buttonIconContainer}>
                     <TrendingUp color="#FFFFFF" size={18} />
                   </View>
@@ -165,7 +165,7 @@ export default function HomeScreen() {
 
                 <TouchableOpacity
                   testID="action-start"
-                  style={[styles.actionButton, styles.tradeButton, isBotActive && styles.tradeButtonActive, { borderColor: 'rgba(' + a + ', 0.45)', shadowColor: ag }, Platform.OS === 'web' && { boxShadow: '0 0 12px rgba(' + a + ', 0.4), 0 0 25px rgba(' + a + ', 0.15)' }]}
+                  style={[styles.actionButton, styles.tradeButton, isBotActive && styles.tradeButtonActive, { borderColor: 'rgba(255, 255, 255, 0.25)' }, Platform.OS === 'web' && { boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.3), inset 0 -1px 1px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 15px rgba(' + a + ', 0.2)' }]}
                   onPress={() => {
                     console.log('Start/Stop button pressed, current state:', isBotActive);
                     try {
@@ -188,7 +188,7 @@ export default function HomeScreen() {
                   </Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity testID="action-remove" style={[styles.actionButton, styles.removeButton, { borderColor: 'rgba(' + a + ', 0.35)', shadowColor: ag }, Platform.OS === 'web' && { boxShadow: '0 0 12px rgba(' + a + ', 0.4), 0 0 25px rgba(' + a + ', 0.15)' }]} onPress={handleRemoveActiveBot}>
+                <TouchableOpacity testID="action-remove" style={[styles.actionButton, styles.removeButton, { borderColor: 'rgba(255, 255, 255, 0.25)' }, Platform.OS === 'web' && { boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.3), inset 0 -1px 1px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 15px rgba(' + a + ', 0.2)' }]} onPress={handleRemoveActiveBot}>
                   <View style={styles.buttonIconContainer}>
                     <Trash2 color="#FFFFFF" size={18} />
                   </View>
@@ -251,7 +251,7 @@ export default function HomeScreen() {
             </>
           )}
 
-          <TouchableOpacity style={[styles.addEAButton, { borderColor: 'rgba(' + a + ', 0.35)', shadowColor: ag }, Platform.OS === 'web' && { boxShadow: '0 0 12px rgba(' + a + ', 0.4), 0 0 25px rgba(' + a + ', 0.15)' }]} onPress={handleAddNewEA}>
+          <TouchableOpacity style={[styles.addEAButton, { borderColor: 'rgba(255, 255, 255, 0.25)' }, Platform.OS === 'web' && { boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.3), inset 0 -1px 1px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 15px rgba(' + a + ', 0.15)' }]} onPress={handleAddNewEA}>
             <Plus color="#FFFFFF" size={20} />
             <View style={styles.addEATextContainer}>
               <Text style={styles.addEATitle}>ADD A NEW EA</Text>
@@ -344,15 +344,15 @@ const styles = StyleSheet.create({
     height: 500,
     borderRadius: 24,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 26, 26, 0.4)',
-    shadowColor: '#FF1A1A',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 16,
-    elevation: 12,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.4,
+    shadowRadius: 20,
+    elevation: 14,
     ...(Platform.OS === 'web' && {
-      boxShadow: '0 0 15px rgba(255, 26, 26, 0.5), 0 0 30px rgba(255, 26, 26, 0.2), inset 0 0 15px rgba(255, 26, 26, 0.1)',
+      boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.15), 0 10px 40px rgba(0, 0, 0, 0.4)',
     }),
   },
   heroImageStyle: {
@@ -365,15 +365,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 26, 26, 0.4)',
-    shadowColor: '#FF1A1A',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 16,
-    elevation: 12,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.4,
+    shadowRadius: 20,
+    elevation: 14,
     ...(Platform.OS === 'web' && {
-      boxShadow: '0 0 15px rgba(255, 26, 26, 0.5), 0 0 30px rgba(255, 26, 26, 0.2)',
+      boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.15), 0 10px 40px rgba(0, 0, 0, 0.4)',
     }),
   },
   fallbackIcon: {
@@ -454,53 +454,53 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 18,
     paddingHorizontal: 14,
-    borderRadius: 20,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'column',
     gap: 10,
-    minHeight: 90,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 26, 26, 0.35)',
-    shadowColor: '#FF1A1A',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
-    elevation: 10,
+    minHeight: 96,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 12,
     ...(Platform.OS === 'web' && {
-      backdropFilter: 'blur(40px)',
-      WebkitBackdropFilter: 'blur(40px)',
-      boxShadow: '0 0 12px rgba(255, 26, 26, 0.4), 0 0 25px rgba(255, 26, 26, 0.15)',
+      backdropFilter: 'blur(50px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(50px) saturate(180%)',
+      boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.3), inset 0 -1px 1px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2)',
       transition: 'all 0.3s ease',
     }),
   },
   tradeButton: {
-    backgroundColor: 'rgba(255, 26, 26, 0.15)',
-    borderColor: 'rgba(255, 26, 26, 0.45)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   tradeButtonActive: {
-    backgroundColor: 'rgba(220, 38, 38, 0.5)',
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.35)',
   },
   secondaryButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderColor: 'rgba(255, 26, 26, 0.35)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   removeButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderColor: 'rgba(255, 26, 26, 0.35)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   buttonIconContainer: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    ...(Platform.OS === 'web' && {
+      boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 2px 6px rgba(0, 0, 0, 0.15)',
+    }),
   },
   buttonIconContainerActive: {
     backgroundColor: 'rgba(255, 255, 255, 0.12)',
@@ -621,24 +621,24 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   addEAButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 24,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 22,
     paddingHorizontal: 24,
     marginBottom: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 26, 26, 0.35)',
-    shadowColor: '#FF1A1A',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
-    elevation: 10,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 12,
     ...(Platform.OS === 'web' && {
-      backdropFilter: 'blur(40px)',
-      WebkitBackdropFilter: 'blur(40px)',
-      boxShadow: '0 0 12px rgba(255, 26, 26, 0.4), 0 0 25px rgba(255, 26, 26, 0.15)',
+      backdropFilter: 'blur(50px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(50px) saturate(180%)',
+      boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.3), inset 0 -1px 1px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2)',
     }),
   },
   addEATextContainer: {
