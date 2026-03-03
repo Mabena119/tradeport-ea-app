@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, ImageBackground, Platform, Dimensions, SafeAreaView } from 'react-native';
-import { Play, Square, TrendingUp, Trash2, Plus, Info } from 'lucide-react-native';
+import { Play, Square, TrendingUp, Trash2, Plus } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { RobotLogo } from '@/components/robot-logo';
 
@@ -10,24 +10,19 @@ import type { EA } from '@/providers/app-provider';
 export default function HomeScreen() {
   const { eas, isFirstTime, setIsFirstTime, removeEA, isBotActive, setBotActive, setActiveEA, user } = useApp();
 
-  // Safely get the primary EA (first one in the list)
   const primaryEA = Array.isArray(eas) && eas.length > 0 ? eas[0] : null;
-  const otherEAs = Array.isArray(eas) ? eas.slice(1) : []; // All EAs except the first one
+  const otherEAs = Array.isArray(eas) ? eas.slice(1) : [];
 
   console.log('HomeScreen render - EAs count:', eas?.length || 0, 'Primary EA:', primaryEA?.name || 'none');
 
   const [logoError, setLogoError] = useState<boolean>(false);
 
-  // Navigation guard: Check authentication state and redirect if needed
   useEffect(() => {
-    // If user has started onboarding but hasn't completed the flow, redirect to appropriate screen
     if (!isFirstTime) {
       if (!user) {
-        // User clicked "START NOW" but hasn't entered email yet
         console.log('Navigation guard: No user data found, redirecting to login');
         router.replace('/login');
       } else if (eas.length === 0) {
-        // User entered email but hasn't added any EA license yet
         console.log('Navigation guard: User authenticated but no EAs found, redirecting to license');
         router.replace('/license');
       }
@@ -44,12 +39,10 @@ export default function HomeScreen() {
       console.log('EA Image Debug: No logo found for EA:', ea.name);
       return null;
     }
-    // If already an absolute URL, return as-is
     if (/^https?:\/\//i.test(raw)) {
       console.log('EA Image Debug: Using absolute URL:', raw);
       return raw;
     }
-    // Otherwise, treat as filename and prefix uploads base URL
     const filename = raw.replace(/^\/+/, '');
     const base = 'https://tradeportea.com/admin/uploads';
     const fullUrl = `${base}/${filename}`;
@@ -94,8 +87,6 @@ export default function HomeScreen() {
     router.push('/(tabs)/quotes');
   };
 
-
-
   // Show splash screen for first-time users
   if (isFirstTime) {
     return (
@@ -133,6 +124,7 @@ export default function HomeScreen() {
                 testID="ea-hero-bg"
                 source={{ uri: primaryEAImage }}
                 style={styles.hero}
+                imageStyle={styles.heroImageStyle}
                 onError={(error) => {
                   console.log('EA Image Error: Failed to load image:', primaryEAImage, error);
                   setLogoError(true);
@@ -141,7 +133,7 @@ export default function HomeScreen() {
               >
               </ImageBackground>
             ) : (
-              <View style={styles.heroFallback}>
+              <View style={[styles.heroFallback, styles.heroImageStyle]}>
                 <Image
                   testID="fallback-app-icon"
                   source={require('../../assets/images/icon.png')}
@@ -159,6 +151,13 @@ export default function HomeScreen() {
               </View>
 
               <View style={styles.bottomActions}>
+                <TouchableOpacity testID="action-quotes" style={[styles.actionButton, styles.secondaryButton]} onPress={handleQuotes}>
+                  <View style={styles.buttonIconContainer}>
+                    <TrendingUp color="#FFFFFF" size={18} />
+                  </View>
+                  <Text style={styles.secondaryButtonText}>QUOTES</Text>
+                </TouchableOpacity>
+
                 <TouchableOpacity
                   testID="action-start"
                   style={[styles.actionButton, styles.tradeButton, isBotActive && styles.tradeButtonActive]}
@@ -184,13 +183,6 @@ export default function HomeScreen() {
                   </Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity testID="action-quotes" style={[styles.actionButton, styles.secondaryButton]} onPress={handleQuotes}>
-                  <View style={styles.buttonIconContainer}>
-                    <TrendingUp color="#FFFFFF" size={18} />
-                  </View>
-                  <Text style={styles.secondaryButtonText}>QUOTES</Text>
-                </TouchableOpacity>
-
                 <TouchableOpacity testID="action-remove" style={[styles.actionButton, styles.removeButton]} onPress={handleRemoveActiveBot}>
                   <View style={styles.buttonIconContainer}>
                     <Trash2 color="#FFFFFF" size={18} />
@@ -198,10 +190,6 @@ export default function HomeScreen() {
                   <Text style={styles.removeButtonText}>REMOVE</Text>
                 </TouchableOpacity>
               </View>
-
-              <TouchableOpacity style={styles.infoButton}>
-                <Info color="#FFFFFF" size={16} />
-              </TouchableOpacity>
             </View>
           </View>
         ) : (
@@ -257,9 +245,6 @@ export default function HomeScreen() {
               ))}
             </>
           )}
-
-
-
 
           <TouchableOpacity style={styles.addEAButton} onPress={handleAddNewEA}>
             <Plus color="#FFFFFF" size={20} />
@@ -343,7 +328,8 @@ const styles = StyleSheet.create({
   },
   mainEAContainer: {
     alignItems: 'center',
-    paddingTop: 0,
+    paddingTop: 12,
+    paddingHorizontal: 12,
     paddingBottom: 20,
     position: 'relative',
     overflow: 'hidden',
@@ -351,6 +337,11 @@ const styles = StyleSheet.create({
   hero: {
     width: '100%',
     height: 500,
+    borderRadius: 24,
+    overflow: 'hidden',
+  },
+  heroImageStyle: {
+    borderRadius: 24,
   },
   heroFallback: {
     width: '100%',
@@ -372,9 +363,9 @@ const styles = StyleSheet.create({
   },
   heroContent: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    bottom: 12,
+    left: 12,
+    right: 12,
     height: 350,
     justifyContent: 'space-between',
     paddingTop: 40,
@@ -385,7 +376,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 120,
   },
-
   titleBlock: {
     alignItems: 'center',
   },
@@ -412,7 +402,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     letterSpacing: 0.5,
   },
-
   connectedCountBadge: {
     alignSelf: 'flex-start',
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
@@ -433,74 +422,69 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    gap: 16,
+    gap: 12,
     marginTop: 20,
   },
   actionButton: {
     flex: 1,
-    paddingVertical: 20,
-    paddingHorizontal: 16,
-    borderRadius: 24,
+    paddingVertical: 18,
+    paddingHorizontal: 14,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'column',
-    gap: 12,
-    shadowColor: '#FF1A1A',
+    gap: 10,
+    minHeight: 90,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.6,
-    shadowRadius: 16,
-    elevation: 16,
-    minHeight: 96,
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 26, 26, 0.9)',
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
     ...(Platform.OS === 'web' && {
+      backdropFilter: 'blur(40px)',
+      WebkitBackdropFilter: 'blur(40px)',
       transition: 'all 0.3s ease',
     }),
   },
   tradeButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 26, 26, 0.9)',
-    shadowColor: '#FF1A1A',
-    shadowOpacity: 0.7,
+    backgroundColor: 'rgba(255, 26, 26, 0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   tradeButtonActive: {
-    backgroundColor: 'rgba(220, 38, 38, 0.6)',
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-    shadowColor: '#DC2626',
-    shadowOpacity: 0.2,
+    backgroundColor: 'rgba(220, 38, 38, 0.5)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   secondaryButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 26, 26, 0.9)',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   removeButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 26, 26, 0.9)',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   buttonIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 6,
-    borderWidth: 0.5,
-    borderColor: 'rgba(255, 255, 255, 0.04)',
+    marginBottom: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   buttonIconContainerActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   tradeButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: 1.5,
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: 1,
     textAlign: 'center',
   },
   tradeButtonTextActive: {
@@ -508,35 +492,17 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: 1.5,
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: 1,
     textAlign: 'center',
   },
   removeButtonText: {
-    color: '#FFB3B3',
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: 1.5,
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: 1,
     textAlign: 'center',
-  },
-  infoButton: {
-    position: 'absolute',
-    right: 20,
-    top: 60,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 26, 26, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 26, 26, 0.6)',
-    shadowColor: '#FF1A1A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
-    elevation: 6,
   },
   connectedBotsSection: {
     paddingHorizontal: 20,
@@ -629,31 +595,39 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   addEAButton: {
-    backgroundColor: 'transparent',
-    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 24,
-    paddingHorizontal: 28,
+    paddingVertical: 22,
+    paddingHorizontal: 24,
     marginBottom: 24,
-    borderWidth: 3,
-    borderColor: 'rgba(255, 26, 26, 1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
+    ...(Platform.OS === 'web' && {
+      backdropFilter: 'blur(40px)',
+      WebkitBackdropFilter: 'blur(40px)',
+    }),
   },
   addEATextContainer: {
     marginLeft: 12,
   },
   addEATitle: {
     color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.8,
   },
   addEASubtitle: {
-    color: '#FFB3B3',
-    fontSize: 13,
-    opacity: 1,
-    marginTop: 4,
-    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.45)',
+    fontSize: 12,
+    marginTop: 3,
+    fontWeight: '500',
+    letterSpacing: 0.3,
   },
-
 });

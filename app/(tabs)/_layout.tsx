@@ -1,6 +1,7 @@
 import { Tabs } from "expo-router";
 import { Home, Settings, TrendingUp } from "lucide-react-native";
 import React from "react";
+import { Platform } from "react-native";
 import { useApp } from "@/providers/app-provider";
 
 export default function TabLayout() {
@@ -13,16 +14,20 @@ export default function TabLayout() {
         tabBarStyle: isFirstTime ? {
           display: 'none',
         } : {
-          backgroundColor: 'rgba(0, 0, 0, 0.95)',
-          borderTopColor: '#FF1A1A',
-          borderTopWidth: 2,
-          backdropFilter: 'blur(20px)',
+          backgroundColor: 'rgba(10, 10, 10, 0.85)',
+          borderTopWidth: 1,
+          borderTopColor: 'rgba(255, 255, 255, 0.08)',
+          ...(Platform.OS === 'web' && {
+            backdropFilter: 'blur(40px)',
+            WebkitBackdropFilter: 'blur(40px)',
+          }),
         },
         tabBarActiveTintColor: '#FF1A1A',
-        tabBarInactiveTintColor: '#808080',
+        tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.4)',
         tabBarLabelStyle: {
           fontSize: 10,
           fontWeight: '600',
+          letterSpacing: 0.3,
         },
       }}
     >
@@ -37,13 +42,20 @@ export default function TabLayout() {
         name="quotes"
         options={{
           title: "QUOTES",
-          tabBarIcon: ({ color }) => <TrendingUp color={color} size={20} />,
+          tabBarButton: () => null,
         }}
       />
       <Tabs.Screen
         name="metatrader"
         options={{
           title: "METATRADER",
+          tabBarIcon: ({ color }) => <TrendingUp color={color} size={20} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: "SETTINGS",
           tabBarIcon: ({ color }) => <Settings color={color} size={20} />,
         }}
       />
