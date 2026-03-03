@@ -568,34 +568,24 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 16,
     paddingHorizontal: 10,
-    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'column',
     gap: 8,
     minHeight: 80,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    overflow: 'hidden',
-    ...(Platform.OS === 'web' && {
-      backdropFilter: 'blur(20px)',
-      WebkitBackdropFilter: 'blur(20px)',
-      transition: 'all 0.3s ease',
-    }),
+    backgroundColor: 'transparent',
   },
   tradeButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.14)',
+    backgroundColor: 'transparent',
   },
   tradeButtonActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderTopColor: 'rgba(255, 255, 255, 0.6)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   secondaryButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'transparent',
   },
   removeButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'transparent',
   },
 
   glassShineTop: {
