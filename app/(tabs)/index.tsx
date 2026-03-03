@@ -128,7 +128,7 @@ export default function HomeScreen() {
               <ImageBackground
                 testID="ea-hero-bg"
                 source={{ uri: primaryEAImage }}
-                style={[styles.hero, { borderColor: 'rgba(255, 255, 255, 0.2)', shadowColor: '#000000' }, Platform.OS === 'web' && { boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.2), 0 8px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(' + a + ', 0.15)' }]}
+                style={[styles.hero, Platform.OS === 'web' && { boxShadow: 'inset 0 2px 4px rgba(255, 255, 255, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.2), 0 14px 50px rgba(0, 0, 0, 0.5), 0 0 20px rgba(' + a + ', 0.12)' }]}
                 imageStyle={styles.heroImageStyle}
                 onError={(error) => {
                   console.log('EA Image Error: Failed to load image:', primaryEAImage, error);
@@ -138,7 +138,7 @@ export default function HomeScreen() {
               >
               </ImageBackground>
             ) : (
-              <View style={[styles.heroFallback, styles.heroImageStyle, { borderColor: 'rgba(255, 255, 255, 0.2)', shadowColor: '#000000' }]}>
+              <View style={[styles.heroFallback, styles.heroImageStyle, Platform.OS === 'web' && { boxShadow: 'inset 0 2px 4px rgba(255, 255, 255, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.2), 0 14px 50px rgba(0, 0, 0, 0.5)' }]}>
                 <Image
                   testID="fallback-app-icon"
                   source={require('../../assets/images/icon.png')}
@@ -156,16 +156,19 @@ export default function HomeScreen() {
               </View>
 
               <View style={styles.bottomActions}>
-                <TouchableOpacity testID="action-quotes" style={[styles.actionButton, styles.secondaryButton, { borderColor: 'rgba(255, 255, 255, 0.25)' }, Platform.OS === 'web' && { boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.3), inset 0 -1px 1px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 15px rgba(' + a + ', 0.2)' }]} onPress={handleQuotes}>
+                <TouchableOpacity testID="action-quotes" style={[styles.actionButton, styles.secondaryButton, Platform.OS === 'web' && { boxShadow: 'inset 0 2px 4px rgba(255, 255, 255, 0.4), inset 0 -3px 6px rgba(0, 0, 0, 0.25), 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 20px rgba(' + a + ', 0.15)' }]} onPress={handleQuotes}>
                   <View style={styles.buttonIconContainer}>
                     <TrendingUp color="#FFFFFF" size={18} />
                   </View>
                   <Text style={styles.secondaryButtonText}>QUOTES</Text>
+                    <View style={styles.glassShineTop} />
+                    <View style={styles.glassEdgeTop} />
+                    <View style={styles.glassShadowBottom} />
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   testID="action-start"
-                  style={[styles.actionButton, styles.tradeButton, isBotActive && styles.tradeButtonActive, { borderColor: 'rgba(255, 255, 255, 0.25)' }, Platform.OS === 'web' && { boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.3), inset 0 -1px 1px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 15px rgba(' + a + ', 0.2)' }]}
+                  style={[styles.actionButton, styles.tradeButton, isBotActive && styles.tradeButtonActive, Platform.OS === 'web' && { boxShadow: 'inset 0 2px 4px rgba(255, 255, 255, 0.4), inset 0 -3px 6px rgba(0, 0, 0, 0.25), 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 20px rgba(' + a + ', 0.15)' }]}
                   onPress={() => {
                     console.log('Start/Stop button pressed, current state:', isBotActive);
                     try {
@@ -188,11 +191,14 @@ export default function HomeScreen() {
                   </Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity testID="action-remove" style={[styles.actionButton, styles.removeButton, { borderColor: 'rgba(255, 255, 255, 0.25)' }, Platform.OS === 'web' && { boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.3), inset 0 -1px 1px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 15px rgba(' + a + ', 0.2)' }]} onPress={handleRemoveActiveBot}>
+                <TouchableOpacity testID="action-remove" style={[styles.actionButton, styles.removeButton, Platform.OS === 'web' && { boxShadow: 'inset 0 2px 4px rgba(255, 255, 255, 0.4), inset 0 -3px 6px rgba(0, 0, 0, 0.25), 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 20px rgba(' + a + ', 0.15)' }]} onPress={handleRemoveActiveBot}>
                   <View style={styles.buttonIconContainer}>
                     <Trash2 color="#FFFFFF" size={18} />
                   </View>
                   <Text style={styles.removeButtonText}>REMOVE</Text>
+                    <View style={styles.glassShineTop} />
+                    <View style={styles.glassEdgeTop} />
+                    <View style={styles.glassShadowBottom} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -251,7 +257,7 @@ export default function HomeScreen() {
             </>
           )}
 
-          <TouchableOpacity style={[styles.addEAButton, { borderColor: 'rgba(255, 255, 255, 0.25)' }, Platform.OS === 'web' && { boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.3), inset 0 -1px 1px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 15px rgba(' + a + ', 0.15)' }]} onPress={handleAddNewEA}>
+          <TouchableOpacity style={[styles.addEAButton, Platform.OS === 'web' && { boxShadow: 'inset 0 2px 4px rgba(255, 255, 255, 0.4), inset 0 -3px 6px rgba(0, 0, 0, 0.25), 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 20px rgba(' + a + ', 0.12)' }]} onPress={handleAddNewEA}>
             <Plus color="#FFFFFF" size={20} />
             <View style={styles.addEATextContainer}>
               <Text style={styles.addEATitle}>ADD A NEW EA</Text>
@@ -342,38 +348,44 @@ const styles = StyleSheet.create({
   hero: {
     width: '100%',
     height: 500,
-    borderRadius: 24,
+    borderRadius: 28,
     overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 3,
+    borderTopColor: 'rgba(255, 255, 255, 0.55)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.3)',
+    borderRightColor: 'rgba(255, 255, 255, 0.18)',
+    borderBottomColor: 'rgba(0, 0, 0, 0.3)',
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 14,
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.55,
+    shadowRadius: 24,
+    elevation: 18,
     ...(Platform.OS === 'web' && {
-      boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.15), 0 10px 40px rgba(0, 0, 0, 0.4)',
+      boxShadow: 'inset 0 2px 4px rgba(255, 255, 255, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.2), 0 14px 50px rgba(0, 0, 0, 0.5), 0 6px 16px rgba(0, 0, 0, 0.35)',
     }),
   },
   heroImageStyle: {
-    borderRadius: 24,
+    borderRadius: 28,
   },
   heroFallback: {
     width: '100%',
     height: 500,
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 2.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.5)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.25)',
+    borderRightColor: 'rgba(255, 255, 255, 0.15)',
+    borderBottomColor: 'rgba(0, 0, 0, 0.15)',
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 14,
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.55,
+    shadowRadius: 24,
+    elevation: 18,
     ...(Platform.OS === 'web' && {
-      boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.15), 0 10px 40px rgba(0, 0, 0, 0.4)',
+      boxShadow: 'inset 0 2px 4px rgba(255, 255, 255, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.2), 0 14px 50px rgba(0, 0, 0, 0.5), 0 6px 16px rgba(0, 0, 0, 0.35)',
     }),
   },
   fallbackIcon: {
@@ -452,54 +464,140 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
-    paddingVertical: 18,
+    paddingVertical: 20,
     paddingHorizontal: 14,
-    borderRadius: 24,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'column',
     gap: 10,
-    minHeight: 96,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
+    minHeight: 100,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 3,
+    borderTopColor: 'rgba(255, 255, 255, 0.55)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.3)',
+    borderRightColor: 'rgba(255, 255, 255, 0.18)',
+    borderBottomColor: 'rgba(0, 0, 0, 0.3)',
+    overflow: 'hidden',
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 16,
     ...(Platform.OS === 'web' && {
-      backdropFilter: 'blur(50px) saturate(180%)',
-      WebkitBackdropFilter: 'blur(50px) saturate(180%)',
-      boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.3), inset 0 -1px 1px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2)',
+      backdropFilter: 'blur(60px) saturate(200%)',
+      WebkitBackdropFilter: 'blur(60px) saturate(200%)',
+      boxShadow: 'inset 0 2px 4px rgba(255, 255, 255, 0.4), inset 0 -3px 6px rgba(0, 0, 0, 0.25), 0 12px 40px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.3)',
       transition: 'all 0.3s ease',
     }),
   },
   tradeButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
   },
   tradeButtonActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderColor: 'rgba(255, 255, 255, 0.35)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderTopColor: 'rgba(255, 255, 255, 0.6)',
   },
   secondaryButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   removeButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+
+  glassShineTop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '45%',
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
+    ...(Platform.OS === 'web' && {
+      background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.15) 40%, rgba(255, 255, 255, 0.02) 100%)',
+      pointerEvents: 'none',
+    }),
+  },
+  glassEdgeTop: {
+    position: 'absolute',
+    top: 0,
+    left: 8,
+    right: 8,
+    height: 2,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    ...(Platform.OS === 'web' && {
+      background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 20%, rgba(255,255,255,0.9) 50%, rgba(255,255,255,0.7) 80%, rgba(255,255,255,0) 100%)',
+      pointerEvents: 'none',
+    }),
+  },
+  glassShadowBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '30%',
+    borderBottomLeftRadius: 26,
+    borderBottomRightRadius: 26,
+    ...(Platform.OS === 'web' && {
+      background: 'linear-gradient(0deg, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.08) 50%, rgba(0, 0, 0, 0) 100%)',
+      pointerEvents: 'none',
+    }),
+  },
+  glassShineTopPill: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '50%',
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
+    ...(Platform.OS === 'web' && {
+      background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0) 100%)',
+      pointerEvents: 'none',
+    }),
+  },
+  glassEdgeTopPill: {
+    position: 'absolute',
+    top: 0,
+    left: 16,
+    right: 16,
+    height: 2,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    ...(Platform.OS === 'web' && {
+      background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 20%, rgba(255,255,255,0.85) 50%, rgba(255,255,255,0.6) 80%, rgba(255,255,255,0) 100%)',
+      pointerEvents: 'none',
+    }),
+  },
+  glassShadowBottomPill: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '35%',
+    borderBottomLeftRadius: 26,
+    borderBottomRightRadius: 26,
+    ...(Platform.OS === 'web' && {
+      background: 'linear-gradient(0deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.05) 60%, rgba(0, 0, 0, 0) 100%)',
+      pointerEvents: 'none',
+    }),
   },
   buttonIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.45)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.2)',
+    borderRightColor: 'rgba(255, 255, 255, 0.15)',
+    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
     ...(Platform.OS === 'web' && {
-      boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 2px 6px rgba(0, 0, 0, 0.15)',
+      boxShadow: 'inset 0 2px 3px rgba(255, 255, 255, 0.35), inset 0 -2px 3px rgba(0, 0, 0, 0.15), 0 3px 8px rgba(0, 0, 0, 0.2)',
     }),
   },
   buttonIconContainerActive: {
@@ -621,24 +719,28 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   addEAButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 28,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 22,
     paddingHorizontal: 24,
     marginBottom: 24,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
+    borderWidth: 3,
+    borderTopColor: 'rgba(255, 255, 255, 0.55)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.3)',
+    borderRightColor: 'rgba(255, 255, 255, 0.18)',
+    borderBottomColor: 'rgba(0, 0, 0, 0.3)',
+    overflow: 'hidden',
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 16,
     ...(Platform.OS === 'web' && {
-      backdropFilter: 'blur(50px) saturate(180%)',
-      WebkitBackdropFilter: 'blur(50px) saturate(180%)',
-      boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.3), inset 0 -1px 1px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2)',
+      backdropFilter: 'blur(60px) saturate(200%)',
+      WebkitBackdropFilter: 'blur(60px) saturate(200%)',
+      boxShadow: 'inset 0 2px 4px rgba(255, 255, 255, 0.4), inset 0 -3px 6px rgba(0, 0, 0, 0.25), 0 12px 40px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.3)',
     }),
   },
   addEATextContainer: {
