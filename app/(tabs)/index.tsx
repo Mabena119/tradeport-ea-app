@@ -157,11 +157,7 @@ export default function HomeScreen() {
                 </View>
               </View>
 
-              <View style={[styles.tradingPanelCard, Platform.OS === 'web' && { boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.2), inset 0 -3px 6px rgba(0,0,0,0.2), 0 14px 50px rgba(0,0,0,0.5), 0 0 20px rgba(' + a + ', 0.08)' }]}>
-                <View style={styles.tradingPanelShine} />
-                <View style={styles.tradingPanelEdge} />
-                <View style={styles.tradingPanelShadow} />
-                <View style={styles.bottomActions}>
+              <View style={styles.bottomActions}>
                 <TouchableOpacity testID="action-quotes" style={[styles.actionButton, styles.secondaryButton, Platform.OS === 'web' && { boxShadow: 'inset 0 2px 4px rgba(255, 255, 255, 0.4), inset 0 -3px 6px rgba(0, 0, 0, 0.25), 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 20px rgba(' + a + ', 0.15)' }]} onPress={handleQuotes}>
                   <View style={styles.buttonIconContainer}>
                     <TrendingUp color="#FFFFFF" size={18} />
@@ -202,7 +198,6 @@ export default function HomeScreen() {
                   <Text style={styles.removeButtonText}>REMOVE</Text>
 
                 </TouchableOpacity>
-              </View>
               </View>
             </View>
           </View>
