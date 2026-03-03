@@ -41,13 +41,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="quotes"
-        options={{
-          title: "QUOTES",
-          tabBarButton: () => null,
-        }}
-      />
-      <Tabs.Screen
         name="metatrader"
         options={{
           title: "METATRADER",
@@ -59,6 +52,13 @@ export default function TabLayout() {
         options={{
           title: "SETTINGS",
           tabBarIcon: ({ color }) => <Settings color={color} size={20} />,
+        }}
+      />
+      <Tabs.Screen
+        name="quotes"
+        options={{
+          title: "QUOTES",
+          tabBarButton: () => null,
         }}
       />
     </Tabs>

@@ -2,15 +2,15 @@ import createContextHook from '@nkzw/create-context-hook';
 import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export type ThemeName = 'red' | 'blue' | 'green';
+export type ThemeName = 'red' | 'blue' | 'green' | 'purple' | 'orange' | 'cyan';
 
 export interface ThemeColors {
   accent: string;
-  accentRgb: string;       // "255, 26, 26" for rgba()
-  accentLight: string;     // lighter tint for subtle fills
-  accentGlow: string;      // for shadows/neon
-  gradientStart: string;   // for web gradients
-  textMuted: string;       // muted text on accent
+  accentRgb: string;
+  accentLight: string;
+  accentGlow: string;
+  gradientStart: string;
+  textMuted: string;
 }
 
 const THEMES: Record<ThemeName, ThemeColors> = {
@@ -38,6 +38,30 @@ const THEMES: Record<ThemeName, ThemeColors> = {
     gradientStart: 'rgba(26, 255, 94,',
     textMuted: 'rgba(179, 255, 208, 0.6)',
   },
+  purple: {
+    accent: '#A855F7',
+    accentRgb: '168, 85, 247',
+    accentLight: '#DDB4FE',
+    accentGlow: '#A855F7',
+    gradientStart: 'rgba(168, 85, 247,',
+    textMuted: 'rgba(221, 180, 254, 0.6)',
+  },
+  orange: {
+    accent: '#FF8C1A',
+    accentRgb: '255, 140, 26',
+    accentLight: '#FFD1A3',
+    accentGlow: '#FF8C1A',
+    gradientStart: 'rgba(255, 140, 26,',
+    textMuted: 'rgba(255, 209, 163, 0.6)',
+  },
+  cyan: {
+    accent: '#06D6E0',
+    accentRgb: '6, 214, 224',
+    accentLight: '#A5F3FC',
+    accentGlow: '#06D6E0',
+    gradientStart: 'rgba(6, 214, 224,',
+    textMuted: 'rgba(165, 243, 252, 0.6)',
+  },
 };
 
 const THEME_STORAGE_KEY = 'tradeport_theme';
@@ -51,10 +75,9 @@ export interface ThemeState {
 export const [ThemeProvider, useTheme] = createContextHook<ThemeState>(() => {
   const [themeName, setThemeNameState] = useState<ThemeName>('red');
 
-  // Load saved theme on mount
   useEffect(() => {
     AsyncStorage.getItem(THEME_STORAGE_KEY).then((saved) => {
-      if (saved && (saved === 'red' || saved === 'blue' || saved === 'green')) {
+      if (saved && saved in THEMES) {
         setThemeNameState(saved as ThemeName);
       }
     }).catch(() => {});

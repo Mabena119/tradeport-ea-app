@@ -6,6 +6,9 @@ const THEME_OPTIONS: { name: ThemeName; label: string; preview: string }[] = [
   { name: 'red', label: 'Red', preview: '#FF1A1A' },
   { name: 'blue', label: 'Blue', preview: '#1A8FFF' },
   { name: 'green', label: 'Green', preview: '#1AFF5E' },
+  { name: 'purple', label: 'Purple', preview: '#A855F7' },
+  { name: 'orange', label: 'Orange', preview: '#FF8C1A' },
+  { name: 'cyan', label: 'Cyan', preview: '#06D6E0' },
 ];
 
 export default function SettingsScreen() {
@@ -17,7 +20,7 @@ export default function SettingsScreen() {
         <Text style={styles.header}>Settings</Text>
 
         <Text style={styles.sectionLabel}>THEME</Text>
-        <View style={styles.themeRow}>
+        <View style={styles.themeGrid}>
           {THEME_OPTIONS.map((opt) => {
             const isActive = themeName === opt.name;
             return (
@@ -25,21 +28,19 @@ export default function SettingsScreen() {
                 key={opt.name}
                 style={[
                   styles.themeCard,
-                  { borderColor: isActive ? opt.preview : 'rgba(255, 255, 255, 0.1)' },
+                  { borderColor: isActive ? opt.preview : 'rgba(255, 255, 255, 0.08)' },
+                  isActive && { shadowColor: opt.preview, shadowOpacity: 0.5, shadowRadius: 12 },
                   isActive && Platform.OS === 'web' && { boxShadow: '0 0 14px ' + opt.preview + '55, 0 0 28px ' + opt.preview + '22' },
                 ]}
                 activeOpacity={0.7}
                 onPress={() => setThemeName(opt.name)}
               >
-                <View style={styles.themePreviewRow}>
-                  <View style={[styles.previewDot, { backgroundColor: '#0A0A0A' }]} />
-                  <View style={[styles.previewDot, { backgroundColor: opt.preview }]} />
+                <View style={[styles.previewSwatch, { backgroundColor: opt.preview + '20', borderColor: opt.preview + '44' }]}>
+                  <View style={[styles.previewDotInner, { backgroundColor: opt.preview }]} />
                 </View>
                 <Text style={[styles.themeLabel, isActive && { color: opt.preview }]}>{opt.label}</Text>
                 {isActive && (
-                  <View style={[styles.activeBadge, { backgroundColor: opt.preview + '22', borderColor: opt.preview + '55' }]}>
-                    <Text style={[styles.activeBadgeText, { color: opt.preview }]}>Active</Text>
-                  </View>
+                  <View style={[styles.activeDot, { backgroundColor: opt.preview }]} />
                 )}
               </TouchableOpacity>
             );
@@ -89,53 +90,50 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: 14,
   },
-  themeRow: {
+  themeGrid: {
     flexDirection: 'row',
-    gap: 12,
+    flexWrap: 'wrap',
+    gap: 10,
   },
   themeCard: {
-    flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderRadius: 18,
-    paddingVertical: 18,
-    paddingHorizontal: 14,
+    width: '31%',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 10,
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     ...(Platform.OS === 'web' && {
       backdropFilter: 'blur(40px)',
       WebkitBackdropFilter: 'blur(40px)',
     }),
   },
-  themePreviewRow: {
-    flexDirection: 'row',
-    gap: 6,
-    marginBottom: 10,
-  },
-  previewDot: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+  previewSwatch: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  previewDotInner: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
   },
   themeLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.6)',
+    color: 'rgba(255, 255, 255, 0.5)',
     letterSpacing: 0.3,
   },
-  activeBadge: {
-    marginTop: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  activeBadgeText: {
-    fontSize: 10,
-    fontWeight: '600',
-    letterSpacing: 0.3,
+  activeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginTop: 6,
   },
   glassCard: {
     flexDirection: 'row',

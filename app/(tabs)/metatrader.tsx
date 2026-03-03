@@ -8,6 +8,7 @@ import InjectableWebView from '../../components/injectable-webview';
 import FallbackWebView from '../../components/fallback-webview';
 import { Eye, EyeOff, Search, Server, ExternalLink, Shield, RefreshCw, X } from 'lucide-react-native';
 import { useApp } from '@/providers/app-provider';
+import { useTheme } from '@/providers/theme-provider';
 
 // Default MT4 Brokers (will be updated from web terminal)
 const DEFAULT_MT4_BROKERS = [
@@ -519,6 +520,10 @@ export default function MetaTraderScreen() {
   const brokerFetchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const authFinalizedRef = useRef<boolean>(false);
   const { mtAccount, setMTAccount, mt4Account, setMT4Account, mt5Account, setMT5Account } = useApp();
+  const { theme: thm } = useTheme();
+  const a = thm.accentRgb;
+  const ac = thm.accent;
+  const ag = thm.accentGlow;
 
   // Load existing account data when tab changes
   useEffect(() => {
@@ -1765,7 +1770,7 @@ export default function MetaTraderScreen() {
 
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, Platform.OS === 'web' && { backgroundImage: 'linear-gradient(135deg, rgba(' + a + ', 0.9) 0%, rgba(' + a + ', 0.5) 30%, rgba(' + a + ', 0.1) 65%, rgba(0, 0, 0, 0.95) 90%, rgba(0, 0, 0, 1) 100%)' }]}>
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -1779,19 +1784,19 @@ export default function MetaTraderScreen() {
           {/* Account Type Tabs */}
           <View style={styles.tabContainer}>
             <TouchableOpacity
-              style={[styles.tab, activeTab === 'MT5' && styles.activeTab]}
+              style={[styles.tab, activeTab === 'MT5' && styles.activeTab, activeTab === 'MT5' && { borderColor: ac, shadowColor: ag, shadowOpacity: 0.6, shadowRadius: 10 }, Platform.OS === 'web' && activeTab === 'MT5' && { boxShadow: '0 0 12px rgba(' + a + ', 0.4)' }]}
               onPress={() => setActiveTab('MT5')}
             >
-              <Text style={[styles.tabText, activeTab === 'MT5' && styles.activeTabText]}>
+              <Text style={[styles.tabText, activeTab === 'MT5' && { color: ac }]}>
                 MT5 ACCOUNT
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.tab, activeTab === 'MT4' && styles.activeTab]}
+              style={[styles.tab, activeTab === 'MT4' && styles.activeTab, activeTab === 'MT4' && { borderColor: ac, shadowColor: ag, shadowOpacity: 0.6, shadowRadius: 10 }, Platform.OS === 'web' && activeTab === 'MT4' && { boxShadow: '0 0 12px rgba(' + a + ', 0.4)' }]}
               onPress={() => setActiveTab('MT4')}
             >
-              <Text style={[styles.tabText, activeTab === 'MT4' && styles.activeTabText]}>
+              <Text style={[styles.tabText, activeTab === 'MT4' && { color: ac }]}>
                 MT4 ACCOUNT
               </Text>
             </TouchableOpacity>
@@ -1870,7 +1875,7 @@ export default function MetaTraderScreen() {
           {/* Authentication Status Display - Only shown during authentication */}
           {isAuthenticating && (
             <View style={styles.authStatusDisplay}>
-              <ActivityIndicator color={Platform.OS === 'ios' ? '#DC2626' : '#000000'} size="small" />
+              <ActivityIndicator color={ac} size="small" />
               <Text style={styles.authStatusDisplayText}>{authenticationStep}</Text>
             </View>
           )}
@@ -1878,7 +1883,7 @@ export default function MetaTraderScreen() {
           {/* Login Form */}
           <View style={styles.form}>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { borderColor: 'rgba(' + a + ', 0.3)' }, Platform.OS === 'web' && { boxShadow: '0 0 8px rgba(' + a + ', 0.15)' }]}
               placeholder="Login"
               placeholderTextColor="#999999"
               value={login}
@@ -1886,7 +1891,7 @@ export default function MetaTraderScreen() {
               keyboardType="numeric"
             />
 
-            <View style={styles.passwordContainer}>
+            <View style={[styles.passwordContainer, { borderColor: 'rgba(' + a + ', 0.3)' }, Platform.OS === 'web' && { boxShadow: '0 0 8px rgba(' + a + ', 0.15)' }]}>
               <TextInput
                 style={styles.passwordInput}
                 placeholder="Password"
@@ -1908,7 +1913,7 @@ export default function MetaTraderScreen() {
             </View>
 
             <View style={styles.serverContainer}>
-              <View style={styles.serverInputContainer}>
+              <View style={[styles.serverInputContainer, { borderColor: 'rgba(' + a + ', 0.3)' }, Platform.OS === 'web' && { boxShadow: '0 0 8px rgba(' + a + ', 0.15)' }]}>
                 <Server color="#999999" size={20} style={styles.serverIcon} />
                 <TextInput
                   style={styles.serverInput}
@@ -2156,10 +2161,7 @@ export default function MetaTraderScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
-    ...(Platform.OS === 'web' && {
-      backgroundImage: 'linear-gradient(135deg, rgba(255, 26, 26, 0.9) 0%, rgba(255, 26, 26, 0.5) 30%, rgba(255, 26, 26, 0.1) 65%, rgba(0, 0, 0, 0.95) 90%, rgba(0, 0, 0, 1) 100%)',
-    }),
+    backgroundColor: '#050505',
   },
   keyboardAvoidingView: {
     flex: 1,
@@ -2177,20 +2179,19 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 20,
-    backgroundColor: '#1A1A1A',
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     marginHorizontal: 4,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#800000',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    ...(Platform.OS === 'web' && {
+      backdropFilter: 'blur(40px)',
+      WebkitBackdropFilter: 'blur(40px)',
+    }),
   },
   activeTab: {
-    backgroundColor: '#1A1A1A',
-    borderColor: '#FF0000',
-    shadowColor: '#FF0000',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   tabText: {
     fontSize: 12,
@@ -2198,7 +2199,7 @@ const styles = StyleSheet.create({
     color: '#CCCCCC',
   },
   activeTabText: {
-    color: '#FF0000',
+    color: '#FFFFFF',
   },
   statusContainer: {
     flexDirection: 'row',
@@ -2255,24 +2256,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   input: {
-    backgroundColor: '#1A1A1A',
-    borderWidth: 2,
-    borderColor: '#FF0000',
-    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: 14,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
+    paddingVertical: 14,
+    fontSize: 15,
     marginBottom: 16,
     color: '#FFFFFF',
+    ...(Platform.OS === 'web' && {
+      backdropFilter: 'blur(40px)',
+      WebkitBackdropFilter: 'blur(40px)',
+    }),
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1A1A1A',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     borderWidth: 1,
-    borderColor: '#FF0000',
-    borderRadius: 8,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: 14,
     marginBottom: 16,
+    ...(Platform.OS === 'web' && {
+      backdropFilter: 'blur(40px)',
+      WebkitBackdropFilter: 'blur(40px)',
+    }),
   },
   passwordInput: {
     flex: 1,
@@ -2284,17 +2293,23 @@ const styles = StyleSheet.create({
   eyeButton: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#4d1521',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     marginLeft: 8,
   },
   linkButton: {
-    backgroundColor: '#1A1A1A',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     paddingVertical: 16,
-    borderRadius: 8,
+    borderRadius: 16,
     marginTop: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    ...(Platform.OS === 'web' && {
+      backdropFilter: 'blur(40px)',
+      WebkitBackdropFilter: 'blur(40px)',
+    }),
   },
   linkButtonText: {
     color: '#FFFFFF',
@@ -2307,11 +2322,11 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   linkButtonComingSoon: {
-    backgroundColor: '#1a1a1a', // Dark background
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
     opacity: 0.6,
   },
   comingSoonText: {
-    color: '#FF4444', // Red color
+    color: 'rgba(255, 255, 255, 0.4)',
     fontSize: 12,
     fontWeight: 'bold',
     textAlign: 'center',
@@ -2339,10 +2354,14 @@ const styles = StyleSheet.create({
   serverInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1A1A1A',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     borderWidth: 1,
-    borderColor: '#FF0000',
-    borderRadius: 8,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: 14,
+    ...(Platform.OS === 'web' && {
+      backdropFilter: 'blur(40px)',
+      WebkitBackdropFilter: 'blur(40px)',
+    }),
   },
   serverIcon: {
     marginLeft: 16,
@@ -2357,10 +2376,10 @@ const styles = StyleSheet.create({
   clearButton: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#4d1521',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   clearButtonText: {
     color: '#999999',
@@ -2372,9 +2391,9 @@ const styles = StyleSheet.create({
     top: 50,
     left: 0,
     right: 0,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     borderWidth: 1,
-    borderColor: '#FF0000',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     borderRadius: 8,
     maxHeight: 300,
     shadowColor: '#000',
@@ -2393,7 +2412,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#FF0000',
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   brokerListTitle: {
     fontSize: 14,
@@ -2402,10 +2421,10 @@ const styles = StyleSheet.create({
   },
   closeBrokerList: {
     padding: 4,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#4d1521',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   closeBrokerListText: {
     color: '#999999',
@@ -2474,7 +2493,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 20,
     marginBottom: 20,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     borderRadius: 8,
     marginHorizontal: 20,
     borderWidth: 1,
@@ -2493,10 +2512,10 @@ const styles = StyleSheet.create({
   refreshButton: {
     padding: 4,
     marginRight: 8,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#4d1521',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   refreshIcon: {
     opacity: 0.7,
@@ -2540,7 +2559,7 @@ const styles = StyleSheet.create({
   },
   brokerItemTypeDisabled: {
     color: '#666666',
-    backgroundColor: '#1A1A1A',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
   },
   disabledLabel: {
     fontSize: 8,
@@ -2555,7 +2574,7 @@ const styles = StyleSheet.create({
   accountDetailsContainer: {
     marginHorizontal: 20,
     marginBottom: 30,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
