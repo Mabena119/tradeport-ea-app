@@ -3,9 +3,11 @@ import { Home, Settings, TrendingUp } from "lucide-react-native";
 import React from "react";
 import { Platform } from "react-native";
 import { useApp } from "@/providers/app-provider";
+import { useTheme } from "@/providers/theme-provider";
 
 export default function TabLayout() {
   const { isFirstTime } = useApp();
+  const { theme } = useTheme();
 
   return (
     <Tabs
@@ -22,7 +24,7 @@ export default function TabLayout() {
             WebkitBackdropFilter: 'blur(40px)',
           }),
         },
-        tabBarActiveTintColor: '#FF1A1A',
+        tabBarActiveTintColor: theme.accent,
         tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.4)',
         tabBarLabelStyle: {
           fontSize: 10,

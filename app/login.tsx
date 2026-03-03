@@ -4,6 +4,7 @@ import { WebView } from 'react-native-webview';
 import { router } from 'expo-router';
 // Networking disabled: avoid external browser/payment flows
 import { useApp } from '@/providers/app-provider';
+import { useTheme } from '@/providers/theme-provider';
 import { apiService } from '@/services/api';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -19,6 +20,9 @@ export default function LoginScreen() {
   const [paymentVisible, setPaymentVisible] = useState<boolean>(false);
   const [paymentUrl, setPaymentUrl] = useState<string>('');
   const { setUser, user, eas } = useApp();
+  const { theme } = useTheme();
+  const a = theme.accentRgb;
+  const ac = theme.accent;
 
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -111,8 +115,8 @@ export default function LoginScreen() {
   return (
     <SafeAreaView style={styles.container}>
       {/* Ambient gradient orbs */}
-      <Animated.View style={[styles.orbTop, { opacity: glowAnim }]} />
-      <Animated.View style={[styles.orbBottom, { opacity: glowAnim }]} />
+      <Animated.View style={[styles.orbTop, { opacity: glowAnim, backgroundColor: 'rgba(' + a + ', 0.12)' }]} />
+      <Animated.View style={[styles.orbBottom, { opacity: glowAnim, backgroundColor: 'rgba(' + a + ', 0.08)' }]} />
 
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
@@ -127,7 +131,7 @@ export default function LoginScreen() {
           <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
             {/* Logo */}
             <Animated.View style={[styles.logoContainer, { transform: [{ scale: logoScale }] }]}>
-              <View style={styles.iconGlow}>
+              <View style={[styles.iconGlow, { backgroundColor: 'rgba(' + a + ', 0.08)', shadowColor: ac }]}>
                 <Image
                   source={require('@/assets/images/icon.png')}
                   style={styles.appIcon}
@@ -172,7 +176,7 @@ export default function LoginScreen() {
               </View>
 
               <TouchableOpacity
-                style={[styles.proceedButton, (isLoading || isPaymentProcessing) && styles.proceedButtonDisabled]}
+                style={[styles.proceedButton, (isLoading || isPaymentProcessing) && styles.proceedButtonDisabled, { backgroundColor: 'rgba(' + a + ', 0.85)', shadowColor: ac }]}
                 onPress={handleProceed}
                 disabled={isLoading || isPaymentProcessing}
                 activeOpacity={0.8}
@@ -203,8 +207,8 @@ export default function LoginScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <View style={styles.modalIconRow}>
-              <View style={styles.modalIconCircle}>
-                <Text style={styles.modalIconText}>!</Text>
+              <View style={[styles.modalIconCircle, { backgroundColor: 'rgba(' + a + ', 0.15)', borderColor: 'rgba(' + a + ', 0.3)' }]}>
+                <Text style={[styles.modalIconText, { color: ac }]}>!</Text>
               </View>
             </View>
             <Text style={styles.modalTitle}>{modalTitle}</Text>

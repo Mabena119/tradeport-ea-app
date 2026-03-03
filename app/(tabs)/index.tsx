@@ -5,10 +5,15 @@ import { router } from 'expo-router';
 import { RobotLogo } from '@/components/robot-logo';
 
 import { useApp } from '@/providers/app-provider';
+import { useTheme } from '@/providers/theme-provider';
 import type { EA } from '@/providers/app-provider';
 
 export default function HomeScreen() {
   const { eas, isFirstTime, setIsFirstTime, removeEA, isBotActive, setBotActive, setActiveEA, user } = useApp();
+  const { theme } = useTheme();
+  const a = theme.accentRgb; // shorthand for rgba building
+  const ac = theme.accent;
+  const ag = theme.accentGlow;
 
   const primaryEA = Array.isArray(eas) && eas.length > 0 ? eas[0] : null;
   const otherEAs = Array.isArray(eas) ? eas.slice(1) : [];
@@ -90,7 +95,7 @@ export default function HomeScreen() {
   // Show splash screen for first-time users
   if (isFirstTime) {
     return (
-      <View style={styles.splashContainer}>
+      <View style={[styles.splashContainer, Platform.OS === 'web' && { backgroundImage: 'linear-gradient(135deg, rgba(' + a + ', 0.95) 0%, rgba(' + a + ', 0.7) 20%, rgba(' + a + ', 0.4) 40%, rgba(' + a + ', 0.2) 60%, rgba(' + a + ', 0.1) 80%, rgba(0, 0, 0, 0.8) 95%, rgba(0, 0, 0, 1) 100%)' }]}>
         <View style={styles.splashContent}>
           <View style={styles.logoContainer}>
             <Image
@@ -99,15 +104,15 @@ export default function HomeScreen() {
               style={{ width: 120, height: 120, borderRadius: 24 }}
               resizeMode="contain"
             />
-            <Text style={styles.title}>TRADE PORT EA</Text>
+            <Text style={[styles.title, { color: ac }]}>TRADE PORT EA</Text>
           </View>
 
           <Text style={styles.description}>
             A cutting-edge mobile hosting platform designed to empower traders with a secure, reliable, and user-friendly environment for running their automated trading systems. Seamlessly manage your Expert Advisors (EAs) on the go, ensuring optimal performance and peace of mind.
           </Text>
 
-          <TouchableOpacity style={styles.splashStartButton} onPress={handleStartNow}>
-            <Text style={styles.startButtonText}>START NOW</Text>
+          <TouchableOpacity style={[styles.splashStartButton, { borderColor: ac, shadowColor: ac }]} onPress={handleStartNow}>
+            <Text style={[styles.startButtonText, { color: ac }]}>START NOW</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -115,7 +120,7 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, Platform.OS === 'web' && { backgroundImage: 'linear-gradient(135deg, rgba(' + a + ', 0.95) 0%, rgba(' + a + ', 0.85) 10%, rgba(' + a + ', 0.75) 20%, rgba(' + a + ', 0.65) 30%, rgba(' + a + ', 0.55) 40%, rgba(' + a + ', 0.45) 50%, rgba(' + a + ', 0.35) 60%, rgba(' + a + ', 0.25) 70%, rgba(' + a + ', 0.15) 80%, rgba(' + a + ', 0.08) 90%, rgba(' + a + ', 0.03) 95%, rgba(0, 0, 0, 1) 100%)' }]}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {primaryEA ? (
           <View style={styles.mainEAContainer}>
@@ -123,7 +128,7 @@ export default function HomeScreen() {
               <ImageBackground
                 testID="ea-hero-bg"
                 source={{ uri: primaryEAImage }}
-                style={styles.hero}
+                style={[styles.hero, { borderColor: 'rgba(' + a + ', 0.4)', shadowColor: ag }, Platform.OS === 'web' && { boxShadow: '0 0 15px rgba(' + a + ', 0.5), 0 0 30px rgba(' + a + ', 0.2), inset 0 0 15px rgba(' + a + ', 0.1)' }]}
                 imageStyle={styles.heroImageStyle}
                 onError={(error) => {
                   console.log('EA Image Error: Failed to load image:', primaryEAImage, error);
@@ -133,7 +138,7 @@ export default function HomeScreen() {
               >
               </ImageBackground>
             ) : (
-              <View style={[styles.heroFallback, styles.heroImageStyle]}>
+              <View style={[styles.heroFallback, styles.heroImageStyle, { borderColor: 'rgba(' + a + ', 0.4)', shadowColor: ag }]}>
                 <Image
                   testID="fallback-app-icon"
                   source={require('../../assets/images/icon.png')}
@@ -151,7 +156,7 @@ export default function HomeScreen() {
               </View>
 
               <View style={styles.bottomActions}>
-                <TouchableOpacity testID="action-quotes" style={[styles.actionButton, styles.secondaryButton]} onPress={handleQuotes}>
+                <TouchableOpacity testID="action-quotes" style={[styles.actionButton, styles.secondaryButton, { borderColor: 'rgba(' + a + ', 0.35)', shadowColor: ag }, Platform.OS === 'web' && { boxShadow: '0 0 12px rgba(' + a + ', 0.4), 0 0 25px rgba(' + a + ', 0.15)' }]} onPress={handleQuotes}>
                   <View style={styles.buttonIconContainer}>
                     <TrendingUp color="#FFFFFF" size={18} />
                   </View>
@@ -160,7 +165,7 @@ export default function HomeScreen() {
 
                 <TouchableOpacity
                   testID="action-start"
-                  style={[styles.actionButton, styles.tradeButton, isBotActive && styles.tradeButtonActive]}
+                  style={[styles.actionButton, styles.tradeButton, isBotActive && styles.tradeButtonActive, { borderColor: 'rgba(' + a + ', 0.45)', shadowColor: ag }, Platform.OS === 'web' && { boxShadow: '0 0 12px rgba(' + a + ', 0.4), 0 0 25px rgba(' + a + ', 0.15)' }]}
                   onPress={() => {
                     console.log('Start/Stop button pressed, current state:', isBotActive);
                     try {
@@ -183,7 +188,7 @@ export default function HomeScreen() {
                   </Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity testID="action-remove" style={[styles.actionButton, styles.removeButton]} onPress={handleRemoveActiveBot}>
+                <TouchableOpacity testID="action-remove" style={[styles.actionButton, styles.removeButton, { borderColor: 'rgba(' + a + ', 0.35)', shadowColor: ag }, Platform.OS === 'web' && { boxShadow: '0 0 12px rgba(' + a + ', 0.4), 0 0 25px rgba(' + a + ', 0.15)' }]} onPress={handleRemoveActiveBot}>
                   <View style={styles.buttonIconContainer}>
                     <Trash2 color="#FFFFFF" size={18} />
                   </View>
@@ -246,7 +251,7 @@ export default function HomeScreen() {
             </>
           )}
 
-          <TouchableOpacity style={styles.addEAButton} onPress={handleAddNewEA}>
+          <TouchableOpacity style={[styles.addEAButton, { borderColor: 'rgba(' + a + ', 0.35)', shadowColor: ag }, Platform.OS === 'web' && { boxShadow: '0 0 12px rgba(' + a + ', 0.4), 0 0 25px rgba(' + a + ', 0.15)' }]} onPress={handleAddNewEA}>
             <Plus color="#FFFFFF" size={20} />
             <View style={styles.addEATextContainer}>
               <Text style={styles.addEATitle}>ADD A NEW EA</Text>
