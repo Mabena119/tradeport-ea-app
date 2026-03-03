@@ -157,8 +157,9 @@ export default function HomeScreen() {
                 </View>
               </View>
 
-              <View style={styles.bottomActions}>
-                <TouchableOpacity testID="action-quotes" style={[styles.actionButton, styles.secondaryButton, Platform.OS === 'web' && { boxShadow: 'inset 0 2px 4px rgba(255, 255, 255, 0.4), inset 0 -3px 6px rgba(0, 0, 0, 0.25), 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 20px rgba(' + a + ', 0.15)' }]} onPress={handleQuotes}>
+              <View style={[styles.tradingPanelCard, Platform.OS === 'web' && { boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.2), inset 0 -3px 6px rgba(0,0,0,0.2), 0 14px 50px rgba(0,0,0,0.5), 0 0 20px rgba(0,0,0,0.3)' }]}>
+                <View style={styles.bottomActions}>
+                <TouchableOpacity testID="action-quotes" style={[styles.actionButton, styles.secondaryButton, false]} onPress={handleQuotes}>
                   <View style={styles.buttonIconContainer}>
                     <TrendingUp color="#FFFFFF" size={18} />
                   </View>
@@ -168,7 +169,7 @@ export default function HomeScreen() {
 
                 <TouchableOpacity
                   testID="action-start"
-                  style={[styles.actionButton, styles.tradeButton, isBotActive && styles.tradeButtonActive, Platform.OS === 'web' && { boxShadow: 'inset 0 2px 4px rgba(255, 255, 255, 0.4), inset 0 -3px 6px rgba(0, 0, 0, 0.25), 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 20px rgba(' + a + ', 0.15)' }]}
+                  style={[styles.actionButton, styles.tradeButton, isBotActive && styles.tradeButtonActive, false]}
                   onPress={() => {
                     console.log('Start/Stop button pressed, current state:', isBotActive);
                     try {
@@ -191,13 +192,14 @@ export default function HomeScreen() {
                   </Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity testID="action-remove" style={[styles.actionButton, styles.removeButton, Platform.OS === 'web' && { boxShadow: 'inset 0 2px 4px rgba(255, 255, 255, 0.4), inset 0 -3px 6px rgba(0, 0, 0, 0.25), 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 20px rgba(' + a + ', 0.15)' }]} onPress={handleRemoveActiveBot}>
+                <TouchableOpacity testID="action-remove" style={[styles.actionButton, styles.removeButton, false]} onPress={handleRemoveActiveBot}>
                   <View style={styles.buttonIconContainer}>
                     <Trash2 color="#FFFFFF" size={18} />
                   </View>
                   <Text style={styles.removeButtonText}>REMOVE</Text>
 
                 </TouchableOpacity>
+              </View>
               </View>
             </View>
           </View>
@@ -534,24 +536,11 @@ const styles = StyleSheet.create({
       pointerEvents: 'none',
     }),
   },
-  bottomActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    gap: 18,
-    marginTop: 20,
-  },
-  actionButton: {
-    flex: 1,
-    paddingVertical: 18,
-    paddingHorizontal: 12,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'column',
-    gap: 8,
-    minHeight: 90,
+
+  tradingPanelCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.07)',
+    borderRadius: 28,
+    padding: 10,
     borderWidth: 2.5,
     borderTopColor: 'rgba(255, 255, 255, 0.45)',
     borderLeftColor: 'rgba(255, 255, 255, 0.2)',
@@ -566,7 +555,32 @@ const styles = StyleSheet.create({
     ...(Platform.OS === 'web' && {
       backdropFilter: 'blur(60px) saturate(200%)',
       WebkitBackdropFilter: 'blur(60px) saturate(200%)',
-      boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.2), inset 0 -3px 6px rgba(0,0,0,0.2), 0 14px 50px rgba(0,0,0,0.5), 0 0 20px rgba(0,0,0,0.3)',
+    }),
+  },
+  bottomActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    gap: 8,
+    marginTop: 20,
+  },
+  actionButton: {
+    flex: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 10,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'column',
+    gap: 8,
+    minHeight: 80,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    overflow: 'hidden',
+    ...(Platform.OS === 'web' && {
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
       transition: 'all 0.3s ease',
     }),
   },
