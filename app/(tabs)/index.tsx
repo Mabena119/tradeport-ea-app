@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, ImageBackground, Platform, Dimensions, SafeAreaView, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, ImageBackground, Platform, Dimensions, SafeAreaView, Animated, RefreshControl } from 'react-native';
 import { Play, Square, TrendingUp, Trash2, Plus, Menu } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { RobotLogo } from '@/components/robot-logo';
@@ -58,6 +58,8 @@ export default function HomeScreen() {
   console.log('HomeScreen render - EAs count:', eas?.length || 0, 'Primary EA:', primaryEA?.name || 'none');
 
   const [logoError, setLogoError] = useState<boolean>(false);
+  const [showRemoveWarning, setShowRemoveWarning] = useState<boolean>(false);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   useEffect(() => {
     if (!isFirstTime) {
@@ -108,21 +110,24 @@ export default function HomeScreen() {
     router.push('/license');
   };
 
-  const handleRemoveActiveBot = async () => {
+  const handleRemoveActiveBot = () => {
+    setShowRemoveWarning(true);
+  };
+
+  const confirmRemoveBot = async () => {
+    setShowRemoveWarning(false);
     if (primaryEA && primaryEA.id) {
       try {
-        console.log('Removing EA:', primaryEA.name, primaryEA.id);
         const success = await removeEA(primaryEA.id);
-        if (success) {
-          console.log('EA removed successfully, navigating to license screen');
-          router.push('/license');
-        } else {
-          console.error('Failed to remove EA');
-        }
-      } catch (error) {
-        console.error('Error removing EA:', error);
-      }
+        if (success) router.push('/license');
+      } catch (error) { console.error('Error removing EA:', error); }
     }
+  };
+
+  const onRefresh = async () => {
+    setIsRefreshing(true);
+    await new Promise(r => setTimeout(r, 800));
+    setIsRefreshing(false);
   };
 
   const handleQuotes = () => {
@@ -206,7 +211,7 @@ export default function HomeScreen() {
         <Menu color="rgba(255,255,255,0.8)" size={22} />
       </TouchableOpacity>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={ac} colors={[ac]} />}>
         {primaryEA ? (
           <View style={styles.mainEAContainer}>
 
@@ -337,27 +342,49 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* ========== 4. ACTIVE EA INFO CARD ========== */}
+          {/* ========== 4. ACTIVE EA INFO CARD — NEON WRAPPED ========== */}
           {primaryEA && (
-            <View style={[styles.eaInfoCard, Platform.OS === 'web' && { background: 'radial-gradient(ellipse 120% 50% at 20% 20%, rgba(255,255,255,0.12) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.06) 0%, rgba(0,0,0,0.7) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', boxShadow: '0 4px 8px rgba(0,0,0,0.3), 0 12px 24px rgba(0,0,0,0.35), 0 24px 48px rgba(0,0,0,0.25), 0 6px 20px rgba(' + a + ', 0.08)' }]}>
-              <View style={styles.eaInfoImageWrap}>
-                {primaryEAImage && !logoError ? (
-                  <Image source={{ uri: primaryEAImage }} style={styles.eaInfoImage} resizeMode="cover" />
-                ) : (
-                  <Image source={require('../../assets/images/icon.png')} style={styles.eaInfoImage} resizeMode="contain" />
-                )}
-              </View>
-              <View style={styles.eaInfoTextWrap}>
-                <Text style={styles.eaInfoName} numberOfLines={2}>{primaryEA.name}</Text>
-                <Text style={[styles.eaInfoStatus, { color: isBotActive ? '#16A34A' : 'rgba(255,255,255,0.4)' }]}>
-                  {isBotActive ? 'RUNNING' : 'IDLE'}
-                </Text>
-              </View>
+            <View style={styles.neonWrapInfo}>
+              <Animated.View style={[styles.neonSpinnerInfo, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 40deg, rgba(' + a + ', 0.5) 80deg, transparent 120deg, transparent 180deg, ' + ac + ' 220deg, rgba(' + a + ', 0.5) 260deg, transparent 300deg, transparent 360deg)' }]} />
+              <Animated.View style={[styles.neonGlowInfo, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.4) 40deg, transparent 120deg, transparent 180deg, rgba(' + a + ', 0.4) 220deg, transparent 300deg, transparent 360deg)' }]} />
+              <TouchableOpacity activeOpacity={0.7} onPress={() => {}} style={[styles.eaInfoCard, Platform.OS === 'web' && { background: 'radial-gradient(ellipse 120% 50% at 20% 20%, rgba(255,255,255,0.15) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.08) 0%, rgba(0,0,0,0.75) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)' }]}>
+                <View style={styles.eaInfoImageWrap}>
+                  {primaryEAImage && !logoError ? (
+                    <Image source={{ uri: primaryEAImage }} style={styles.eaInfoImage} resizeMode="cover" />
+                  ) : (
+                    <Image source={require('../../assets/images/icon.png')} style={styles.eaInfoImage} resizeMode="contain" />
+                  )}
+                </View>
+                <View style={styles.eaInfoTextWrap}>
+                  <Text style={styles.eaInfoName} numberOfLines={2}>{primaryEA.name}</Text>
+                  <Text style={[styles.eaInfoStatus, { color: isBotActive ? '#16A34A' : 'rgba(255,255,255,0.4)' }]}>
+                    {isBotActive ? 'RUNNING' : 'IDLE'}
+                  </Text>
+                </View>
+              </TouchableOpacity>
             </View>
           )}
         </View>
 
       </ScrollView>
+
+      {/* ========== REMOVE WARNING MODAL — GLASSMORPHISM ========== */}
+      {showRemoveWarning && (
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, Platform.OS === 'web' && { background: 'radial-gradient(ellipse 120% 50% at 20% 20%, rgba(255,255,255,0.15) 0%, transparent 70%), linear-gradient(180deg, rgba(44,44,46,0.85) 0%, rgba(28,28,30,0.95) 100%)', backdropFilter: 'blur(80px) saturate(200%)', WebkitBackdropFilter: 'blur(80px) saturate(200%)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.25), 0 24px 80px rgba(0,0,0,0.6), 0 0 0 0.5px rgba(255,255,255,0.08)' }]}>
+            <Text style={styles.modalTitle}>Remove EA</Text>
+            <Text style={styles.modalMessage}>Are you sure you want to remove {primaryEA?.name || 'this EA'}? This action cannot be undone.</Text>
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalCancel} onPress={() => setShowRemoveWarning(false)}>
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalConfirm, { backgroundColor: 'rgba(220, 38, 38, 0.8)' }]} onPress={confirmRemoveBot}>
+                <Text style={styles.modalConfirmText}>Remove</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -918,23 +945,22 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 
-  /* ========== EA INFO CARD ========== */
+  /* ========== EA INFO CARD — NEON WRAP ========== */
+  neonWrapInfo: {
+    position: 'relative', borderRadius: 24, padding: 2.5,
+    overflow: 'hidden', marginBottom: 30,
+  },
+  neonSpinnerInfo: {
+    position: 'absolute', top: '-50%', left: '-25%', width: '150%', height: '200%',
+  },
+  neonGlowInfo: {
+    position: 'absolute', top: '-60%', left: '-30%', width: '160%', height: '220%',
+    ...(Platform.OS === 'web' && { filter: 'blur(16px)' }),
+  },
   eaInfoCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(12, 12, 12, 0.9)',
-    borderRadius: 22,
-    padding: 14,
-    marginBottom: 30,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    ...(Platform.OS !== 'web' && {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.4,
-      shadowRadius: 16,
-      elevation: 8,
-    }),
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: 'rgba(12, 12, 12, 0.93)', borderRadius: 22,
+    padding: 16, position: 'relative', overflow: 'hidden',
   },
   eaInfoImageWrap: {
     width: 56,
@@ -964,4 +990,32 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginTop: 4,
   },
+
+  /* ========== REMOVE WARNING MODAL ========== */
+  modalOverlay: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center',
+    padding: 32, zIndex: 9999,
+  },
+  modalCard: {
+    width: '100%', maxWidth: 340, borderRadius: 24, padding: 24,
+    backgroundColor: 'rgba(44, 44, 46, 0.92)',
+    borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.15)',
+    ...(Platform.OS !== 'web' && {
+      shadowColor: '#000', shadowOffset: { width: 0, height: 16 },
+      shadowOpacity: 0.6, shadowRadius: 32, elevation: 20,
+    }),
+  },
+  modalTitle: { fontSize: 20, fontWeight: '700', color: '#FFFFFF', marginBottom: 10, textAlign: 'center' },
+  modalMessage: { fontSize: 15, color: 'rgba(255,255,255,0.65)', lineHeight: 22, textAlign: 'center', marginBottom: 24 },
+  modalActions: { flexDirection: 'row', gap: 12 },
+  modalCancel: {
+    flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  modalCancelText: { fontSize: 16, fontWeight: '600', color: '#FFFFFF' },
+  modalConfirm: {
+    flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center',
+  },
+  modalConfirmText: { fontSize: 16, fontWeight: '600', color: '#FFFFFF' },
 });
