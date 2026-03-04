@@ -259,7 +259,7 @@ export default function HomeScreen() {
         )}
 
         <View style={styles.connectedBotsSection}>
-          {/* ========== 2. TRADING PANEL — SAME WIDTH AS OTHER CARDS ========== */}
+          {/* ========== 2. TRADING PANEL — iOS 26 LUXURY GLASS ========== */}
           {primaryEA && (
             <View style={styles.neonWrap}>
               <Animated.View style={[styles.neonSpinner, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 40deg, rgba(' + a + ', 0.5) 80deg, transparent 120deg, transparent 180deg, ' + ac + ' 220deg, rgba(' + a + ', 0.5) 260deg, transparent 300deg, transparent 360deg)' }]} />
@@ -267,29 +267,56 @@ export default function HomeScreen() {
               <View style={[styles.liquidInner, Platform.OS === 'web' && { background: 'radial-gradient(ellipse 120% 40% at 30% 25%, rgba(255,255,255,0.25) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.12) 0%, rgba(' + a + ', 0.08) 30%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0.8) 100%)', backdropFilter: 'blur(80px) saturate(200%)', WebkitBackdropFilter: 'blur(80px) saturate(200%)', boxShadow: 'inset 0 2px 8px rgba(255,255,255,0.25), inset 0 -4px 12px rgba(0,0,0,0.4), inset 0 40px 60px -20px rgba(255,255,255,0.08), 0 20px 60px rgba(0,0,0,0.6), 0 0 30px rgba(' + a + ', 0.2), 0 0 80px rgba(' + a + ', 0.08)' }]}>
                 {renderBubbles(cardBubbles)}
                 <View style={[styles.refraction, Platform.OS === 'web' && { background: 'linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 40%, transparent 100%)' }]} />
-                <View style={[styles.meniscus, Platform.OS === 'web' && { background: 'radial-gradient(ellipse 60% 100% at 50% 0%, rgba(255,255,255,0.12) 0%, transparent 100%)' }]} />
+
+                {/* ===== PANEL HEADER — GLOWING ICON + EA INFO ===== */}
+                <View style={styles.panelHeader}>
+                  <View style={[styles.panelIconWrap, Platform.OS === 'web' && { boxShadow: '0 0 16px rgba(' + a + ', 0.4), 0 0 32px rgba(' + a + ', 0.2), 0 0 48px rgba(' + a + ', 0.1), 0 4px 12px rgba(0,0,0,0.5)' }]}>
+                    <Animated.View style={[styles.panelIconNeon, { transform: [{ rotate: tradeSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 50deg, rgba(' + a + ', 0.5) 100deg, transparent 150deg, transparent 210deg, ' + ac + ' 260deg, rgba(' + a + ', 0.5) 310deg, transparent 360deg)' }]} />
+                    <View style={[styles.panelIconInner, Platform.OS === 'web' && { boxShadow: 'inset 0 1px 4px rgba(255,255,255,0.15), inset 0 -2px 4px rgba(0,0,0,0.2)' }]}>
+                      {primaryEAImage && !logoError ? (
+                        <Image source={{ uri: primaryEAImage }} style={styles.panelIconImg} resizeMode="cover" />
+                      ) : (
+                        <Image source={require('../../assets/images/icon.png')} style={styles.panelIconImg} resizeMode="contain" />
+                      )}
+                    </View>
+                  </View>
+                  <View style={styles.panelInfo}>
+                    <Text style={[styles.panelOwner, { color: ac }]}>{primaryEA.description || 'TRADE PORT EA'}</Text>
+                    <Text style={styles.panelBotName} numberOfLines={1}>{primaryEA.name}</Text>
+                  </View>
+                </View>
+
+                {/* ===== GLASS ACTION BUTTONS ===== */}
                 <View style={styles.bottomActions}>
-                  <TouchableOpacity testID="action-quotes" style={[styles.actionButton, styles.secondaryButton]} onPress={handleQuotes}>
-                    <View style={styles.buttonIconContainer}>
-                      <TrendingUp color={ac} size={18} />
-                    </View>
-                    <Text style={styles.secondaryButtonText}>QUOTES</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity testID="action-start" style={[styles.actionButton, styles.tradeButton, isBotActive && styles.tradeButtonActive]} onPress={() => { try { setBotActive(!isBotActive); } catch (e) { console.error(e); } }}>
-                    <View style={styles.tradeIconOuter}>
-                      <Animated.View style={[styles.tradeIconSpinner, { transform: [{ rotate: tradeSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 60deg, rgba(' + a + ', 0.5) 120deg, transparent 180deg, transparent 240deg, ' + ac + ' 300deg, transparent 360deg)' }]} />
-                      <Animated.View style={[styles.tradeIconGlow, { transform: [{ rotate: tradeSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.5) 60deg, transparent 180deg, rgba(' + a + ', 0.5) 300deg, transparent 360deg)' }]} />
-                      <View style={styles.tradeIconInner}>
-                        {isBotActive ? <Square color={ac} size={20} fill={ac} style={Platform.OS === 'web' ? { filter: 'drop-shadow(0 0 6px rgba(' + a + ', 0.7))' } : {}} /> : <Play color={ac} size={22} fill={ac} style={Platform.OS === 'web' ? { filter: 'drop-shadow(0 0 6px rgba(' + a + ', 0.7))' } : {}} />}
+                  <TouchableOpacity testID="action-start" style={styles.actionButton} onPress={() => { try { setBotActive(!isBotActive); } catch (e) { console.error(e); } }}>
+                    <View style={[styles.glassActionBtn, isBotActive && styles.glassActionBtnActive, Platform.OS === 'web' && { background: 'radial-gradient(ellipse 130% 60% at 30% 20%, rgba(255,255,255,0.14) 0%, transparent 55%), linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0.2) 100%)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', boxShadow: 'inset 0 0.5px 1px rgba(255,255,255,0.2), inset 0 -0.5px 1px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.3), 0 0 16px rgba(' + a + ', ' + (isBotActive ? '0.15' : '0.04') + ')' }]}>
+                      <View style={styles.tradeIconOuter}>
+                        <Animated.View style={[styles.tradeIconSpinner, { transform: [{ rotate: tradeSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 60deg, rgba(' + a + ', 0.5) 120deg, transparent 180deg, transparent 240deg, ' + ac + ' 300deg, transparent 360deg)' }]} />
+                        <Animated.View style={[styles.tradeIconGlow, { transform: [{ rotate: tradeSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.5) 60deg, transparent 180deg, rgba(' + a + ', 0.5) 300deg, transparent 360deg)' }]} />
+                        <View style={styles.tradeIconInner}>
+                          {isBotActive ? <Square color={ac} size={18} fill={ac} style={Platform.OS === 'web' ? { filter: 'drop-shadow(0 0 6px rgba(' + a + ', 0.7))' } : {}} /> : <Play color={ac} size={20} fill={ac} style={Platform.OS === 'web' ? { filter: 'drop-shadow(0 0 6px rgba(' + a + ', 0.7))' } : {}} />}
+                        </View>
                       </View>
+                      <Text style={[styles.glassActionText, isBotActive && { color: ac }]}>{isBotActive ? 'STOP' : 'TRADE'}</Text>
                     </View>
-                    <Text style={[styles.tradeButtonText, isBotActive && styles.tradeButtonTextActive]}>{isBotActive ? 'STOP' : 'TRADE'}</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity testID="action-remove" style={[styles.actionButton, styles.removeButton]} onPress={handleRemoveActiveBot}>
-                    <View style={styles.buttonIconContainer}>
-                      <Trash2 color={ac} size={18} />
+
+                  <TouchableOpacity testID="action-quotes" style={styles.actionButton} onPress={handleQuotes}>
+                    <View style={[styles.glassActionBtn, Platform.OS === 'web' && { background: 'radial-gradient(ellipse 130% 60% at 30% 20%, rgba(255,255,255,0.14) 0%, transparent 55%), linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0.2) 100%)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', boxShadow: 'inset 0 0.5px 1px rgba(255,255,255,0.2), inset 0 -0.5px 1px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.3)' }]}>
+                      <View style={styles.glassBtnCircle}>
+                        <TrendingUp color={ac} size={18} />
+                      </View>
+                      <Text style={styles.glassActionText}>QUOTES</Text>
                     </View>
-                    <Text style={styles.removeButtonText}>REMOVE</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity testID="action-remove" style={styles.actionButton} onPress={handleRemoveActiveBot}>
+                    <View style={[styles.glassActionBtn, Platform.OS === 'web' && { background: 'radial-gradient(ellipse 130% 60% at 30% 20%, rgba(255,255,255,0.14) 0%, transparent 55%), linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0.2) 100%)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', boxShadow: 'inset 0 0.5px 1px rgba(255,255,255,0.2), inset 0 -0.5px 1px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.3)' }]}>
+                      <View style={styles.glassBtnCircle}>
+                        <Trash2 color="rgba(255,255,255,0.5)" size={18} />
+                      </View>
+                      <Text style={[styles.glassActionText, { color: 'rgba(255,255,255,0.5)' }]}>REMOVE</Text>
+                    </View>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -763,73 +790,119 @@ const styles = StyleSheet.create({
     }),
   },
 
-  /* ========== TRADING PANEL — COMPACT ========== */
+  /* ========== PANEL HEADER — GLOWING ICON ========== */
+  panelHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 12,
+    zIndex: 5,
+    borderBottomWidth: 0.5,
+    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  panelIconWrap: {
+    position: 'relative',
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    padding: 2,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  panelIconNeon: {
+    position: 'absolute',
+    top: '-30%',
+    left: '-30%',
+    width: '160%',
+    height: '160%',
+  },
+  panelIconInner: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 14,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(12, 12, 12, 0.95)',
+    zIndex: 1,
+  },
+  panelIconImg: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 14,
+  },
+  panelInfo: {
+    flex: 1,
+    marginLeft: 14,
+  },
+  panelOwner: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: 2,
+  },
+  panelBotName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: -0.2,
+  },
+
+  /* ========== GLASS ACTION BUTTONS ========== */
   bottomActions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    gap: 6,
-    paddingVertical: 8,
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    gap: 10,
+    paddingVertical: 14,
     zIndex: 5,
   },
   actionButton: {
     flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
+  },
+  glassActionBtn: {
     alignItems: 'center',
     justifyContent: 'center',
-    flexDirection: 'column',
-    gap: 6,
-    minHeight: 56,
-    backgroundColor: 'transparent',
-  },
-  tradeButton: {
-    backgroundColor: 'transparent',
-  },
-  tradeButtonActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingVertical: 14,
+    paddingHorizontal: 6,
     borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    gap: 8,
+    minHeight: 82,
+    ...(Platform.OS !== 'web' && {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.25,
+      shadowRadius: 8,
+      elevation: 3,
+    }),
   },
-  secondaryButton: {
-    backgroundColor: 'transparent',
+  glassActionBtnActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.18)',
   },
-  removeButton: {
-    backgroundColor: 'transparent',
-  },
-  buttonIconContainer: {
+  glassBtnCircle: {
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 2,
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: 'rgba(255, 255, 255, 0.1)',
     ...(Platform.OS === 'web' && {
-      boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.15), inset 0 -2px 3px rgba(0,0,0,0.1)',
+      boxShadow: 'inset 0 1px 3px rgba(255,255,255,0.15), inset 0 -1px 2px rgba(0,0,0,0.1)',
     }),
   },
-  tradeButtonText: {
+  glassActionText: {
     color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-    textAlign: 'center',
-  },
-  tradeButtonTextActive: {
-    color: '#FFFFFF',
-  },
-  secondaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-    textAlign: 'center',
-  },
-  removeButtonText: {
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.8,
     textAlign: 'center',
