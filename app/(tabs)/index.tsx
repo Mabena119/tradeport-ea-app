@@ -210,7 +210,7 @@ export default function HomeScreen() {
         {primaryEA ? (
           <View style={styles.mainEAContainer}>
 
-            {/* ========== HERO IMAGE — LIQUID GLASS WRAP ========== */}
+            {/* ========== 1. HERO IMAGE — STANDALONE ========== */}
             <View style={styles.heroWrap}>
               <Animated.View style={[styles.heroNeonSpinner, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 40deg, rgba(' + a + ', 0.5) 80deg, transparent 120deg, transparent 180deg, ' + ac + ' 220deg, rgba(' + a + ', 0.5) 260deg, transparent 300deg, transparent 360deg)' }]} />
               <Animated.View style={[styles.heroNeonGlow, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.4) 40deg, transparent 120deg, transparent 180deg, rgba(' + a + ', 0.4) 220deg, transparent 300deg, transparent 360deg)' }]} />
@@ -220,89 +220,74 @@ export default function HomeScreen() {
                   source={{ uri: primaryEAImage }}
                   style={[styles.hero, Platform.OS === 'web' && { boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 30px rgba(' + a + ', 0.25), 0 0 80px rgba(' + a + ', 0.1)' }]}
                   imageStyle={styles.heroImageStyle}
-                  onError={(error) => {
-                    console.log('EA Image Error: Failed to load image:', primaryEAImage, error);
-                    setLogoError(true);
-                  }}
+                  onError={(error) => { console.log('EA Image Error:', error); setLogoError(true); }}
                   resizeMode="cover"
                 >
                   {renderBubbles(heroBubbles)}
                   <View style={[styles.heroRefraction, Platform.OS === 'web' && { background: 'linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.03) 50%, transparent 100%)' }]} />
+                  {/* Bot name overlaid at bottom of hero */}
+                  <View style={styles.heroNameOverlay}>
+                    <Text testID="ea-title" style={styles.botMainName} numberOfLines={3} ellipsizeMode="tail">{primaryEA.name}</Text>
+                  </View>
                 </ImageBackground>
               ) : (
                 <View style={[styles.heroFallback, Platform.OS === 'web' && { boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 30px rgba(' + a + ', 0.25), 0 0 80px rgba(' + a + ', 0.1)' }]}>
-                  <Image
-                    testID="fallback-app-icon"
-                    source={require('../../assets/images/icon.png')}
-                    style={styles.fallbackIcon}
-                    resizeMode="contain"
-                  />
+                  <Image testID="fallback-app-icon" source={require('../../assets/images/icon.png')} style={styles.fallbackIcon} resizeMode="contain" />
                   {renderBubbles(heroBubbles)}
                   <View style={[styles.heroRefraction, Platform.OS === 'web' && { background: 'linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.03) 50%, transparent 100%)' }]} />
+                  <View style={styles.heroNameOverlay}>
+                    <Text testID="ea-title" style={styles.botMainName} numberOfLines={3} ellipsizeMode="tail">{primaryEA.name}</Text>
+                  </View>
                 </View>
               )}
             </View>
 
-            {/* ========== HERO CONTENT OVERLAY ========== */}
-            <View style={styles.heroContent}>
-              <View style={styles.topSection}>
-                <View style={styles.titleBlock}>
-                  <Text testID="ea-title" style={styles.botMainName} numberOfLines={3} ellipsizeMode="tail">{primaryEA.name}</Text>
-                </View>
-              </View>
+            {/* ========== 2. TRADING PANEL — SEPARATE CARD ========== */}
+            <View style={styles.neonWrap}>
+              <Animated.View style={[styles.neonSpinner, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 40deg, rgba(' + a + ', 0.5) 80deg, transparent 120deg, transparent 180deg, ' + ac + ' 220deg, rgba(' + a + ', 0.5) 260deg, transparent 300deg, transparent 360deg)' }]} />
+              <Animated.View style={[styles.neonGlowSpinner, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.4) 40deg, transparent 120deg, transparent 180deg, rgba(' + a + ', 0.4) 220deg, transparent 300deg, transparent 360deg)' }]} />
+              <View style={[styles.liquidInner, Platform.OS === 'web' && { background: 'radial-gradient(ellipse 120% 40% at 30% 25%, rgba(255,255,255,0.25) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.12) 0%, rgba(' + a + ', 0.08) 30%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0.8) 100%)', backdropFilter: 'blur(80px) saturate(200%)', WebkitBackdropFilter: 'blur(80px) saturate(200%)', boxShadow: 'inset 0 2px 8px rgba(255,255,255,0.25), inset 0 -4px 12px rgba(0,0,0,0.4), inset 0 40px 60px -20px rgba(255,255,255,0.08), 0 20px 60px rgba(0,0,0,0.6), 0 0 30px rgba(' + a + ', 0.2), 0 0 80px rgba(' + a + ', 0.08)' }]}>
+                {renderBubbles(cardBubbles)}
+                <View style={[styles.refraction, Platform.OS === 'web' && { background: 'linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 40%, transparent 100%)' }]} />
+                <View style={[styles.meniscus, Platform.OS === 'web' && { background: 'radial-gradient(ellipse 60% 100% at 50% 0%, rgba(255,255,255,0.12) 0%, transparent 100%)' }]} />
+                <View style={styles.bottomActions}>
+                  <TouchableOpacity testID="action-quotes" style={[styles.actionButton, styles.secondaryButton]} onPress={handleQuotes}>
+                    <View style={styles.buttonIconContainer}>
+                      <TrendingUp color={ac} size={18} />
+                    </View>
+                    <Text style={styles.secondaryButtonText}>QUOTES</Text>
+                  </TouchableOpacity>
 
-              {/* ========== TRADING PANEL — LIQUID GLASS ========== */}
-              <View style={styles.neonWrap}>
-                <Animated.View style={[styles.neonSpinner, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 40deg, rgba(' + a + ', 0.5) 80deg, transparent 120deg, transparent 180deg, ' + ac + ' 220deg, rgba(' + a + ', 0.5) 260deg, transparent 300deg, transparent 360deg)' }]} />
-                <Animated.View style={[styles.neonGlowSpinner, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.4) 40deg, transparent 120deg, transparent 180deg, rgba(' + a + ', 0.4) 220deg, transparent 300deg, transparent 360deg)' }]} />
-                <View style={[styles.liquidInner, Platform.OS === 'web' && { background: 'radial-gradient(ellipse 120% 40% at 30% 25%, rgba(255,255,255,0.25) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.12) 0%, rgba(' + a + ', 0.08) 30%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0.8) 100%)', backdropFilter: 'blur(80px) saturate(200%)', WebkitBackdropFilter: 'blur(80px) saturate(200%)', boxShadow: 'inset 0 2px 8px rgba(255,255,255,0.25), inset 0 -4px 12px rgba(0,0,0,0.4), inset 0 40px 60px -20px rgba(255,255,255,0.08), 0 20px 60px rgba(0,0,0,0.6), 0 0 30px rgba(' + a + ', 0.2), 0 0 80px rgba(' + a + ', 0.08)' }]}>
-                  {renderBubbles(cardBubbles)}
-                  <View style={[styles.refraction, Platform.OS === 'web' && { background: 'linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 40%, transparent 100%)' }]} />
-                  <View style={[styles.meniscus, Platform.OS === 'web' && { background: 'radial-gradient(ellipse 60% 100% at 50% 0%, rgba(255,255,255,0.12) 0%, transparent 100%)' }]} />
-                  <View style={styles.bottomActions}>
-                    <TouchableOpacity testID="action-quotes" style={[styles.actionButton, styles.secondaryButton]} onPress={handleQuotes}>
-                      <View style={styles.buttonIconContainer}>
-                        <TrendingUp color={ac} size={18} />
+                  <TouchableOpacity
+                    testID="action-start"
+                    style={[styles.actionButton, styles.tradeButton, isBotActive && styles.tradeButtonActive]}
+                    onPress={() => {
+                      console.log('Start/Stop button pressed, current state:', isBotActive);
+                      try { setBotActive(!isBotActive); } catch (error) { console.error('Error:', error); }
+                    }}
+                  >
+                    <View style={styles.tradeIconOuter}>
+                      <Animated.View style={[styles.tradeIconSpinner, { transform: [{ rotate: tradeSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 60deg, rgba(' + a + ', 0.5) 120deg, transparent 180deg, transparent 240deg, ' + ac + ' 300deg, transparent 360deg)' }]} />
+                      <Animated.View style={[styles.tradeIconGlow, { transform: [{ rotate: tradeSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.5) 60deg, transparent 180deg, rgba(' + a + ', 0.5) 300deg, transparent 360deg)' }]} />
+                      <View style={styles.tradeIconInner}>
+                        {isBotActive ? (
+                          <Square color={ac} size={20} fill={ac} style={Platform.OS === 'web' ? { filter: 'drop-shadow(0 0 6px rgba(' + a + ', 0.7)) drop-shadow(0 0 14px rgba(' + a + ', 0.4))' } : {}} />
+                        ) : (
+                          <Play color={ac} size={22} fill={ac} style={Platform.OS === 'web' ? { filter: 'drop-shadow(0 0 6px rgba(' + a + ', 0.7)) drop-shadow(0 0 14px rgba(' + a + ', 0.4))' } : {}} />
+                        )}
                       </View>
-                      <Text style={styles.secondaryButtonText}>QUOTES</Text>
-                    </TouchableOpacity>
+                    </View>
+                    <Text style={[styles.tradeButtonText, isBotActive && styles.tradeButtonTextActive]}>
+                      {isBotActive ? 'STOP' : 'TRADE'}
+                    </Text>
+                  </TouchableOpacity>
 
-                    <TouchableOpacity
-                      testID="action-start"
-                      style={[styles.actionButton, styles.tradeButton, isBotActive && styles.tradeButtonActive]}
-                      onPress={() => {
-                        console.log('Start/Stop button pressed, current state:', isBotActive);
-                        try {
-                          setBotActive(!isBotActive);
-                          console.log('Bot active state changed to:', !isBotActive);
-                        } catch (error) {
-                          console.error('Error changing bot state:', error);
-                        }
-                      }}
-                    >
-                      <View style={styles.tradeIconOuter}>
-                        <Animated.View style={[styles.tradeIconSpinner, { transform: [{ rotate: tradeSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 60deg, rgba(' + a + ', 0.5) 120deg, transparent 180deg, transparent 240deg, ' + ac + ' 300deg, transparent 360deg)' }]} />
-                        <Animated.View style={[styles.tradeIconGlow, { transform: [{ rotate: tradeSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.5) 60deg, transparent 180deg, rgba(' + a + ', 0.5) 300deg, transparent 360deg)' }]} />
-                        <View style={styles.tradeIconInner}>
-                          {isBotActive ? (
-                            <Square color={ac} size={20} fill={ac} style={Platform.OS === 'web' ? { filter: 'drop-shadow(0 0 6px rgba(' + a + ', 0.7)) drop-shadow(0 0 14px rgba(' + a + ', 0.4))' } : {}} />
-                          ) : (
-                            <Play color={ac} size={22} fill={ac} style={Platform.OS === 'web' ? { filter: 'drop-shadow(0 0 6px rgba(' + a + ', 0.7)) drop-shadow(0 0 14px rgba(' + a + ', 0.4))' } : {}} />
-                          )}
-                        </View>
-                      </View>
-                      <Text style={[styles.tradeButtonText, isBotActive && styles.tradeButtonTextActive]}>
-                        {isBotActive ? 'STOP' : 'TRADE'}
-                      </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity testID="action-remove" style={[styles.actionButton, styles.removeButton]} onPress={handleRemoveActiveBot}>
-                      <View style={styles.buttonIconContainer}>
-                        <Trash2 color={ac} size={18} />
-                      </View>
-                      <Text style={styles.removeButtonText}>REMOVE</Text>
-                    </TouchableOpacity>
-                  </View>
+                  <TouchableOpacity testID="action-remove" style={[styles.actionButton, styles.removeButton]} onPress={handleRemoveActiveBot}>
+                    <View style={styles.buttonIconContainer}>
+                      <Trash2 color={ac} size={18} />
+                    </View>
+                    <Text style={styles.removeButtonText}>REMOVE</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             </View>
@@ -331,27 +316,15 @@ export default function HomeScreen() {
                   key={`${ea.id}-${index}`}
                   style={styles.botCard}
                   onPress={async () => {
-                    try {
-                      console.log('Switching active EA to:', ea.name, ea.id);
-                      await setActiveEA(ea.id);
-                    } catch (error) {
-                      console.error('Failed to switch active EA:', error);
-                    }
+                    try { console.log('Switching active EA to:', ea.name); await setActiveEA(ea.id); } catch (error) { console.error('Failed:', error); }
                   }}
                 >
                   <View style={styles.botCardContent}>
                     <View style={styles.botIcon}>
                       {getEAImageUrl(ea as unknown as EA) ? (
-                        <Image
-                          testID={`ea-logo-small-${index}`}
-                          source={{ uri: getEAImageUrl(ea as unknown as EA) as string }}
-                          style={styles.smallLogo}
-                        />
+                        <Image testID={`ea-logo-small-${index}`} source={{ uri: getEAImageUrl(ea as unknown as EA) as string }} style={styles.smallLogo} />
                       ) : (
-                        <View style={styles.robotFace}>
-                          <View style={styles.robotEye} />
-                          <View style={styles.robotEye} />
-                        </View>
+                        <View style={styles.robotFace}><View style={styles.robotEye} /><View style={styles.robotEye} /></View>
                       )}
                     </View>
                     <Text style={styles.botName} numberOfLines={2} ellipsizeMode="tail">{ea.name}</Text>
@@ -361,7 +334,7 @@ export default function HomeScreen() {
             </>
           )}
 
-          {/* ========== ADD EA — LIQUID GLASS PILL ========== */}
+          {/* ========== 3. ADD EA — LIQUID GLASS PILL ========== */}
           <View style={styles.neonWrapPill}>
             <Animated.View style={[styles.neonSpinnerPill, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 40deg, rgba(' + a + ', 0.5) 80deg, transparent 120deg, transparent 180deg, ' + ac + ' 220deg, rgba(' + a + ', 0.5) 260deg, transparent 300deg, transparent 360deg)' }]} />
             <Animated.View style={[styles.neonGlowSpinnerPill, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.4) 40deg, transparent 120deg, transparent 180deg, rgba(' + a + ', 0.4) 220deg, transparent 300deg, transparent 360deg)' }]} />
@@ -376,6 +349,25 @@ export default function HomeScreen() {
               </View>
             </TouchableOpacity>
           </View>
+
+          {/* ========== 4. ACTIVE EA INFO CARD ========== */}
+          {primaryEA && (
+            <View style={[styles.eaInfoCard, Platform.OS === 'web' && { background: 'radial-gradient(ellipse 120% 50% at 20% 20%, rgba(255,255,255,0.12) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.06) 0%, rgba(0,0,0,0.7) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', boxShadow: '0 4px 8px rgba(0,0,0,0.3), 0 12px 24px rgba(0,0,0,0.35), 0 24px 48px rgba(0,0,0,0.25), 0 6px 20px rgba(' + a + ', 0.08)' }]}>
+              <View style={styles.eaInfoImageWrap}>
+                {primaryEAImage && !logoError ? (
+                  <Image source={{ uri: primaryEAImage }} style={styles.eaInfoImage} resizeMode="cover" />
+                ) : (
+                  <Image source={require('../../assets/images/icon.png')} style={styles.eaInfoImage} resizeMode="contain" />
+                )}
+              </View>
+              <View style={styles.eaInfoTextWrap}>
+                <Text style={styles.eaInfoName} numberOfLines={2}>{primaryEA.name}</Text>
+                <Text style={[styles.eaInfoStatus, { color: isBotActive ? '#16A34A' : 'rgba(255,255,255,0.4)' }]}>
+                  {isBotActive ? 'RUNNING' : 'IDLE'}
+                </Text>
+              </View>
+            </View>
+          )}
         </View>
 
       </ScrollView>
@@ -603,24 +595,18 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '-3deg' }],
   },
 
-  /* ========== HERO CONTENT OVERLAY ========== */
-  heroContent: {
+  /* ========== HERO NAME OVERLAY ========== */
+  heroNameOverlay: {
     position: 'absolute',
-    bottom: 12,
-    left: 12,
-    right: 12,
-    height: 320,
-    justifyContent: 'space-between',
-    paddingTop: 40,
-    paddingBottom: 20,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
     zIndex: 10,
-  },
-  topSection: {
-    alignItems: 'center',
-    marginTop: 100,
-  },
-  titleBlock: {
-    alignItems: 'center',
+    ...(Platform.OS === 'web' && {
+      background: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.7) 100%)',
+    }),
   },
   botMainName: {
     color: '#FFFFFF',
@@ -657,7 +643,8 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     padding: 2.5,
     overflow: 'hidden',
-    marginTop: 12,
+    marginTop: 16,
+    marginHorizontal: 8,
   },
   neonSpinner: {
     position: 'absolute',
@@ -943,5 +930,52 @@ const styles = StyleSheet.create({
     marginTop: 3,
     fontWeight: '500',
     letterSpacing: 0.3,
+  },
+
+  /* ========== EA INFO CARD ========== */
+  eaInfoCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(12, 12, 12, 0.9)',
+    borderRadius: 22,
+    padding: 14,
+    marginBottom: 30,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    ...(Platform.OS !== 'web' && {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.4,
+      shadowRadius: 16,
+      elevation: 8,
+    }),
+  },
+  eaInfoImageWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  eaInfoImage: {
+    width: 56,
+    height: 56,
+  },
+  eaInfoTextWrap: {
+    flex: 1,
+    marginLeft: 14,
+  },
+  eaInfoName: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  eaInfoStatus: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 1,
+    marginTop: 4,
   },
 });
