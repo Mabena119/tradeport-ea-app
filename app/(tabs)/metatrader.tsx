@@ -2269,67 +2269,87 @@ const styles = StyleSheet.create({
   linkButtonText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700', letterSpacing: 1.2, zIndex: 3 },
   comingSoonText: { color: 'rgba(255,255,255,0.4)', fontSize: 12, fontWeight: 'bold', zIndex: 3 },
 
-  /* ========== BROKER LIST — iOS 26 LIQUID GLASS DROPDOWN ========== */
+  /* ========== BROKER LIST — iOS 26.3 GLASSMORPHISM DROPDOWN ========== */
   brokerListContainer: {
-    marginTop: 8, zIndex: 100, borderRadius: 22, maxHeight: 340, overflow: 'hidden',
-    backgroundColor: 'rgba(28, 28, 30, 0.88)',
-    borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.14)',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.5, shadowRadius: 24, elevation: 12,
+    marginTop: 8, zIndex: 100, borderRadius: 24, maxHeight: 360, overflow: 'hidden',
+    backgroundColor: 'rgba(44, 44, 46, 0.72)',
+    borderWidth: 0.5, borderColor: 'rgba(255, 255, 255, 0.18)',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.55, shadowRadius: 32, elevation: 14,
     ...(Platform.OS === 'web' && {
-      backdropFilter: 'blur(60px) saturate(190%)', WebkitBackdropFilter: 'blur(60px) saturate(190%)',
-      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15), 0 12px 40px rgba(0,0,0,0.6), 0 0 0 0.5px rgba(255,255,255,0.08)',
+      backdropFilter: 'blur(80px) saturate(200%) brightness(1.05)',
+      WebkitBackdropFilter: 'blur(80px) saturate(200%) brightness(1.05)',
+      boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.25), inset 0 -0.5px 0 rgba(0,0,0,0.1), 0 16px 48px rgba(0,0,0,0.55), 0 4px 12px rgba(0,0,0,0.3), 0 0 0 0.5px rgba(255,255,255,0.06)',
     }),
   },
   brokerListHeader: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 18, paddingVertical: 14,
-    borderBottomWidth: 0.5, borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: 20, paddingVertical: 16,
+    ...(Platform.OS === 'web' && {
+      background: 'linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 100%)',
+    }),
   },
-  brokerListTitle: { fontSize: 15, fontWeight: '600', color: '#FFFFFF', letterSpacing: 0.3 },
+  brokerListTitle: { fontSize: 17, fontWeight: '600', color: '#FFFFFF', letterSpacing: -0.2 },
   brokerListActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   refreshButton: {
-    width: 30, height: 30, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)', borderRadius: 10,
+    width: 32, height: 32, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)', borderRadius: 10,
+    ...(Platform.OS === 'web' && {
+      backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+    }),
   },
   refreshIcon: { opacity: 0.7 },
   refreshIconSpinning: { opacity: 0.5 },
   closeBrokerList: {
-    width: 30, height: 30, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)', borderRadius: 10,
+    width: 32, height: 32, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)', borderRadius: 10,
+    ...(Platform.OS === 'web' && {
+      backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+    }),
   },
-  closeBrokerListText: { color: 'rgba(255,255,255,0.5)', fontSize: 18, fontWeight: '600', marginTop: -1 },
+  closeBrokerListText: { color: 'rgba(255,255,255,0.5)', fontSize: 16, fontWeight: '600', marginTop: -1 },
   errorContainer: {
-    paddingHorizontal: 18, paddingVertical: 10, backgroundColor: 'rgba(220, 38, 38, 0.85)',
-    borderBottomWidth: 0.5, borderBottomColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: 20, paddingVertical: 10,
+    backgroundColor: 'rgba(220, 38, 38, 0.7)',
+    ...(Platform.OS === 'web' && {
+      backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+    }),
   },
   errorText: { fontSize: 13, color: '#FFFFFF', textAlign: 'center', fontWeight: '500' },
   loadingBrokersContainer: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    paddingVertical: 18, borderBottomWidth: 0.5, borderBottomColor: 'rgba(255,255,255,0.06)',
+    paddingVertical: 20,
   },
-  loadingBrokersText: { marginLeft: 10, fontSize: 13, color: 'rgba(255,255,255,0.6)', fontWeight: '500' },
-  brokerList: { maxHeight: 260 },
+  loadingBrokersText: { marginLeft: 10, fontSize: 14, color: 'rgba(255,255,255,0.55)', fontWeight: '500' },
+  brokerList: { maxHeight: 280, paddingHorizontal: 8, paddingVertical: 4 },
   brokerItem: {
-    paddingHorizontal: 18, paddingVertical: 14,
-    borderBottomWidth: 0.5, borderBottomColor: 'rgba(255,255,255,0.05)',
-    marginHorizontal: 6, borderRadius: 12,
+    paddingHorizontal: 14, paddingVertical: 14,
+    marginVertical: 2, borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    ...(Platform.OS === 'web' && {
+      transition: 'background-color 0.15s ease',
+    }),
   },
   brokerItemContent: { flexDirection: 'row', alignItems: 'center' },
   brokerStatusDot: {
-    width: 9, height: 9, borderRadius: 5, marginRight: 14,
-    ...(Platform.OS === 'web' && { boxShadow: '0 0 6px currentColor' }),
+    width: 10, height: 10, borderRadius: 5, marginRight: 14,
   },
-  liveBrokerDot: { backgroundColor: '#34D399' },
-  demoBrokerDot: { backgroundColor: '#FBBF24' },
-  brokerItemText: { flex: 1, fontSize: 15, color: '#FFFFFF', fontWeight: '500' },
+  liveBrokerDot: {
+    backgroundColor: '#34D399',
+    ...(Platform.OS === 'web' && { boxShadow: '0 0 8px rgba(52, 211, 153, 0.5)' }),
+  },
+  demoBrokerDot: {
+    backgroundColor: '#FBBF24',
+    ...(Platform.OS === 'web' && { boxShadow: '0 0 8px rgba(251, 191, 36, 0.4)' }),
+  },
+  brokerItemText: { flex: 1, fontSize: 16, color: '#FFFFFF', fontWeight: '500', letterSpacing: -0.1 },
   brokerItemType: {
-    fontSize: 10, fontWeight: '700', color: 'rgba(255,255,255,0.45)', letterSpacing: 0.8,
-    backgroundColor: 'rgba(255,255,255,0.08)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6,
+    fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.5)', letterSpacing: 0.6,
+    backgroundColor: 'rgba(255,255,255,0.08)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8,
   },
-  noBrokersContainer: { alignItems: 'center', paddingVertical: 44, paddingHorizontal: 20 },
-  noBrokersText: { fontSize: 16, fontWeight: '600', color: '#FFFFFF', marginTop: 14 },
-  noBrokersSubtext: { fontSize: 14, color: 'rgba(255,255,255,0.4)', marginTop: 4 },
+  noBrokersContainer: { alignItems: 'center', paddingVertical: 48, paddingHorizontal: 20 },
+  noBrokersText: { fontSize: 17, fontWeight: '600', color: '#FFFFFF', marginTop: 14, letterSpacing: -0.2 },
+  noBrokersSubtext: { fontSize: 15, color: 'rgba(255,255,255,0.4)', marginTop: 4 },
 
   /* ========== TOASTS ========== */
   authToastContainer: {

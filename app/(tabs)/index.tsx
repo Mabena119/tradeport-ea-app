@@ -242,7 +242,20 @@ export default function HomeScreen() {
               )}
             </View>
 
-            {/* ========== 2. TRADING PANEL — SEPARATE CARD ========== */}
+          </View>
+        ) : (
+          <View style={styles.mainEAContainer}>
+            <RobotLogo size={200} />
+            <View style={styles.botInfoContainer}>
+              <Text style={styles.botMainName}>NO EA CONNECTED</Text>
+              <Text style={styles.botDescription}>ADD A LICENSE KEY TO GET STARTED</Text>
+            </View>
+          </View>
+        )}
+
+        <View style={styles.connectedBotsSection}>
+          {/* ========== 2. TRADING PANEL — SAME WIDTH AS OTHER CARDS ========== */}
+          {primaryEA && (
             <View style={styles.neonWrap}>
               <Animated.View style={[styles.neonSpinner, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 40deg, rgba(' + a + ', 0.5) 80deg, transparent 120deg, transparent 180deg, ' + ac + ' 220deg, rgba(' + a + ', 0.5) 260deg, transparent 300deg, transparent 360deg)' }]} />
               <Animated.View style={[styles.neonGlowSpinner, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.4) 40deg, transparent 120deg, transparent 180deg, rgba(' + a + ', 0.4) 220deg, transparent 300deg, transparent 360deg)' }]} />
@@ -257,31 +270,16 @@ export default function HomeScreen() {
                     </View>
                     <Text style={styles.secondaryButtonText}>QUOTES</Text>
                   </TouchableOpacity>
-
-                  <TouchableOpacity
-                    testID="action-start"
-                    style={[styles.actionButton, styles.tradeButton, isBotActive && styles.tradeButtonActive]}
-                    onPress={() => {
-                      console.log('Start/Stop button pressed, current state:', isBotActive);
-                      try { setBotActive(!isBotActive); } catch (error) { console.error('Error:', error); }
-                    }}
-                  >
+                  <TouchableOpacity testID="action-start" style={[styles.actionButton, styles.tradeButton, isBotActive && styles.tradeButtonActive]} onPress={() => { try { setBotActive(!isBotActive); } catch (e) { console.error(e); } }}>
                     <View style={styles.tradeIconOuter}>
                       <Animated.View style={[styles.tradeIconSpinner, { transform: [{ rotate: tradeSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 60deg, rgba(' + a + ', 0.5) 120deg, transparent 180deg, transparent 240deg, ' + ac + ' 300deg, transparent 360deg)' }]} />
                       <Animated.View style={[styles.tradeIconGlow, { transform: [{ rotate: tradeSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.5) 60deg, transparent 180deg, rgba(' + a + ', 0.5) 300deg, transparent 360deg)' }]} />
                       <View style={styles.tradeIconInner}>
-                        {isBotActive ? (
-                          <Square color={ac} size={20} fill={ac} style={Platform.OS === 'web' ? { filter: 'drop-shadow(0 0 6px rgba(' + a + ', 0.7)) drop-shadow(0 0 14px rgba(' + a + ', 0.4))' } : {}} />
-                        ) : (
-                          <Play color={ac} size={22} fill={ac} style={Platform.OS === 'web' ? { filter: 'drop-shadow(0 0 6px rgba(' + a + ', 0.7)) drop-shadow(0 0 14px rgba(' + a + ', 0.4))' } : {}} />
-                        )}
+                        {isBotActive ? <Square color={ac} size={20} fill={ac} style={Platform.OS === 'web' ? { filter: 'drop-shadow(0 0 6px rgba(' + a + ', 0.7))' } : {}} /> : <Play color={ac} size={22} fill={ac} style={Platform.OS === 'web' ? { filter: 'drop-shadow(0 0 6px rgba(' + a + ', 0.7))' } : {}} />}
                       </View>
                     </View>
-                    <Text style={[styles.tradeButtonText, isBotActive && styles.tradeButtonTextActive]}>
-                      {isBotActive ? 'STOP' : 'TRADE'}
-                    </Text>
+                    <Text style={[styles.tradeButtonText, isBotActive && styles.tradeButtonTextActive]}>{isBotActive ? 'STOP' : 'TRADE'}</Text>
                   </TouchableOpacity>
-
                   <TouchableOpacity testID="action-remove" style={[styles.actionButton, styles.removeButton]} onPress={handleRemoveActiveBot}>
                     <View style={styles.buttonIconContainer}>
                       <Trash2 color={ac} size={18} />
@@ -291,18 +289,7 @@ export default function HomeScreen() {
                 </View>
               </View>
             </View>
-          </View>
-        ) : (
-          <View style={styles.mainEAContainer}>
-            <RobotLogo size={200} />
-            <View style={styles.botInfoContainer}>
-              <Text style={styles.botMainName}>NO EA CONNECTED</Text>
-              <Text style={styles.botDescription}>ADD A LICENSE KEY TO GET STARTED</Text>
-            </View>
-          </View>
-        )}
-
-        <View style={styles.connectedBotsSection}>
+          )}
           {otherEAs.length > 0 && (
             <>
               <View testID="connected-bots-header" style={styles.sectionHeader}>
@@ -463,8 +450,8 @@ const styles = StyleSheet.create({
   mainEAContainer: {
     alignItems: 'center',
     paddingTop: 12,
-    paddingHorizontal: 12,
-    paddingBottom: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 0,
     position: 'relative',
     overflow: 'hidden',
   },
@@ -643,8 +630,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     padding: 2.5,
     overflow: 'hidden',
-    marginTop: 16,
-    marginHorizontal: 8,
+    marginBottom: 20,
   },
   neonSpinner: {
     position: 'absolute',
