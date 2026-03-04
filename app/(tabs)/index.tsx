@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, ImageBackground, Platform, Dimensions, SafeAreaView } from 'react-native';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, ImageBackground, Platform, Dimensions, SafeAreaView, Animated } from 'react-native';
 import { Play, Square, TrendingUp, Trash2, Plus, Menu } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { RobotLogo } from '@/components/robot-logo';
@@ -13,6 +13,41 @@ export default function HomeScreen() {
   const { eas, isFirstTime, setIsFirstTime, removeEA, isBotActive, setBotActive, setActiveEA, user } = useApp();
   const { theme } = useTheme();
   const { toggle: toggleSidebar } = useSidebar();
+
+  // Spinning neon border animations
+  const cardSpin = useRef(new Animated.Value(0)).current;
+  const tradeSpin = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const cardLoop = Animated.loop(
+      Animated.timing(cardSpin, {
+        toValue: 1,
+        duration: 3000,
+        useNativeDriver: Platform.OS !== 'web',
+        isInteraction: false,
+      })
+    );
+    const tradeLoop = Animated.loop(
+      Animated.timing(tradeSpin, {
+        toValue: 1,
+        duration: 2000,
+        useNativeDriver: Platform.OS !== 'web',
+        isInteraction: false,
+      })
+    );
+    cardLoop.start();
+    tradeLoop.start();
+    return () => { cardLoop.stop(); tradeLoop.stop(); };
+  }, []);
+
+  const cardSpinDeg = cardSpin.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+  const tradeSpinDeg = tradeSpin.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
   const a = theme.accentRgb; // shorthand for rgba building
   const ac = theme.accent;
   const ag = theme.accentGlow;
@@ -123,6 +158,11 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={[styles.container, Platform.OS === 'web' && { backgroundImage: 'linear-gradient(135deg, rgba(' + a + ', 0.95) 0%, rgba(' + a + ', 0.85) 10%, rgba(' + a + ', 0.75) 20%, rgba(' + a + ', 0.65) 30%, rgba(' + a + ', 0.55) 40%, rgba(' + a + ', 0.45) 50%, rgba(' + a + ', 0.35) 60%, rgba(' + a + ', 0.25) 70%, rgba(' + a + ', 0.15) 80%, rgba(' + a + ', 0.08) 90%, rgba(' + a + ', 0.03) 95%, rgba(0, 0, 0, 1) 100%)' }]}>
+      {/* Menu Button */}
+      <TouchableOpacity style={styles.menuButton} onPress={toggleSidebar} activeOpacity={0.7}>
+        <Menu color="rgba(255,255,255,0.8)" size={22} />
+      </TouchableOpacity>
+
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {primaryEA ? (
           <View style={styles.mainEAContainer}>
@@ -130,7 +170,7 @@ export default function HomeScreen() {
               <ImageBackground
                 testID="ea-hero-bg"
                 source={{ uri: primaryEAImage }}
-                style={[styles.hero, Platform.OS === 'web' && { boxShadow: 'inset 0 2px 4px rgba(255, 255, 255, 0.3), inset 0 -3px 6px rgba(0, 0, 0, 0.2), 0 14px 50px rgba(0, 0, 0, 0.5), 0 0 20px rgba(' + a + ', 0.12)' }]}
+                style={[styles.hero, Platform.OS === 'web' && { boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.2), inset 0 -3px 6px rgba(0,0,0,0.2), 0 14px 50px rgba(0,0,0,0.5), 0 0 25px rgba(' + a + ', 0.35), 0 0 60px rgba(' + a + ', 0.15)' }]}
                 imageStyle={styles.heroImageStyle}
                 onError={(error) => {
                   console.log('EA Image Error: Failed to load image:', primaryEAImage, error);
@@ -157,11 +197,14 @@ export default function HomeScreen() {
                 </View>
               </View>
 
-              <View style={[styles.tradingPanelCard, Platform.OS === 'web' && { boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.2), inset 0 -3px 6px rgba(0,0,0,0.2), 0 14px 50px rgba(0,0,0,0.5), 0 0 20px rgba(0,0,0,0.3)' }]}>
+              <View style={styles.neonWrap}>
+                <Animated.View style={[styles.neonSpinner, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 40deg, rgba(' + a + ', 0.5) 80deg, transparent 120deg, transparent 180deg, ' + ac + ' 220deg, rgba(' + a + ', 0.5) 260deg, transparent 300deg, transparent 360deg)' }]} />
+                <Animated.View style={[styles.neonGlowSpinner, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.4) 40deg, transparent 120deg, transparent 180deg, rgba(' + a + ', 0.4) 220deg, transparent 300deg, transparent 360deg)' }]} />
+                <View style={styles.neonCardInner}>
                 <View style={styles.bottomActions}>
-                <TouchableOpacity testID="action-quotes" style={[styles.actionButton, styles.secondaryButton, false]} onPress={handleQuotes}>
+                <TouchableOpacity testID="action-quotes" style={[styles.actionButton, styles.secondaryButton]} onPress={handleQuotes}>
                   <View style={styles.buttonIconContainer}>
-                    <TrendingUp color="#FFFFFF" size={18} />
+                    <TrendingUp color={ac} size={18} />
                   </View>
                   <Text style={styles.secondaryButtonText}>QUOTES</Text>
 
@@ -169,7 +212,7 @@ export default function HomeScreen() {
 
                 <TouchableOpacity
                   testID="action-start"
-                  style={[styles.actionButton, styles.tradeButton, isBotActive && styles.tradeButtonActive, false]}
+                  style={[styles.actionButton, styles.tradeButton, isBotActive && styles.tradeButtonActive]}
                   onPress={() => {
                     console.log('Start/Stop button pressed, current state:', isBotActive);
                     try {
@@ -180,26 +223,31 @@ export default function HomeScreen() {
                     }
                   }}
                 >
-                  <View style={[styles.buttonIconContainer, isBotActive && styles.buttonIconContainerActive]}>
-                    {isBotActive ? (
-                      <Square color={isBotActive ? "#FFFFFF" : "#000000"} size={18} />
-                    ) : (
-                      <Play color="#000000" size={18} />
-                    )}
+                  <View style={styles.tradeIconOuter}>
+                    <Animated.View style={[styles.tradeIconSpinner, { transform: [{ rotate: tradeSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 60deg, rgba(' + a + ', 0.5) 120deg, transparent 180deg, transparent 240deg, ' + ac + ' 300deg, transparent 360deg)' }]} />
+                    <Animated.View style={[styles.tradeIconGlow, { transform: [{ rotate: tradeSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.5) 60deg, transparent 180deg, rgba(' + a + ', 0.5) 300deg, transparent 360deg)' }]} />
+                    <View style={styles.tradeIconInner}>
+                      {isBotActive ? (
+                        <Square color={ac} size={20} fill={ac} style={Platform.OS === 'web' ? { filter: 'drop-shadow(0 0 6px rgba(' + a + ', 0.7)) drop-shadow(0 0 14px rgba(' + a + ', 0.4))' } : {}} />
+                      ) : (
+                        <Play color={ac} size={22} fill={ac} style={Platform.OS === 'web' ? { filter: 'drop-shadow(0 0 6px rgba(' + a + ', 0.7)) drop-shadow(0 0 14px rgba(' + a + ', 0.4))' } : {}} />
+                      )}
+                    </View>
                   </View>
                   <Text style={[styles.tradeButtonText, isBotActive && styles.tradeButtonTextActive]}>
                     {isBotActive ? 'STOP' : 'TRADE'}
                   </Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity testID="action-remove" style={[styles.actionButton, styles.removeButton, false]} onPress={handleRemoveActiveBot}>
+                <TouchableOpacity testID="action-remove" style={[styles.actionButton, styles.removeButton]} onPress={handleRemoveActiveBot}>
                   <View style={styles.buttonIconContainer}>
-                    <Trash2 color="#FFFFFF" size={18} />
+                    <Trash2 color={ac} size={18} />
                   </View>
                   <Text style={styles.removeButtonText}>REMOVE</Text>
 
                 </TouchableOpacity>
               </View>
+                </View>
               </View>
             </View>
           </View>
@@ -257,13 +305,17 @@ export default function HomeScreen() {
             </>
           )}
 
-          <TouchableOpacity style={[styles.addEAButton, Platform.OS === 'web' && { boxShadow: 'inset 0 2px 4px rgba(255, 255, 255, 0.4), inset 0 -3px 6px rgba(0, 0, 0, 0.25), 0 12px 40px rgba(0, 0, 0, 0.45), 0 0 20px rgba(' + a + ', 0.12)' }]} onPress={handleAddNewEA}>
-            <Plus color="#FFFFFF" size={20} />
-            <View style={styles.addEATextContainer}>
-              <Text style={styles.addEATitle}>ADD A NEW EA</Text>
-              <Text style={styles.addEASubtitle}>HAVE A VALID LICENSE KEY</Text>
-            </View>
-          </TouchableOpacity>
+          <View style={styles.neonWrapPill}>
+            <Animated.View style={[styles.neonSpinnerPill, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 40deg, rgba(' + a + ', 0.5) 80deg, transparent 120deg, transparent 180deg, ' + ac + ' 220deg, rgba(' + a + ', 0.5) 260deg, transparent 300deg, transparent 360deg)' }]} />
+            <Animated.View style={[styles.neonGlowSpinnerPill, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.4) 40deg, transparent 120deg, transparent 180deg, rgba(' + a + ', 0.4) 220deg, transparent 300deg, transparent 360deg)' }]} />
+            <TouchableOpacity style={styles.neonCardInnerPill} onPress={handleAddNewEA} activeOpacity={0.7}>
+              <Plus color={ac} size={20} />
+              <View style={styles.addEATextContainer}>
+                <Text style={styles.addEATitle}>ADD A NEW EA</Text>
+                <Text style={styles.addEASubtitle}>HAVE A VALID LICENSE KEY</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
 
       </ScrollView>
@@ -478,85 +530,129 @@ const styles = StyleSheet.create({
       boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.2), 0 4px 16px rgba(0,0,0,0.3)',
     }),
   },
-  tradingPanelCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.07)',
+  neonWrap: {
+    position: 'relative',
     borderRadius: 28,
-    padding: 12,
-    borderWidth: 2.5,
-    borderTopColor: 'rgba(255, 255, 255, 0.45)',
-    borderLeftColor: 'rgba(255, 255, 255, 0.2)',
-    borderRightColor: 'rgba(255, 255, 255, 0.12)',
-    borderBottomColor: 'rgba(0, 0, 0, 0.25)',
+    padding: 2.5,
     overflow: 'hidden',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.55,
-    shadowRadius: 24,
-    elevation: 18,
+    marginTop: 20,
+  },
+  neonSpinner: {
+    position: 'absolute',
+    top: '-25%',
+    left: '-25%',
+    width: '150%',
+    height: '150%',
+    ...(Platform.OS === 'web' && {
+      backgroundImage: 'conic-gradient(from 0deg, transparent, #FF1A1A 40deg, transparent 120deg, transparent 180deg, #FF1A1A 220deg, transparent 300deg)',
+    }),
+  },
+  neonGlowSpinner: {
+    position: 'absolute',
+    top: '-30%',
+    left: '-30%',
+    width: '160%',
+    height: '160%',
+    ...(Platform.OS === 'web' && {
+      filter: 'blur(16px)',
+      backgroundImage: 'conic-gradient(from 0deg, transparent, rgba(255,26,26,0.4) 40deg, transparent 120deg, transparent 180deg, rgba(255,26,26,0.4) 220deg, transparent 300deg)',
+    }),
+  },
+  neonCardInner: {
+    borderRadius: 26,
+    backgroundColor: 'rgba(12, 12, 12, 0.93)',
     ...(Platform.OS === 'web' && {
       backdropFilter: 'blur(60px) saturate(200%)',
       WebkitBackdropFilter: 'blur(60px) saturate(200%)',
+      boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.08), inset 0 -3px 6px rgba(0,0,0,0.2)',
     }),
   },
-  tradingPanelShine: {
+  neonWrapPill: {
+    position: 'relative',
+    borderRadius: 28,
+    padding: 2.5,
+    overflow: 'hidden',
+    marginBottom: 24,
+  },
+  neonSpinnerPill: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '50%',
-    borderTopLeftRadius: 26,
-    borderTopRightRadius: 26,
+    top: '-50%',
+    left: '-25%',
+    width: '150%',
+    height: '200%',
     ...(Platform.OS === 'web' && {
-      background: 'linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0) 100%)',
-      pointerEvents: 'none',
+      backgroundImage: 'conic-gradient(from 0deg, transparent, #FF1A1A 40deg, transparent 120deg, transparent 180deg, #FF1A1A 220deg, transparent 300deg)',
     }),
   },
-  tradingPanelEdge: {
+  neonGlowSpinnerPill: {
     position: 'absolute',
-    top: 0,
-    left: 12,
-    right: 12,
-    height: 2,
-    borderRadius: 2,
+    top: '-60%',
+    left: '-30%',
+    width: '160%',
+    height: '220%',
     ...(Platform.OS === 'web' && {
-      background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.5) 20%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0.5) 80%, rgba(255,255,255,0) 100%)',
-      pointerEvents: 'none',
+      filter: 'blur(16px)',
+      backgroundImage: 'conic-gradient(from 0deg, transparent, rgba(255,26,26,0.4) 40deg, transparent 120deg, transparent 180deg, rgba(255,26,26,0.4) 220deg, transparent 300deg)',
     }),
   },
-  tradingPanelShadow: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '35%',
-    borderBottomLeftRadius: 26,
-    borderBottomRightRadius: 26,
+  neonCardInnerPill: {
+    borderRadius: 26,
+    backgroundColor: 'rgba(12, 12, 12, 0.93)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 22,
+    paddingHorizontal: 24,
+    gap: 16,
     ...(Platform.OS === 'web' && {
-      background: 'linear-gradient(0deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.05) 60%, rgba(0,0,0,0) 100%)',
-      pointerEvents: 'none',
+      backdropFilter: 'blur(60px) saturate(200%)',
+      WebkitBackdropFilter: 'blur(60px) saturate(200%)',
+      boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.08), inset 0 -3px 6px rgba(0,0,0,0.2)',
+    }),
+  },
+  tradeIconOuter: {
+    position: 'relative',
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    padding: 2,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tradeIconSpinner: {
+    position: 'absolute',
+    top: '-25%',
+    left: '-25%',
+    width: '150%',
+    height: '150%',
+    ...(Platform.OS === 'web' && {
+      backgroundImage: 'conic-gradient(from 0deg, transparent, #FF1A1A 60deg, transparent 180deg, #FF1A1A 300deg, transparent 360deg)',
+    }),
+  },
+  tradeIconGlow: {
+    position: 'absolute',
+    top: '-35%',
+    left: '-35%',
+    width: '170%',
+    height: '170%',
+    ...(Platform.OS === 'web' && {
+      filter: 'blur(8px)',
+      backgroundImage: 'conic-gradient(from 0deg, transparent, rgba(255,26,26,0.5) 60deg, transparent 180deg, rgba(255,26,26,0.5) 300deg, transparent 360deg)',
+    }),
+  },
+  tradeIconInner: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: 'rgba(12, 12, 12, 0.95)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+    ...(Platform.OS === 'web' && {
+      boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.12), inset 0 -2px 4px rgba(0,0,0,0.2)',
     }),
   },
 
-  tradingPanelCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.07)',
-    borderRadius: 28,
-    padding: 10,
-    borderWidth: 2.5,
-    borderTopColor: 'rgba(255, 255, 255, 0.45)',
-    borderLeftColor: 'rgba(255, 255, 255, 0.2)',
-    borderRightColor: 'rgba(255, 255, 255, 0.12)',
-    borderBottomColor: 'rgba(0, 0, 0, 0.25)',
-    overflow: 'hidden',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.55,
-    shadowRadius: 24,
-    elevation: 18,
-    ...(Platform.OS === 'web' && {
-      backdropFilter: 'blur(60px) saturate(200%)',
-      WebkitBackdropFilter: 'blur(60px) saturate(200%)',
-    }),
-  },
   bottomActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -588,84 +684,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
 
-  glassShineTop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '45%',
-    borderTopLeftRadius: 26,
-    borderTopRightRadius: 26,
-    ...(Platform.OS === 'web' && {
-      background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.15) 40%, rgba(255, 255, 255, 0.02) 100%)',
-      pointerEvents: 'none',
-    }),
-  },
-  glassEdgeTop: {
-    position: 'absolute',
-    top: 0,
-    left: 8,
-    right: 8,
-    height: 2,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-    ...(Platform.OS === 'web' && {
-      background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 20%, rgba(255,255,255,0.9) 50%, rgba(255,255,255,0.7) 80%, rgba(255,255,255,0) 100%)',
-      pointerEvents: 'none',
-    }),
-  },
-  glassShadowBottom: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '30%',
-    borderBottomLeftRadius: 26,
-    borderBottomRightRadius: 26,
-    ...(Platform.OS === 'web' && {
-      background: 'linear-gradient(0deg, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.08) 50%, rgba(0, 0, 0, 0) 100%)',
-      pointerEvents: 'none',
-    }),
-  },
-  glassShineTopPill: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '50%',
-    borderTopLeftRadius: 26,
-    borderTopRightRadius: 26,
-    ...(Platform.OS === 'web' && {
-      background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0) 100%)',
-      pointerEvents: 'none',
-    }),
-  },
-  glassEdgeTopPill: {
-    position: 'absolute',
-    top: 0,
-    left: 16,
-    right: 16,
-    height: 2,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    ...(Platform.OS === 'web' && {
-      background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 20%, rgba(255,255,255,0.85) 50%, rgba(255,255,255,0.6) 80%, rgba(255,255,255,0) 100%)',
-      pointerEvents: 'none',
-    }),
-  },
-  glassShadowBottomPill: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '35%',
-    borderBottomLeftRadius: 26,
-    borderBottomRightRadius: 26,
-    ...(Platform.OS === 'web' && {
-      background: 'linear-gradient(0deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.05) 60%, rgba(0, 0, 0, 0) 100%)',
-      pointerEvents: 'none',
-    }),
-  },
   buttonIconContainer: {
     width: 42,
     height: 42,
@@ -800,31 +818,6 @@ const styles = StyleSheet.create({
     flex: 1,
     flexWrap: 'wrap',
     textAlign: 'center',
-  },
-  addEAButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.07)',
-    borderRadius: 28,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 22,
-    paddingHorizontal: 24,
-    marginBottom: 24,
-    borderWidth: 2.5,
-    borderTopColor: 'rgba(255, 255, 255, 0.45)',
-    borderLeftColor: 'rgba(255, 255, 255, 0.2)',
-    borderRightColor: 'rgba(255, 255, 255, 0.12)',
-    borderBottomColor: 'rgba(0, 0, 0, 0.25)',
-    overflow: 'hidden',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.55,
-    shadowRadius: 24,
-    elevation: 18,
-    ...(Platform.OS === 'web' && {
-      backdropFilter: 'blur(60px) saturate(200%)',
-      WebkitBackdropFilter: 'blur(60px) saturate(200%)',
-      boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.2), inset 0 -3px 6px rgba(0,0,0,0.2), 0 14px 50px rgba(0,0,0,0.5), 0 0 20px rgba(0,0,0,0.3)',
-    }),
   },
   addEATextContainer: {
     marginLeft: 12,
