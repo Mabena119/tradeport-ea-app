@@ -1912,30 +1912,32 @@ export default function MetaTraderScreen() {
             </View>
 
             {/* Server Search Field */}
-            <View style={[styles.fieldWrap, { zIndex: 1000 }]}>
-              <Animated.View style={[styles.fieldNeon, { transform: [{ rotate: spinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 40deg, rgba(' + a + ', 0.5) 80deg, transparent 120deg, transparent 180deg, ' + ac + ' 220deg, rgba(' + a + ', 0.5) 260deg, transparent 300deg, transparent 360deg)' }]} />
-              <Animated.View style={[styles.fieldNeonGlow, { transform: [{ rotate: spinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.35) 40deg, transparent 120deg, transparent 180deg, rgba(' + a + ', 0.35) 220deg, transparent 300deg, transparent 360deg)' }]} />
-              <View style={[styles.fieldInner, Platform.OS === 'web' && { background: 'radial-gradient(ellipse 120% 50% at 20% 20%, rgba(255,255,255,0.18) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.08) 0%, rgba(' + a + ', 0.04) 30%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.7) 100%)', backdropFilter: 'blur(80px) saturate(200%)', WebkitBackdropFilter: 'blur(80px) saturate(200%)', boxShadow: 'inset 0 2px 6px rgba(255,255,255,0.2), inset 0 -3px 8px rgba(0,0,0,0.3), 0 4px 8px rgba(0,0,0,0.3), 0 12px 24px rgba(0,0,0,0.35), 0 24px 48px rgba(0,0,0,0.25), 0 6px 20px rgba(' + a + ', 0.1)' }]}>
-                {renderBubbles(fieldBubblesC)}
-                <View style={[styles.fieldRefraction, Platform.OS === 'web' && { background: 'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 50%, transparent 100%)' }]} />
-                <Server color="rgba(255,255,255,0.35)" size={20} style={styles.serverIcon} />
-                <TextInput
-                  style={styles.fieldInput}
-                  placeholder={activeTab === 'MT4' ? "Search MT4 Broker Server..." : "Search MT5 Broker Server..."}
-                  placeholderTextColor="rgba(255,255,255,0.35)"
-                  value={server}
-                  onChangeText={(text) => { setServer(text); setShowBrokerList(true); }}
-                  onFocus={() => setShowBrokerList(true)}
-                  autoCapitalize="none"
-                />
-                {server.length > 0 && (
-                  <TouchableOpacity style={styles.clearButton} onPress={() => { setServer(''); setShowBrokerList(false); }}>
-                    <Text style={styles.clearButtonText}>×</Text>
-                  </TouchableOpacity>
-                )}
+            <View style={styles.serverSection}>
+              <View style={[styles.fieldWrap, { marginBottom: 0 }]}>
+                <Animated.View style={[styles.fieldNeon, { transform: [{ rotate: spinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 40deg, rgba(' + a + ', 0.5) 80deg, transparent 120deg, transparent 180deg, ' + ac + ' 220deg, rgba(' + a + ', 0.5) 260deg, transparent 300deg, transparent 360deg)' }]} />
+                <Animated.View style={[styles.fieldNeonGlow, { transform: [{ rotate: spinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.35) 40deg, transparent 120deg, transparent 180deg, rgba(' + a + ', 0.35) 220deg, transparent 300deg, transparent 360deg)' }]} />
+                <View style={[styles.fieldInner, Platform.OS === 'web' && { background: 'radial-gradient(ellipse 120% 50% at 20% 20%, rgba(255,255,255,0.18) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.08) 0%, rgba(' + a + ', 0.04) 30%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.7) 100%)', backdropFilter: 'blur(80px) saturate(200%)', WebkitBackdropFilter: 'blur(80px) saturate(200%)', boxShadow: 'inset 0 2px 6px rgba(255,255,255,0.2), inset 0 -3px 8px rgba(0,0,0,0.3), 0 4px 8px rgba(0,0,0,0.3), 0 12px 24px rgba(0,0,0,0.35), 0 24px 48px rgba(0,0,0,0.25), 0 6px 20px rgba(' + a + ', 0.1)' }]}>
+                  {renderBubbles(fieldBubblesC)}
+                  <View style={[styles.fieldRefraction, Platform.OS === 'web' && { background: 'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 50%, transparent 100%)' }]} />
+                  <Server color="rgba(255,255,255,0.35)" size={20} style={styles.serverIcon} />
+                  <TextInput
+                    style={styles.fieldInput}
+                    placeholder={activeTab === 'MT4' ? "Search MT4 Broker Server..." : "Search MT5 Broker Server..."}
+                    placeholderTextColor="rgba(255,255,255,0.35)"
+                    value={server}
+                    onChangeText={(text) => { setServer(text); setShowBrokerList(true); }}
+                    onFocus={() => setShowBrokerList(true)}
+                    autoCapitalize="none"
+                  />
+                  {server.length > 0 && (
+                    <TouchableOpacity style={styles.clearButton} onPress={() => { setServer(''); setShowBrokerList(false); }}>
+                      <Text style={styles.clearButtonText}>×</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
 
-              {/* Broker List Dropdown */}
+              {/* Broker List Dropdown — OUTSIDE fieldWrap so overflow:hidden doesn't clip it */}
               {showBrokerList && (
                 <View style={styles.brokerListContainer}>
                   <View style={styles.brokerListHeader}>
@@ -2186,6 +2188,11 @@ const styles = StyleSheet.create({
   /* ========== FORM ========== */
   form: { paddingHorizontal: 20 },
 
+  /* ========== SERVER SECTION — no overflow clip so dropdown shows ========== */
+  serverSection: {
+    position: 'relative', zIndex: 1000, marginBottom: 18,
+  },
+
   /* ========== BUBBLES ========== */
   bubblesContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 },
   bubble: {
@@ -2264,7 +2271,7 @@ const styles = StyleSheet.create({
 
   /* ========== BROKER LIST ========== */
   brokerListContainer: {
-    position: 'absolute', top: 58, left: 0, right: 0, zIndex: 100,
+    marginTop: 4, zIndex: 100,
     backgroundColor: 'rgba(15, 15, 15, 0.95)', borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.12)', borderRadius: 16, maxHeight: 300,
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
