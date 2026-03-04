@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type ThemeName = 'red' | 'blue' | 'green' | 'purple' | 'orange' | 'cyan';
+export type GlassMode = 'neon' | 'minimal';
 
 export interface ThemeColors {
   accent: string;
@@ -65,20 +66,29 @@ const THEMES: Record<ThemeName, ThemeColors> = {
 };
 
 const THEME_STORAGE_KEY = 'tradeport_theme';
+const GLASS_STORAGE_KEY = 'tradeport_glass_mode';
 
 export interface ThemeState {
   themeName: ThemeName;
   theme: ThemeColors;
   setThemeName: (name: ThemeName) => void;
+  glassMode: GlassMode;
+  setGlassMode: (mode: GlassMode) => void;
 }
 
 export const [ThemeProvider, useTheme] = createContextHook<ThemeState>(() => {
   const [themeName, setThemeNameState] = useState<ThemeName>('red');
+  const [glassMode, setGlassModeState] = useState<GlassMode>('neon');
 
   useEffect(() => {
     AsyncStorage.getItem(THEME_STORAGE_KEY).then((saved) => {
       if (saved && saved in THEMES) {
         setThemeNameState(saved as ThemeName);
+      }
+    }).catch(() => {});
+    AsyncStorage.getItem(GLASS_STORAGE_KEY).then((saved) => {
+      if (saved === 'neon' || saved === 'minimal') {
+        setGlassModeState(saved);
       }
     }).catch(() => {});
   }, []);
@@ -88,9 +98,14 @@ export const [ThemeProvider, useTheme] = createContextHook<ThemeState>(() => {
     AsyncStorage.setItem(THEME_STORAGE_KEY, name).catch(() => {});
   }, []);
 
+  const setGlassMode = useCallback((mode: GlassMode) => {
+    setGlassModeState(mode);
+    AsyncStorage.setItem(GLASS_STORAGE_KEY, mode).catch(() => {});
+  }, []);
+
   const theme = THEMES[themeName];
 
-  return { themeName, theme, setThemeName };
+  return { themeName, theme, setThemeName, glassMode, setGlassMode };
 });
 
 export { THEMES };

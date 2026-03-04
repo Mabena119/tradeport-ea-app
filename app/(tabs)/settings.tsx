@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, ScrollView, Switch } from 'react-native';
 import { useTheme, ThemeName } from '@/providers/theme-provider';
 import { useSidebar } from '@/providers/sidebar-provider';
 import { Menu } from 'lucide-react-native';
@@ -14,8 +14,9 @@ const THEME_OPTIONS: { name: ThemeName; label: string; preview: string }[] = [
 ];
 
 export default function SettingsScreen() {
-  const { themeName, theme, setThemeName } = useTheme();
+  const { themeName, theme, setThemeName, glassMode, setGlassMode } = useTheme();
   const { toggle: toggleSidebar } = useSidebar();
+  const isMinimal = glassMode === 'minimal';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -52,6 +53,35 @@ export default function SettingsScreen() {
               </TouchableOpacity>
             );
           })}
+        </View>
+
+        <Text style={[styles.sectionLabel, { marginTop: 32 }]}>GLASS STYLE</Text>
+        <View style={[styles.glassCard, { borderColor: 'rgba(' + theme.accentRgb + ', 0.2)' }]}>
+          <View style={styles.glassToggleRow}>
+            <View style={styles.glassToggleInfo}>
+              <Text style={styles.cardTitle}>Minimal Glass</Text>
+              <Text style={styles.cardSubtitle}>{isMinimal ? 'Clean iOS 26 dark glass' : 'Neon glow with spinning borders'}</Text>
+            </View>
+            <Switch
+              value={isMinimal}
+              onValueChange={(val) => setGlassMode(val ? 'minimal' : 'neon')}
+              trackColor={{ false: 'rgba(255,255,255,0.12)', true: theme.accent + '55' }}
+              thumbColor={isMinimal ? theme.accent : 'rgba(255,255,255,0.6)'}
+              ios_backgroundColor="rgba(255,255,255,0.12)"
+            />
+          </View>
+          <View style={styles.glassPreviewRow}>
+            <View style={[styles.glassPreviewCard, !isMinimal && styles.glassPreviewActive, !isMinimal && { borderColor: theme.accent + '44' }, Platform.OS === 'web' && !isMinimal && { boxShadow: '0 0 12px ' + theme.accent + '33' }]}>
+              <Text style={[styles.glassPreviewLabel, !isMinimal && { color: theme.accent }]}>Neon</Text>
+              <View style={[styles.glassPreviewBar, { backgroundColor: theme.accent + '30' }]}>
+                <View style={[styles.glassPreviewGlow, { backgroundColor: theme.accent }]} />
+              </View>
+            </View>
+            <View style={[styles.glassPreviewCard, isMinimal && styles.glassPreviewActive, isMinimal && { borderColor: theme.accent + '44' }, Platform.OS === 'web' && isMinimal && { boxShadow: '0 0 12px ' + theme.accent + '33' }]}>
+              <Text style={[styles.glassPreviewLabel, isMinimal && { color: theme.accent }]}>Minimal</Text>
+              <View style={[styles.glassPreviewBar, { backgroundColor: 'rgba(255,255,255,0.08)' }]} />
+            </View>
+          </View>
         </View>
 
         <Text style={[styles.sectionLabel, { marginTop: 32 }]}>ABOUT</Text>
@@ -205,5 +235,50 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.4)',
     marginTop: 3,
     letterSpacing: 0.2,
+  },
+  glassToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+  glassToggleInfo: {
+    flex: 1,
+    marginRight: 12,
+  },
+  glassPreviewRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  glassPreviewCard: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+    alignItems: 'center',
+    gap: 8,
+  },
+  glassPreviewActive: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  glassPreviewLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.4)',
+    letterSpacing: 0.5,
+  },
+  glassPreviewBar: {
+    width: '100%',
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  glassPreviewGlow: {
+    width: '60%',
+    height: '100%',
+    borderRadius: 2,
   },
 });
