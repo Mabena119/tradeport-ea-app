@@ -531,7 +531,7 @@ export default function MetaTraderScreen() {
   const cardSpin = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     const loop = Animated.loop(
-      Animated.timing(cardSpin, { toValue: 1, duration: 3000, useNativeDriver: Platform.OS !== 'web', isInteraction: false })
+      Animated.timing(cardSpin, { toValue: 1, duration: 8000, useNativeDriver: Platform.OS !== 'web', isInteraction: false })
     );
     loop.start();
     return () => loop.stop();

@@ -22,7 +22,7 @@ export default function HomeScreen() {
     const cardLoop = Animated.loop(
       Animated.timing(cardSpin, {
         toValue: 1,
-        duration: 3000,
+        duration: 8000,
         useNativeDriver: Platform.OS !== 'web',
         isInteraction: false,
       })
@@ -30,7 +30,7 @@ export default function HomeScreen() {
     const tradeLoop = Animated.loop(
       Animated.timing(tradeSpin, {
         toValue: 1,
-        duration: 2000,
+        duration: 6000,
         useNativeDriver: Platform.OS !== 'web',
         isInteraction: false,
       })
