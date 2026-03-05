@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, ScrollView, Switch } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, ScrollView } from 'react-native';
 import { useTheme, ThemeName } from '@/providers/theme-provider';
 import { useSidebar } from '@/providers/sidebar-provider';
 import { Menu } from 'lucide-react-native';
@@ -16,7 +16,6 @@ const THEME_OPTIONS: { name: ThemeName; label: string; preview: string }[] = [
 export default function SettingsScreen() {
   const { themeName, theme, setThemeName, glassMode, setGlassMode } = useTheme();
   const { toggle: toggleSidebar } = useSidebar();
-  const isMinimal = glassMode === 'minimal';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -57,30 +56,23 @@ export default function SettingsScreen() {
 
         <Text style={[styles.sectionLabel, { marginTop: 32 }]}>GLASS STYLE</Text>
         <View style={[styles.glassCard, { borderColor: 'rgba(' + theme.accentRgb + ', 0.2)' }]}>
-          <View style={styles.glassToggleRow}>
-            <View style={styles.glassToggleInfo}>
-              <Text style={styles.cardTitle}>Minimal Glass</Text>
-              <Text style={styles.cardSubtitle}>{isMinimal ? 'Clean iOS 26 dark glass' : 'Neon glow with spinning borders'}</Text>
-            </View>
-            <Switch
-              value={isMinimal}
-              onValueChange={(val) => setGlassMode(val ? 'minimal' : 'neon')}
-              trackColor={{ false: 'rgba(255,255,255,0.12)', true: theme.accent + '55' }}
-              thumbColor={isMinimal ? theme.accent : 'rgba(255,255,255,0.6)'}
-              ios_backgroundColor="rgba(255,255,255,0.12)"
-            />
-          </View>
-          <View style={styles.glassPreviewRow}>
-            <View style={[styles.glassPreviewCard, !isMinimal && styles.glassPreviewActive, !isMinimal && { borderColor: theme.accent + '44' }, Platform.OS === 'web' && !isMinimal && { boxShadow: '0 0 12px ' + theme.accent + '33' }]}>
-              <Text style={[styles.glassPreviewLabel, !isMinimal && { color: theme.accent }]}>Neon</Text>
-              <View style={[styles.glassPreviewBar, { backgroundColor: theme.accent + '30' }]}>
-                <View style={[styles.glassPreviewGlow, { backgroundColor: theme.accent }]} />
-              </View>
-            </View>
-            <View style={[styles.glassPreviewCard, isMinimal && styles.glassPreviewActive, isMinimal && { borderColor: theme.accent + '44' }, Platform.OS === 'web' && isMinimal && { boxShadow: '0 0 12px ' + theme.accent + '33' }]}>
-              <Text style={[styles.glassPreviewLabel, isMinimal && { color: theme.accent }]}>Minimal</Text>
-              <View style={[styles.glassPreviewBar, { backgroundColor: 'rgba(255,255,255,0.08)' }]} />
-            </View>
+          <Text style={[styles.cardSubtitle, { marginBottom: 14 }]}>
+            {glassMode === 'neon' ? 'Neon glow with spinning borders' : glassMode === 'minimal' ? 'Dark glass with accent aura' : 'Frosted translucent iOS glass'}
+          </Text>
+          <View style={styles.glassSegmented}>
+            {(['neon', 'minimal', 'liquid'] as const).map((m) => {
+              const active = glassMode === m;
+              return (
+                <TouchableOpacity
+                  key={m}
+                  style={[styles.glassSeg, active && styles.glassSegActive, active && { borderColor: theme.accent + '55' }, active && Platform.OS === 'web' && { boxShadow: '0 0 10px ' + theme.accent + '22' }]}
+                  onPress={() => setGlassMode(m)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.glassSegText, active && { color: theme.accent }]}>{m === 'neon' ? 'Neon' : m === 'minimal' ? 'Minimal' : 'Liquid'}</Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
 
@@ -236,49 +228,26 @@ const styles = StyleSheet.create({
     marginTop: 3,
     letterSpacing: 0.2,
   },
-  glassToggleRow: {
+  glassSegmented: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 14,
+    gap: 8,
   },
-  glassToggleInfo: {
-    flex: 1,
-    marginRight: 12,
-  },
-  glassPreviewRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  glassPreviewCard: {
+  glassSeg: {
     flex: 1,
     paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 12,
+    borderRadius: 14,
     backgroundColor: 'rgba(255,255,255,0.04)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
     alignItems: 'center',
-    gap: 8,
   },
-  glassPreviewActive: {
+  glassSegActive: {
     backgroundColor: 'rgba(255,255,255,0.08)',
   },
-  glassPreviewLabel: {
-    fontSize: 11,
-    fontWeight: '600',
+  glassSegText: {
+    fontSize: 12,
+    fontWeight: '700',
     color: 'rgba(255,255,255,0.4)',
-    letterSpacing: 0.5,
-  },
-  glassPreviewBar: {
-    width: '100%',
-    height: 4,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  glassPreviewGlow: {
-    width: '60%',
-    height: '100%',
-    borderRadius: 2,
+    letterSpacing: 0.3,
   },
 });
