@@ -521,7 +521,7 @@ export default function MetaTraderScreen() {
   const brokerFetchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const authFinalizedRef = useRef<boolean>(false);
   const { mtAccount, setMTAccount, mt4Account, setMT4Account, mt5Account, setMT5Account } = useApp();
-  const { theme: thm } = useTheme();
+  const { theme: thm, glassMode } = useTheme();
   const { toggle: toggleSidebar } = useSidebar();
   const a = thm.accentRgb;
   const ac = thm.accent;
@@ -1797,7 +1797,7 @@ export default function MetaTraderScreen() {
 
 
   return (
-    <SafeAreaView style={[styles.container, Platform.OS === 'web' && { backgroundImage: 'linear-gradient(135deg, rgba(' + a + ', 0.9) 0%, rgba(' + a + ', 0.5) 30%, rgba(' + a + ', 0.1) 65%, rgba(0, 0, 0, 0.95) 90%, rgba(0, 0, 0, 1) 100%)' }]}>
+    <SafeAreaView style={[styles.container, Platform.OS === 'web' && { backgroundImage: glassMode === 'neon' ? 'linear-gradient(135deg, rgba(' + a + ', 0.9) 0%, rgba(' + a + ', 0.5) 30%, rgba(' + a + ', 0.1) 65%, rgba(0, 0, 0, 0.95) 90%, rgba(0, 0, 0, 1) 100%)' : glassMode === 'liquid' ? 'linear-gradient(160deg, #2a2a2e 0%, #1c1c1e 30%, #141416 60%, #0e0e10 100%)' : glassMode === 'commander' ? 'linear-gradient(170deg, rgba(30,10,10,0.6) 0%, #050505 40%, #000 100%)' : 'linear-gradient(160deg, rgba(' + a + ', 0.08) 0%, #050505 40%, #000 100%)' }]}>
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}

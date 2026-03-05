@@ -32,9 +32,13 @@ const mockQuotes: Quote[] = [
 
 export default function QuotesScreen() {
   const { eas, activeSymbols, mt4Symbols, mt5Symbols } = useApp();
-  const { theme: thm } = useTheme();
+  const { theme: thm, glassMode } = useTheme();
   const a = thm.accentRgb;
   const ac = thm.accent;
+  const isNeon = glassMode === 'neon';
+  const isLiquid = glassMode === 'liquid';
+  const isCmd = glassMode === 'commander';
+  const cc = isCmd ? '#E50914' : ac;
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [apiSymbols, setApiSymbols] = useState<ApiSymbol[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -232,7 +236,7 @@ export default function QuotesScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, Platform.OS === 'web' && { backgroundImage: 'linear-gradient(135deg, rgba(' + a + ', 0.9) 0%, rgba(' + a + ', 0.5) 30%, rgba(' + a + ', 0.1) 65%, rgba(0, 0, 0, 0.95) 90%, rgba(0, 0, 0, 1) 100%)' }]}>
+    <SafeAreaView style={[styles.container, Platform.OS === 'web' && { backgroundImage: isNeon ? 'linear-gradient(135deg, rgba(' + a + ', 0.9) 0%, rgba(' + a + ', 0.5) 30%, rgba(' + a + ', 0.1) 65%, rgba(0,0,0,0.95) 90%, #000 100%)' : isLiquid ? 'linear-gradient(160deg, #2a2a2e 0%, #1c1c1e 30%, #141416 60%, #0e0e10 100%)' : isCmd ? 'linear-gradient(170deg, rgba(30,10,10,0.6) 0%, #050505 40%, #000 100%)' : 'linear-gradient(160deg, rgba(' + a + ', 0.08) 0%, #050505 40%, #000 100%)' }]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
@@ -241,7 +245,7 @@ export default function QuotesScreen() {
 
         <View style={styles.headerContent}>
           <View style={styles.titleContainer}>
-            <Text style={[styles.headerTitle, { color: ac }]}>QUOTES</Text>
+            <Text style={[styles.headerTitle, { color: cc }]}>QUOTES</Text>
             {primaryEA && (
               <View style={styles.statusContainer}>
                 <Circle color={hasActiveQuotes ? '#00FF00' : '#666666'} fill={hasActiveQuotes ? '#00FF00' : 'transparent'} size={8} />
@@ -268,7 +272,7 @@ export default function QuotesScreen() {
       <View style={styles.content}>
         {loading && !refreshing ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator testID="quotes-loading" size="large" color={ac} />
+            <ActivityIndicator testID="quotes-loading" size="large" color={cc} />
             <Text style={styles.loadingText}>Loading symbols...</Text>
           </View>
         ) : error ? (
@@ -285,7 +289,7 @@ export default function QuotesScreen() {
             )}
           </View>
         ) : (
-          <ScrollView showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchSymbols(true)} tintColor={ac} colors={[ac]} />}>
+          <ScrollView showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchSymbols(true)} tintColor={cc} colors={[cc]} />}>
             {quotesWithActiveStatus.length === 0 ? (
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyText}>No symbols available</Text>
@@ -296,7 +300,7 @@ export default function QuotesScreen() {
                 <TouchableOpacity
                   testID={`quote-item-${quote.symbol}`}
                   key={quote.symbol}
-                  style={[styles.quoteCard, quote.isActive && styles.activeQuoteCard, Platform.OS === 'web' && { background: 'radial-gradient(ellipse 120% 50% at 20% 20%, rgba(255,255,255,0.12) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.06) 0%, rgba(0,0,0,0.65) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.2), 0 4px 8px rgba(0,0,0,0.3), 0 12px 24px rgba(0,0,0,0.25), 0 0 0 0.5px rgba(255,255,255,0.06)' }]}
+                  style={[styles.quoteCard, quote.isActive && styles.activeQuoteCard, Platform.OS === 'web' && (isNeon ? { background: 'radial-gradient(ellipse 120% 50% at 20% 20%, rgba(255,255,255,0.12) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.06) 0%, rgba(0,0,0,0.65) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.2), 0 4px 8px rgba(0,0,0,0.3), 0 12px 24px rgba(0,0,0,0.25), 0 0 0 0.5px rgba(255,255,255,0.06)' } : isLiquid ? { background: 'linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.02) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', borderColor: 'rgba(255,255,255,0.25)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), 0 6px 20px rgba(0,0,0,0.3), 0 0 16px rgba(255,255,255,0.04)' } : isCmd ? { background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderColor: '#E50914', borderWidth: '2px', boxShadow: '0 0 10px rgba(229,9,20,0.3), 0 0 20px rgba(229,9,20,0.15), 0 4px 14px rgba(0,0,0,0.4)' } : { background: 'linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.5) 100%)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.1), 0 4px 12px rgba(0,0,0,0.35), 0 0 24px rgba(' + a + ', 0.25), 0 0 48px rgba(' + a + ', 0.1)' })]}
                   onPress={() => handleQuoteTap(quote.symbol)}
                   activeOpacity={0.7}
                 >

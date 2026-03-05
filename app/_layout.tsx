@@ -4,7 +4,7 @@ import React, { useEffect, useState, Component, ReactNode } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
 import { AppProvider, useApp } from "@/providers/app-provider";
-import { ThemeProvider } from "@/providers/theme-provider";
+import { ThemeProvider, useTheme } from "@/providers/theme-provider";
 import { SidebarProvider } from "@/providers/sidebar-provider";
 import { View, Platform, Text, TouchableOpacity, StyleSheet, AppState } from "react-native";
 import { DynamicIsland } from "@/components/dynamic-island";
@@ -145,6 +145,7 @@ function RootLayoutNav() {
     showTradingWebView,
     setShowTradingWebView
   } = useApp();
+  const { fontFamilyCSS } = useTheme();
   const [appState, setAppState] = useState<string>(AppState.currentState);
 
   // Debug TradingWebView state changes
@@ -169,7 +170,7 @@ function RootLayoutNav() {
   }, [appState]);
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={[{ flex: 1 }, Platform.OS === 'web' && { fontFamily: fontFamilyCSS } as any]}>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="login" />
