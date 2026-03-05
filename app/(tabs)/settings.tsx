@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, ScrollView } from 'react-native';
-import { useTheme, ThemeName } from '@/providers/theme-provider';
+import { useTheme, ThemeName, FontFamily } from '@/providers/theme-provider';
 import { useSidebar } from '@/providers/sidebar-provider';
 import { Menu } from 'lucide-react-native';
 
@@ -14,7 +14,7 @@ const THEME_OPTIONS: { name: ThemeName; label: string; preview: string }[] = [
 ];
 
 export default function SettingsScreen() {
-  const { themeName, theme, setThemeName, glassMode, setGlassMode } = useTheme();
+  const { themeName, theme, setThemeName, glassMode, setGlassMode, fontFamily, setFontFamily } = useTheme();
   const { toggle: toggleSidebar } = useSidebar();
 
   return (
@@ -70,6 +70,26 @@ export default function SettingsScreen() {
                   activeOpacity={0.7}
                 >
                   <Text style={[styles.glassSegText, active && { color: theme.accent }]}>{m === 'neon' ? 'Neon' : m === 'minimal' ? 'Minimal' : m === 'liquid' ? 'Liquid' : 'Commander'}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        <Text style={[styles.sectionLabel, { marginTop: 32 }]}>FONT</Text>
+        <View style={[styles.glassCard, { borderColor: 'rgba(' + theme.accentRgb + ', 0.2)' }]}>
+          <View style={styles.glassSegmented}>
+            {(['system', 'mono', 'rounded', 'condensed', 'serif'] as FontFamily[]).map((f) => {
+              const active = fontFamily === f;
+              const labels: Record<FontFamily, string> = { system: 'System', mono: 'Mono', rounded: 'Rounded', condensed: 'Condensed', serif: 'Serif' };
+              return (
+                <TouchableOpacity
+                  key={f}
+                  style={[styles.glassSeg, active && styles.glassSegActive, active && { borderColor: theme.accent + '55' }]}
+                  onPress={() => setFontFamily(f)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.glassSegText, active && { color: theme.accent }]}>{labels[f]}</Text>
                 </TouchableOpacity>
               );
             })}

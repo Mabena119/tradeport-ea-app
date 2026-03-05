@@ -4,6 +4,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type ThemeName = 'red' | 'blue' | 'green' | 'purple' | 'orange' | 'cyan';
 export type GlassMode = 'neon' | 'minimal' | 'liquid' | 'commander';
+export type FontFamily = 'system' | 'mono' | 'rounded' | 'condensed' | 'serif';
+
+const FONT_MAP: Record<FontFamily, string> = {
+  system: '-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif',
+  mono: '"SF Mono", "Fira Code", "Courier New", monospace',
+  rounded: '"SF Pro Rounded", "Nunito", system-ui, sans-serif',
+  condensed: '"SF Pro Condensed", "Roboto Condensed", system-ui, sans-serif',
+  serif: '"New York", "Georgia", "Times New Roman", serif',
+};
 
 export interface ThemeColors {
   accent: string;
@@ -67,6 +76,7 @@ const THEMES: Record<ThemeName, ThemeColors> = {
 
 const THEME_STORAGE_KEY = 'tradeport_theme';
 const GLASS_STORAGE_KEY = 'tradeport_glass_mode';
+const FONT_STORAGE_KEY = 'tradeport_font';
 
 export interface ThemeState {
   themeName: ThemeName;
@@ -74,22 +84,25 @@ export interface ThemeState {
   setThemeName: (name: ThemeName) => void;
   glassMode: GlassMode;
   setGlassMode: (mode: GlassMode) => void;
+  fontFamily: FontFamily;
+  fontFamilyCSS: string;
+  setFontFamily: (f: FontFamily) => void;
 }
 
 export const [ThemeProvider, useTheme] = createContextHook<ThemeState>(() => {
   const [themeName, setThemeNameState] = useState<ThemeName>('red');
-  const [glassMode, setGlassModeState] = useState<GlassMode>('neon');
+  const [glassMode, setGlassModeState] = useState<GlassMode>('commander');
+  const [fontFamily, setFontFamilyState] = useState<FontFamily>('system');
 
   useEffect(() => {
     AsyncStorage.getItem(THEME_STORAGE_KEY).then((saved) => {
-      if (saved && saved in THEMES) {
-        setThemeNameState(saved as ThemeName);
-      }
+      if (saved && saved in THEMES) setThemeNameState(saved as ThemeName);
     }).catch(() => {});
     AsyncStorage.getItem(GLASS_STORAGE_KEY).then((saved) => {
-      if (saved === 'neon' || saved === 'minimal' || saved === 'liquid' || saved === 'commander') {
-        setGlassModeState(saved);
-      }
+      if (saved === 'neon' || saved === 'minimal' || saved === 'liquid' || saved === 'commander') setGlassModeState(saved);
+    }).catch(() => {});
+    AsyncStorage.getItem(FONT_STORAGE_KEY).then((saved) => {
+      if (saved && saved in FONT_MAP) setFontFamilyState(saved as FontFamily);
     }).catch(() => {});
   }, []);
 
@@ -103,9 +116,15 @@ export const [ThemeProvider, useTheme] = createContextHook<ThemeState>(() => {
     AsyncStorage.setItem(GLASS_STORAGE_KEY, mode).catch(() => {});
   }, []);
 
-  const theme = THEMES[themeName];
+  const setFontFamily = useCallback((f: FontFamily) => {
+    setFontFamilyState(f);
+    AsyncStorage.setItem(FONT_STORAGE_KEY, f).catch(() => {});
+  }, []);
 
-  return { themeName, theme, setThemeName, glassMode, setGlassMode };
+  const theme = THEMES[themeName];
+  const fontFamilyCSS = FONT_MAP[fontFamily];
+
+  return { themeName, theme, setThemeName, glassMode, setGlassMode, fontFamily, fontFamilyCSS, setFontFamily };
 });
 
-export { THEMES };
+export { THEMES, FONT_MAP };
