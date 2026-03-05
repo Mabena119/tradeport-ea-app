@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type ThemeName = 'red' | 'blue' | 'green' | 'purple' | 'orange' | 'cyan';
-export type GlassMode = 'neon' | 'minimal' | 'liquid';
+export type GlassMode = 'neon' | 'minimal' | 'liquid' | 'commander';
 
 export interface ThemeColors {
   accent: string;
@@ -87,7 +87,7 @@ export const [ThemeProvider, useTheme] = createContextHook<ThemeState>(() => {
       }
     }).catch(() => {});
     AsyncStorage.getItem(GLASS_STORAGE_KEY).then((saved) => {
-      if (saved === 'neon' || saved === 'minimal' || saved === 'liquid') {
+      if (saved === 'neon' || saved === 'minimal' || saved === 'liquid' || saved === 'commander') {
         setGlassModeState(saved);
       }
     }).catch(() => {});

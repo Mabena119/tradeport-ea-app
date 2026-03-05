@@ -15,6 +15,9 @@ export default function HomeScreen() {
   const { toggle: toggleSidebar } = useSidebar();
   const isNeon = glassMode === 'neon';
   const isLiquid = glassMode === 'liquid';
+  const isCmd = glassMode === 'commander';
+  const cmdRed = '#E50914';
+  const cmdRedRgb = '229, 9, 20';
 
   // Spinning neon border animations
   const cardSpin = useRef(new Animated.Value(0)).current;
@@ -53,6 +56,9 @@ export default function HomeScreen() {
   const a = theme.accentRgb;
   const ac = theme.accent;
   const ag = theme.accentGlow;
+  // Commander overrides accent colors
+  const ca = isCmd ? cmdRedRgb : a;
+  const cc = isCmd ? cmdRed : ac;
 
   const primaryEA = Array.isArray(eas) && eas.length > 0 ? eas[0] : null;
   const otherEAs = Array.isArray(eas) ? eas.slice(1) : [];
@@ -207,7 +213,11 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, Platform.OS === 'web' && { backgroundImage: isNeon ? 'linear-gradient(135deg, rgba(' + a + ', 0.95) 0%, rgba(' + a + ', 0.85) 10%, rgba(' + a + ', 0.75) 20%, rgba(' + a + ', 0.65) 30%, rgba(' + a + ', 0.55) 40%, rgba(' + a + ', 0.45) 50%, rgba(' + a + ', 0.35) 60%, rgba(' + a + ', 0.25) 70%, rgba(' + a + ', 0.15) 80%, rgba(' + a + ', 0.08) 90%, rgba(' + a + ', 0.03) 95%, rgba(0, 0, 0, 1) 100%)' : isLiquid ? 'linear-gradient(160deg, #2a2a2e 0%, #1c1c1e 30%, #141416 60%, #0e0e10 100%)' : 'linear-gradient(160deg, rgba(' + a + ', 0.12) 0%, rgba(' + a + ', 0.04) 25%, rgba(0,0,0,0.97) 60%, #000 100%)' }]}>
+    <SafeAreaView style={[styles.container, Platform.OS === 'web' && { backgroundImage: isNeon ? 'linear-gradient(135deg, rgba(' + a + ', 0.95) 0%, rgba(' + a + ', 0.85) 10%, rgba(' + a + ', 0.75) 20%, rgba(' + a + ', 0.65) 30%, rgba(' + a + ', 0.55) 40%, rgba(' + a + ', 0.45) 50%, rgba(' + a + ', 0.35) 60%, rgba(' + a + ', 0.25) 70%, rgba(' + a + ', 0.15) 80%, rgba(' + a + ', 0.08) 90%, rgba(' + a + ', 0.03) 95%, rgba(0, 0, 0, 1) 100%)' : isLiquid ? 'linear-gradient(160deg, #2a2a2e 0%, #1c1c1e 30%, #141416 60%, #0e0e10 100%)' : isCmd ? 'none' : 'linear-gradient(160deg, rgba(' + a + ', 0.12) 0%, rgba(' + a + ', 0.04) 25%, rgba(0,0,0,0.97) 60%, #000 100%)' }]}>
+      {/* Commander robot background */}
+      {isCmd && primaryEAImage && (
+        <View style={[styles.cmdBg, Platform.OS === 'web' && { backgroundImage: 'url(' + primaryEAImage + ')', backgroundSize: 'cover', backgroundPosition: 'center top', filter: 'brightness(0.35) saturate(0.8)' }]} />
+      )}
       {/* Menu Button */}
       <TouchableOpacity style={styles.menuButton} onPress={toggleSidebar} activeOpacity={0.7}>
         <Menu color="rgba(255,255,255,0.8)" size={22} />
@@ -217,7 +227,21 @@ export default function HomeScreen() {
         {primaryEA ? (
           <View style={styles.mainEAContainer}>
 
-            {/* ========== 1. HERO IMAGE — STANDALONE ========== */}
+            {/* ========== 1. HERO / COMMANDER PORTRAIT ========== */}
+            {isCmd ? (
+              <View style={styles.cmdHero}>
+                <View style={[styles.cmdPortrait, Platform.OS === 'web' && { boxShadow: '0 0 20px rgba(' + cmdRedRgb + ', 0.4), 0 0 40px rgba(' + cmdRedRgb + ', 0.2)' }]}>
+                  <Animated.View style={[styles.cmdRing, { transform: [{ rotate: tradeSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent, ' + cmdRed + ' 80deg, rgba(' + cmdRedRgb + ', 0.3) 160deg, transparent 200deg, transparent 260deg, ' + cmdRed + ' 340deg, transparent 360deg)' }]} />
+                  {primaryEAImage && !logoError ? (
+                    <Image source={{ uri: primaryEAImage }} style={styles.cmdPortraitImg} resizeMode="cover" />
+                  ) : (
+                    <Image source={require('../../assets/images/icon.png')} style={styles.cmdPortraitImg} resizeMode="contain" />
+                  )}
+                </View>
+                <Text style={styles.cmdName}>{primaryEA.name}</Text>
+                <Text style={styles.cmdDesc}>{primaryEA.description || 'Your Trading EA Is Ready.'}</Text>
+              </View>
+            ) : (
             <View style={[styles.heroWrap, !isNeon && { padding: 0, borderRadius: 28 }]}>
               {isNeon && <Animated.View style={[styles.heroNeonSpinner, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 40deg, rgba(' + a + ', 0.5) 80deg, transparent 120deg, transparent 180deg, ' + ac + ' 220deg, rgba(' + a + ', 0.5) 260deg, transparent 300deg, transparent 360deg)' }]} />}
               {isNeon && <Animated.View style={[styles.heroNeonGlow, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.4) 40deg, transparent 120deg, transparent 180deg, rgba(' + a + ', 0.4) 220deg, transparent 300deg, transparent 360deg)' }]} />}
@@ -232,7 +256,6 @@ export default function HomeScreen() {
                 >
                   {isNeon && renderBubbles(heroBubbles)}
                   {isNeon && <View style={[styles.heroRefraction, Platform.OS === 'web' && { background: 'linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.03) 50%, transparent 100%)' }]} />}
-                  {/* Bot name overlaid at bottom of hero */}
                   <View style={styles.heroNameOverlay}>
                     <Text testID="ea-title" style={styles.botMainName} numberOfLines={3} ellipsizeMode="tail">{primaryEA.name}</Text>
                   </View>
@@ -248,6 +271,7 @@ export default function HomeScreen() {
                 </View>
               )}
             </View>
+            )}
 
           </View>
         ) : (
@@ -266,32 +290,32 @@ export default function HomeScreen() {
             <View style={[styles.neonWrap, !isNeon && { padding: 0 }]}>
               {isNeon && <Animated.View style={[styles.neonSpinner, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 40deg, rgba(' + a + ', 0.5) 80deg, transparent 120deg, transparent 180deg, ' + ac + ' 220deg, rgba(' + a + ', 0.5) 260deg, transparent 300deg, transparent 360deg)' }]} />}
               {isNeon && <Animated.View style={[styles.neonGlowSpinner, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.4) 40deg, transparent 120deg, transparent 180deg, rgba(' + a + ', 0.4) 220deg, transparent 300deg, transparent 360deg)' }]} />}
-              <View style={[styles.liquidInner, Platform.OS === 'web' && (isNeon ? { background: 'radial-gradient(ellipse 120% 40% at 30% 25%, rgba(255,255,255,0.25) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.12) 0%, rgba(' + a + ', 0.08) 30%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0.8) 100%)', backdropFilter: 'blur(80px) saturate(200%)', WebkitBackdropFilter: 'blur(80px) saturate(200%)', boxShadow: 'inset 0 2px 8px rgba(255,255,255,0.25), inset 0 -4px 12px rgba(0,0,0,0.4), inset 0 40px 60px -20px rgba(255,255,255,0.08), 0 20px 60px rgba(0,0,0,0.6), 0 0 30px rgba(' + a + ', 0.2), 0 0 80px rgba(' + a + ', 0.08)' } : isLiquid ? { background: 'linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.1), 0 8px 32px rgba(0,0,0,0.35)' } : { background: 'linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.5) 100%)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.1), 0 8px 24px rgba(0,0,0,0.4)' }), !isNeon && { borderRadius: isLiquid ? 28 : 24, borderWidth: 0.5, borderColor: isLiquid ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.08)' }]}>
+              <View style={[styles.liquidInner, Platform.OS === 'web' && (isNeon ? { background: 'radial-gradient(ellipse 120% 40% at 30% 25%, rgba(255,255,255,0.25) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.12) 0%, rgba(' + a + ', 0.08) 30%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0.8) 100%)', backdropFilter: 'blur(80px) saturate(200%)', WebkitBackdropFilter: 'blur(80px) saturate(200%)', boxShadow: 'inset 0 2px 8px rgba(255,255,255,0.25), inset 0 -4px 12px rgba(0,0,0,0.4), inset 0 40px 60px -20px rgba(255,255,255,0.08), 0 20px 60px rgba(0,0,0,0.6), 0 0 30px rgba(' + a + ', 0.2), 0 0 80px rgba(' + a + ', 0.08)' } : isLiquid ? { background: 'linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.1), 0 8px 32px rgba(0,0,0,0.35)' } : isCmd ? { background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 0 12px rgba(' + cmdRedRgb + ', 0.35), 0 0 24px rgba(' + cmdRedRgb + ', 0.2), 0 8px 20px rgba(0,0,0,0.5)' } : { background: 'linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.5) 100%)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.1), 0 8px 24px rgba(0,0,0,0.4)' }), !isNeon && { borderRadius: isCmd ? 32 : isLiquid ? 28 : 24, borderWidth: isCmd ? 2 : 0.5, borderColor: isCmd ? cmdRed : isLiquid ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.08)' }]}>
                 {isNeon && renderBubbles(cardBubbles)}
                 {isNeon && <View style={[styles.refraction, Platform.OS === 'web' && { background: 'linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 40%, transparent 100%)' }]} />}
                 {isNeon && <View style={[styles.meniscus, Platform.OS === 'web' && { background: 'radial-gradient(ellipse 60% 100% at 50% 0%, rgba(255,255,255,0.12) 0%, transparent 100%)' }]} />}
                 <View style={styles.bottomActions}>
                   <TouchableOpacity testID="action-quotes" style={[styles.actionButton, styles.secondaryButton]} onPress={handleQuotes}>
                     <View style={styles.buttonIconContainer}>
-                      <TrendingUp color={ac} size={18} />
+                      <TrendingUp color={cc} size={18} />
                     </View>
-                    <Text style={styles.secondaryButtonText}>QUOTES</Text>
+                    <Text style={[styles.secondaryButtonText, isCmd && { color: cmdRed }]}>QUOTES</Text>
                   </TouchableOpacity>
                   <TouchableOpacity testID="action-start" style={[styles.actionButton, styles.tradeButton, isBotActive && styles.tradeButtonActive]} onPress={() => { try { setBotActive(!isBotActive); } catch (e) { console.error(e); } }}>
                     <View style={styles.tradeIconOuter}>
-                      <Animated.View style={[styles.tradeIconSpinner, { transform: [{ rotate: tradeSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 60deg, rgba(' + a + ', 0.5) 120deg, transparent 180deg, transparent 240deg, ' + ac + ' 300deg, transparent 360deg)' }]} />
-                      <Animated.View style={[styles.tradeIconGlow, { transform: [{ rotate: tradeSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.5) 60deg, transparent 180deg, rgba(' + a + ', 0.5) 300deg, transparent 360deg)' }]} />
+                      <Animated.View style={[styles.tradeIconSpinner, { transform: [{ rotate: tradeSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + cc + ' 60deg, rgba(' + ca + ', 0.5) 120deg, transparent 180deg, transparent 240deg, ' + cc + ' 300deg, transparent 360deg)' }]} />
+                      <Animated.View style={[styles.tradeIconGlow, { transform: [{ rotate: tradeSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + ca + ', 0.5) 60deg, transparent 180deg, rgba(' + ca + ', 0.5) 300deg, transparent 360deg)' }]} />
                       <View style={styles.tradeIconInner}>
-                        {isBotActive ? <Square color={ac} size={20} fill={ac} style={Platform.OS === 'web' ? { filter: 'drop-shadow(0 0 6px rgba(' + a + ', 0.7))' } : {}} /> : <Play color={ac} size={22} fill={ac} style={Platform.OS === 'web' ? { filter: 'drop-shadow(0 0 6px rgba(' + a + ', 0.7))' } : {}} />}
+                        {isBotActive ? <Square color={cc} size={20} fill={cc} style={Platform.OS === 'web' ? { filter: 'drop-shadow(0 0 6px rgba(' + ca + ', 0.7))' } : {}} /> : <Play color={cc} size={22} fill={cc} style={Platform.OS === 'web' ? { filter: 'drop-shadow(0 0 6px rgba(' + ca + ', 0.7))' } : {}} />}
                       </View>
                     </View>
-                    <Text style={[styles.tradeButtonText, isBotActive && styles.tradeButtonTextActive]}>{isBotActive ? 'STOP' : 'TRADE'}</Text>
+                    <Text style={[styles.tradeButtonText, isBotActive && styles.tradeButtonTextActive, isCmd && { color: cmdRed }]}>{isBotActive ? 'STOP' : 'TRADE'}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity testID="action-remove" style={[styles.actionButton, styles.removeButton]} onPress={handleRemoveActiveBot}>
                     <View style={styles.buttonIconContainer}>
-                      <Trash2 color={ac} size={18} />
+                      <Trash2 color={isCmd ? cmdRed : ac} size={18} />
                     </View>
-                    <Text style={styles.removeButtonText}>REMOVE</Text>
+                    <Text style={[styles.removeButtonText, isCmd && { color: cmdRed }]}>REMOVE</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -332,11 +356,11 @@ export default function HomeScreen() {
           <View style={[styles.neonWrapPill, !isNeon && { padding: 0 }]}>
             {isNeon && <Animated.View style={[styles.neonSpinnerPill, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 40deg, rgba(' + a + ', 0.5) 80deg, transparent 120deg, transparent 180deg, ' + ac + ' 220deg, rgba(' + a + ', 0.5) 260deg, transparent 300deg, transparent 360deg)' }]} />}
             {isNeon && <Animated.View style={[styles.neonGlowSpinnerPill, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.4) 40deg, transparent 120deg, transparent 180deg, rgba(' + a + ', 0.4) 220deg, transparent 300deg, transparent 360deg)' }]} />}
-            <TouchableOpacity style={[styles.liquidInnerPill, !isNeon && { borderRadius: isLiquid ? 26 : 22, borderWidth: 0.5, borderColor: isLiquid ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.08)' }, Platform.OS === 'web' && (isNeon ? { background: 'radial-gradient(ellipse 120% 40% at 30% 25%, rgba(255,255,255,0.25) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.12) 0%, rgba(' + a + ', 0.08) 30%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0.8) 100%)', backdropFilter: 'blur(80px) saturate(200%)', WebkitBackdropFilter: 'blur(80px) saturate(200%)', boxShadow: 'inset 0 2px 8px rgba(255,255,255,0.25), inset 0 -4px 12px rgba(0,0,0,0.4), inset 0 40px 60px -20px rgba(255,255,255,0.08), 0 20px 60px rgba(0,0,0,0.6), 0 0 30px rgba(' + a + ', 0.2), 0 0 80px rgba(' + a + ', 0.08)' } : isLiquid ? { background: 'linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.1), 0 6px 24px rgba(0,0,0,0.3)' } : { background: 'linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.5) 100%)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.1), 0 8px 24px rgba(0,0,0,0.4)' })] } onPress={handleAddNewEA} activeOpacity={0.7}>
+            <TouchableOpacity style={[styles.liquidInnerPill, !isNeon && { borderRadius: isCmd ? 32 : isLiquid ? 26 : 22, borderWidth: isCmd ? 2 : 0.5, borderColor: isCmd ? cmdRed : isLiquid ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.08)' }, Platform.OS === 'web' && (isNeon ? { background: 'radial-gradient(ellipse 120% 40% at 30% 25%, rgba(255,255,255,0.25) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.12) 0%, rgba(' + a + ', 0.08) 30%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0.8) 100%)', backdropFilter: 'blur(80px) saturate(200%)', WebkitBackdropFilter: 'blur(80px) saturate(200%)', boxShadow: 'inset 0 2px 8px rgba(255,255,255,0.25), inset 0 -4px 12px rgba(0,0,0,0.4), inset 0 40px 60px -20px rgba(255,255,255,0.08), 0 20px 60px rgba(0,0,0,0.6), 0 0 30px rgba(' + a + ', 0.2), 0 0 80px rgba(' + a + ', 0.08)' } : isLiquid ? { background: 'linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.1), 0 6px 24px rgba(0,0,0,0.3)' } : isCmd ? { background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 0 10px rgba(' + cmdRedRgb + ', 0.3), 0 0 20px rgba(' + cmdRedRgb + ', 0.18), 0 6px 18px rgba(0,0,0,0.4)' } : { background: 'linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.5) 100%)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.1), 0 8px 24px rgba(0,0,0,0.4)' })] } onPress={handleAddNewEA} activeOpacity={0.7}>
               {isNeon && renderBubbles(pillBubbles)}
               {isNeon && <View style={[styles.refractionPill, Platform.OS === 'web' && { background: 'linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 40%, transparent 100%)' }]} />}
               {isNeon && <View style={[styles.meniscusPill, Platform.OS === 'web' && { background: 'radial-gradient(ellipse 60% 100% at 50% 0%, rgba(255,255,255,0.12) 0%, transparent 100%)' }]} />}
-              <Plus color={ac} size={20} style={{ zIndex: 5 }} />
+              <Plus color={cc} size={20} style={{ zIndex: 5 }} />
               <View style={[styles.addEATextContainer, { zIndex: 5 }]}>
                 <Text style={styles.addEATitle}>ADD A NEW EA</Text>
                 <Text style={styles.addEASubtitle}>HAVE A VALID LICENSE KEY</Text>
@@ -349,7 +373,7 @@ export default function HomeScreen() {
             <View style={[styles.neonWrapInfo, !isNeon && { padding: 0 }]}>
               {isNeon && <Animated.View style={[styles.neonSpinnerInfo, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 40deg, rgba(' + a + ', 0.5) 80deg, transparent 120deg, transparent 180deg, ' + ac + ' 220deg, rgba(' + a + ', 0.5) 260deg, transparent 300deg, transparent 360deg)' }]} />}
               {isNeon && <Animated.View style={[styles.neonGlowInfo, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.4) 40deg, transparent 120deg, transparent 180deg, rgba(' + a + ', 0.4) 220deg, transparent 300deg, transparent 360deg)' }]} />}
-              <TouchableOpacity activeOpacity={0.7} onPress={() => {}} style={[styles.eaInfoCard, !isNeon && { borderWidth: 0.5, borderColor: isLiquid ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.08)' }, Platform.OS === 'web' && (isNeon ? { background: 'radial-gradient(ellipse 120% 50% at 20% 20%, rgba(255,255,255,0.15) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.08) 0%, rgba(0,0,0,0.75) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)' } : isLiquid ? { background: 'linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.25)' } : { background: 'linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.5) 100%)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.1), 0 4px 12px rgba(0,0,0,0.35)' }), isLiquid && { borderRadius: 26 }]}>
+              <TouchableOpacity activeOpacity={0.7} onPress={() => {}} style={[styles.eaInfoCard, !isNeon && { borderWidth: isCmd ? 2 : 0.5, borderColor: isCmd ? cmdRed : isLiquid ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.08)' }, Platform.OS === 'web' && (isNeon ? { background: 'radial-gradient(ellipse 120% 50% at 20% 20%, rgba(255,255,255,0.15) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.08) 0%, rgba(0,0,0,0.75) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)' } : isLiquid ? { background: 'linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.25)' } : isCmd ? { background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 0 10px rgba(' + cmdRedRgb + ', 0.3), 0 0 20px rgba(' + cmdRedRgb + ', 0.18), 0 4px 14px rgba(0,0,0,0.4)' } : { background: 'linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.5) 100%)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.1), 0 4px 12px rgba(0,0,0,0.35)' }), isCmd && { borderRadius: 32 }, isLiquid && { borderRadius: 26 }]}>
                 <View style={styles.eaInfoImageWrap}>
                   {primaryEAImage && !logoError ? (
                     <Image source={{ uri: primaryEAImage }} style={styles.eaInfoImage} resizeMode="cover" />
@@ -444,6 +468,58 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
+  },
+
+  /* ========== COMMANDER MODE ========== */
+  cmdBg: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    zIndex: 0,
+    backgroundColor: '#050505',
+  },
+  cmdHero: {
+    alignItems: 'center',
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+  },
+  cmdPortrait: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    position: 'relative',
+    overflow: 'hidden',
+    marginBottom: 18,
+    padding: 3,
+  },
+  cmdRing: {
+    position: 'absolute',
+    top: '-25%', left: '-25%',
+    width: '150%', height: '150%',
+  },
+  cmdPortraitImg: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 70,
+    zIndex: 1,
+    borderWidth: 3,
+    borderColor: '#111',
+  },
+  cmdName: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 8,
+    letterSpacing: -0.5,
+    textShadowColor: 'rgba(0,0,0,0.6)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
+  },
+  cmdDesc: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.5)',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 
   /* ========== MAIN LAYOUT ========== */

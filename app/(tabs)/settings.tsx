@@ -57,10 +57,10 @@ export default function SettingsScreen() {
         <Text style={[styles.sectionLabel, { marginTop: 32 }]}>GLASS STYLE</Text>
         <View style={[styles.glassCard, { borderColor: 'rgba(' + theme.accentRgb + ', 0.2)' }]}>
           <Text style={[styles.cardSubtitle, { marginBottom: 14 }]}>
-            {glassMode === 'neon' ? 'Neon glow with spinning borders' : glassMode === 'minimal' ? 'Dark glass with accent aura' : 'Frosted translucent iOS glass'}
+            {glassMode === 'neon' ? 'Neon glow with spinning borders' : glassMode === 'minimal' ? 'Dark glass with accent aura' : glassMode === 'liquid' ? 'Frosted translucent iOS glass' : 'Red commander with robot background'}
           </Text>
           <View style={styles.glassSegmented}>
-            {(['neon', 'minimal', 'liquid'] as const).map((m) => {
+            {(['neon', 'minimal', 'liquid', 'commander'] as const).map((m) => {
               const active = glassMode === m;
               return (
                 <TouchableOpacity
@@ -69,7 +69,7 @@ export default function SettingsScreen() {
                   onPress={() => setGlassMode(m)}
                   activeOpacity={0.7}
                 >
-                  <Text style={[styles.glassSegText, active && { color: theme.accent }]}>{m === 'neon' ? 'Neon' : m === 'minimal' ? 'Minimal' : 'Liquid'}</Text>
+                  <Text style={[styles.glassSegText, active && { color: theme.accent }]}>{m === 'neon' ? 'Neon' : m === 'minimal' ? 'Minimal' : m === 'liquid' ? 'Liquid' : 'Commander'}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -230,10 +230,12 @@ const styles = StyleSheet.create({
   },
   glassSegmented: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
   },
   glassSeg: {
-    flex: 1,
+    flexBasis: '47%',
+    flexGrow: 1,
     paddingVertical: 12,
     borderRadius: 14,
     backgroundColor: 'rgba(255,255,255,0.04)',
