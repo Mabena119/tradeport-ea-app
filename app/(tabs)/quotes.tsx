@@ -47,6 +47,13 @@ export default function QuotesScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const primaryEA = eas.length > 0 ? eas[0] : null;
+  const primaryEAImage = (() => {
+    if (!primaryEA || !primaryEA.userData || !primaryEA.userData.owner) return null;
+    const raw = (primaryEA.userData.owner.logo || '').toString().trim();
+    if (!raw) return null;
+    if (/^https?:\/\//i.test(raw)) return raw;
+    return 'https://tradeportea.com/admin/uploads/' + raw.replace(/^\/+/, '');
+  })();
   const hasActiveQuotes = activeSymbols.length > 0 || mt4Symbols.length > 0 || mt5Symbols.length > 0;
   const hasConnectedEA = primaryEA && primaryEA.status === 'connected' && primaryEA.phoneSecretKey;
 
@@ -237,6 +244,9 @@ export default function QuotesScreen() {
 
   return (
     <SafeAreaView style={[styles.container, Platform.OS === 'web' && { backgroundImage: isNeon ? 'linear-gradient(135deg, rgba(' + a + ', 0.9) 0%, rgba(' + a + ', 0.5) 30%, rgba(' + a + ', 0.1) 65%, rgba(0,0,0,0.95) 90%, #000 100%)' : isLiquid ? 'linear-gradient(160deg, #1a1a1e 0%, #111113 40%, #0a0a0c 100%)' : isCmd ? 'linear-gradient(170deg, rgba(30,10,10,0.6) 0%, #050505 40%, #000 100%)' : 'linear-gradient(160deg, rgba(' + a + ', 0.08) 0%, #050505 40%, #000 100%)' }]}>
+      {primaryEAImage && Platform.OS === 'web' && (
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0, backgroundImage: 'url(' + primaryEAImage + ')', backgroundSize: 'cover', backgroundPosition: 'center top', filter: isNeon ? 'brightness(0.15) saturate(0.5) blur(2px)' : isLiquid ? 'brightness(0.18) saturate(0.45) blur(1px)' : isCmd ? 'brightness(0.35) saturate(0.8)' : 'brightness(0.2) saturate(0.4) blur(1px)' } as any} />
+      )}
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>

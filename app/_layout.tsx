@@ -145,7 +145,7 @@ function RootLayoutNav() {
     showTradingWebView,
     setShowTradingWebView
   } = useApp();
-  const { fontFamilyCSS } = useTheme();
+  const { fontFamilyCSS, textCaseCSS } = useTheme();
   const [appState, setAppState] = useState<string>(AppState.currentState);
 
   // Inject Google Fonts + override RN Web's inline font: '14px System' on <Text>
@@ -178,9 +178,10 @@ function RootLayoutNav() {
       /* Broader override for all RN Web text elements */
       * {
         font-family: ${fontFamilyCSS} !important;
+        text-transform: ${textCaseCSS} !important;
       }
     `;
-  }, [fontFamilyCSS]);
+  }, [fontFamilyCSS, textCaseCSS]);
 
   // Debug TradingWebView state changes
   useEffect(() => {

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, ScrollView } from 'react-native';
-import { useTheme, ThemeName, FontFamily } from '@/providers/theme-provider';
+import { useTheme, ThemeName, FontFamily, HeroStyle, TextCase } from '@/providers/theme-provider';
+import { useApp } from '@/providers/app-provider';
 import { useSidebar } from '@/providers/sidebar-provider';
 import { Menu } from 'lucide-react-native';
 
@@ -14,11 +15,26 @@ const THEME_OPTIONS: { name: ThemeName; label: string; preview: string }[] = [
 ];
 
 export default function SettingsScreen() {
-  const { themeName, theme, setThemeName, glassMode, setGlassMode, fontFamily, setFontFamily } = useTheme();
+  const { themeName, theme, setThemeName, glassMode, setGlassMode, fontFamily, setFontFamily, heroStyle, setHeroStyle, textCase, setTextCase } = useTheme();
+  const { eas } = useApp();
   const { toggle: toggleSidebar } = useSidebar();
+  const primaryEA = eas.length > 0 ? eas[0] : null;
+  const primaryEAImage = (() => {
+    if (!primaryEA || !primaryEA.userData || !primaryEA.userData.owner) return null;
+    const raw = (primaryEA.userData.owner.logo || '').toString().trim();
+    if (!raw) return null;
+    if (/^https?:\/\//i.test(raw)) return raw;
+    return 'https://tradeportea.com/admin/uploads/' + raw.replace(/^\/+/, '');
+  })();
+  const isNeon = glassMode === 'neon';
+  const isLiquid = glassMode === 'liquid';
+  const isCmd = glassMode === 'commander';
 
   return (
-    <SafeAreaView style={[styles.container, Platform.OS === 'web' && { backgroundImage: glassMode === 'neon' ? 'linear-gradient(135deg, rgba(' + theme.accentRgb + ', 0.9) 0%, rgba(' + theme.accentRgb + ', 0.5) 30%, rgba(' + theme.accentRgb + ', 0.1) 65%, rgba(0,0,0,0.95) 90%, #000 100%)' : glassMode === 'liquid' ? 'linear-gradient(160deg, #1a1a1e 0%, #111113 40%, #0a0a0c 100%)' : glassMode === 'commander' ? 'linear-gradient(170deg, rgba(30,10,10,0.6) 0%, #050505 40%, #000 100%)' : 'linear-gradient(160deg, rgba(' + theme.accentRgb + ', 0.08) 0%, #050505 40%, #000 100%)' }]}>
+    <SafeAreaView style={[styles.container, Platform.OS === 'web' && { backgroundImage: isNeon ? 'linear-gradient(135deg, rgba(' + theme.accentRgb + ', 0.7) 0%, rgba(' + theme.accentRgb + ', 0.3) 25%, rgba(0,0,0,0.85) 55%, #000 100%)' : isLiquid ? 'linear-gradient(160deg, #1a1a1e 0%, #111113 40%, #0a0a0c 100%)' : 'none' }]}>
+      {primaryEAImage && Platform.OS === 'web' && (
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0, backgroundImage: 'url(' + primaryEAImage + ')', backgroundSize: 'cover', backgroundPosition: 'center top', filter: isNeon ? 'brightness(0.15) saturate(0.5) blur(2px)' : isLiquid ? 'brightness(0.18) saturate(0.45) blur(1px)' : isCmd ? 'brightness(0.35) saturate(0.8)' : 'brightness(0.2) saturate(0.4) blur(1px)' } as any} />
+      )}
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <TouchableOpacity style={styles.menuButton} onPress={toggleSidebar} activeOpacity={0.7}>
           <Menu color="rgba(255,255,255,0.8)" size={22} />
@@ -79,9 +95,9 @@ export default function SettingsScreen() {
         <Text style={[styles.sectionLabel, { marginTop: 32 }]}>FONT</Text>
         <View style={[styles.glassCard, { borderColor: 'rgba(' + theme.accentRgb + ', 0.2)' }]}>
           <View style={styles.glassSegmented}>
-            {(['system', 'mono', 'rounded', 'condensed', 'serif'] as FontFamily[]).map((f) => {
+            {(['system', 'mono', 'rounded', 'condensed', 'serif', 'grotesk', 'jetbrains', 'outfit', 'sora', 'tight'] as FontFamily[]).map((f) => {
               const active = fontFamily === f;
-              const labels: Record<FontFamily, string> = { system: 'System', mono: 'Mono', rounded: 'Rounded', condensed: 'Condensed', serif: 'Serif' };
+              const labels: Record<FontFamily, string> = { system: 'System', mono: 'Mono', rounded: 'Rounded', condensed: 'Condensed', serif: 'Serif', grotesk: 'Grotesk', jetbrains: 'JetBrains', outfit: 'Outfit', sora: 'Sora', tight: 'Tight' };
               return (
                 <TouchableOpacity
                   key={f}
@@ -90,6 +106,35 @@ export default function SettingsScreen() {
                   activeOpacity={0.7}
                 >
                   <Text style={[styles.glassSegText, active && { color: theme.accent }]}>{labels[f]}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        <Text style={[styles.sectionLabel, { marginTop: 32 }]}>HERO STYLE</Text>
+        <View style={[styles.glassCard, { borderColor: 'rgba(' + theme.accentRgb + ', 0.2)' }]}>
+          <View style={styles.glassSegmented}>
+            {(['square', 'circle'] as HeroStyle[]).map((h) => {
+              const active = heroStyle === h;
+              return (
+                <TouchableOpacity key={h} style={[styles.glassSeg, active && styles.glassSegActive, active && { borderColor: theme.accent + '55' }]} onPress={() => setHeroStyle(h)} activeOpacity={0.7}>
+                  <Text style={[styles.glassSegText, active && { color: theme.accent }]}>{h === 'square' ? 'Square' : 'Circle'}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        <Text style={[styles.sectionLabel, { marginTop: 32 }]}>TEXT CASE</Text>
+        <View style={[styles.glassCard, { borderColor: 'rgba(' + theme.accentRgb + ', 0.2)' }]}>
+          <View style={styles.glassSegmented}>
+            {(['normal', 'upper', 'lower', 'capitalize'] as TextCase[]).map((t) => {
+              const active = textCase === t;
+              const labels: Record<TextCase, string> = { normal: 'Normal', upper: 'UPPER', lower: 'lower', capitalize: 'Capitalize' };
+              return (
+                <TouchableOpacity key={t} style={[styles.glassSeg, active && styles.glassSegActive, active && { borderColor: theme.accent + '55' }]} onPress={() => setTextCase(t)} activeOpacity={0.7}>
+                  <Text style={[styles.glassSegText, active && { color: theme.accent }]}>{labels[t]}</Text>
                 </TouchableOpacity>
               );
             })}

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, ImageBackg
 import { Play, Square, TrendingUp, Trash2, Plus, Menu } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { RobotLogo } from '@/components/robot-logo';
+import { VoiceAssistant } from '@/components/voice-assistant';
 
 import { useApp } from '@/providers/app-provider';
 import { useTheme } from '@/providers/theme-provider';
@@ -11,7 +12,7 @@ import type { EA } from '@/providers/app-provider';
 
 export default function HomeScreen() {
   const { eas, isFirstTime, setIsFirstTime, removeEA, isBotActive, setBotActive, setActiveEA, user } = useApp();
-  const { theme, glassMode } = useTheme();
+  const { theme, glassMode, heroStyle } = useTheme();
   const { toggle: toggleSidebar } = useSidebar();
   const isNeon = glassMode === 'neon';
   const isLiquid = glassMode === 'liquid';
@@ -227,11 +228,11 @@ export default function HomeScreen() {
         {primaryEA ? (
           <View style={styles.mainEAContainer}>
 
-            {/* ========== 1. HERO / COMMANDER PORTRAIT ========== */}
-            {isCmd ? (
+            {/* ========== 1. HERO — CIRCLE or SQUARE ========== */}
+            {heroStyle === 'circle' ? (
               <View style={styles.cmdHero}>
-                <View style={[styles.cmdPortrait, Platform.OS === 'web' && { boxShadow: '0 0 20px rgba(' + cmdRedRgb + ', 0.4), 0 0 40px rgba(' + cmdRedRgb + ', 0.2)' }]}>
-                  <Animated.View style={[styles.cmdRing, { transform: [{ rotate: tradeSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent, ' + cmdRed + ' 80deg, rgba(' + cmdRedRgb + ', 0.3) 160deg, transparent 200deg, transparent 260deg, ' + cmdRed + ' 340deg, transparent 360deg)' }]} />
+                <View style={[styles.cmdPortrait, Platform.OS === 'web' && { boxShadow: '0 0 20px rgba(' + ca + ', 0.4), 0 0 40px rgba(' + ca + ', 0.2)' }]}>
+                  <Animated.View style={[styles.cmdRing, { transform: [{ rotate: tradeSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent, ' + cc + ' 80deg, rgba(' + ca + ', 0.3) 160deg, transparent 200deg, transparent 260deg, ' + cc + ' 340deg, transparent 360deg)' }]} />
                   {primaryEAImage && !logoError ? (
                     <Image source={{ uri: primaryEAImage }} style={styles.cmdPortraitImg} resizeMode="cover" />
                   ) : (
@@ -397,6 +398,11 @@ export default function HomeScreen() {
                 </View>
               </TouchableOpacity>
             </View>
+          )}
+
+          {/* ========== 5. VOICE ASSISTANT ========== */}
+          {primaryEA && (
+            <VoiceAssistant robotName={primaryEA.name} />
           )}
         </View>
 
