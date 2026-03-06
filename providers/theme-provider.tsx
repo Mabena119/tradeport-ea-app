@@ -8,11 +8,14 @@ export type FontFamily = 'system' | 'mono' | 'rounded' | 'condensed' | 'serif';
 
 const FONT_MAP: Record<FontFamily, string> = {
   system: '-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif',
-  mono: '"SF Mono", "Fira Code", "Courier New", monospace',
-  rounded: '"SF Pro Rounded", "Nunito", system-ui, sans-serif',
-  condensed: '"SF Pro Condensed", "Roboto Condensed", system-ui, sans-serif',
-  serif: '"New York", "Georgia", "Times New Roman", serif',
+  mono: '"Fira Code", "SF Mono", "Courier New", monospace',
+  rounded: '"Nunito", "SF Pro Rounded", system-ui, sans-serif',
+  condensed: '"Roboto Condensed", "SF Pro Condensed", system-ui, sans-serif',
+  serif: '"Playfair Display", "New York", "Georgia", serif',
 };
+
+// Google Fonts URL — loaded once on web
+const GOOGLE_FONTS_URL = 'https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&family=Roboto+Condensed:wght@400;500;600;700;800&family=Playfair+Display:wght@400;600;700;800;900&display=swap';
 
 export interface ThemeColors {
   accent: string;
@@ -127,4 +130,4 @@ export const [ThemeProvider, useTheme] = createContextHook<ThemeState>(() => {
   return { themeName, theme, setThemeName, glassMode, setGlassMode, fontFamily, fontFamilyCSS, setFontFamily };
 });
 
-export { THEMES, FONT_MAP };
+export { THEMES, FONT_MAP, GOOGLE_FONTS_URL };
