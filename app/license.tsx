@@ -13,6 +13,9 @@ export default function LicenseScreen() {
   const { theme: thm, glassMode } = useTheme();
   const a = thm.accentRgb;
   const ac = thm.accent;
+  const isNeon = glassMode === 'neon';
+  const isLiquid = glassMode === 'liquid';
+  const isCmd = glassMode === 'commander';
   const hasActiveBots = eas.length > 0;
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [modalTitle, setModalTitle] = useState<string>('');
@@ -71,7 +74,7 @@ export default function LicenseScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, Platform.OS === 'web' && { backgroundImage: glassMode === 'neon' ? 'linear-gradient(135deg, rgba(' + a + ', 0.9) 0%, rgba(' + a + ', 0.5) 30%, rgba(' + a + ', 0.1) 65%, rgba(0,0,0,0.95) 90%, rgba(0,0,0,1) 100%)' : glassMode === 'liquid' ? 'linear-gradient(160deg, #1a1a1e 0%, #111113 40%, #0a0a0c 100%)' : glassMode === 'commander' ? 'linear-gradient(170deg, rgba(30,10,10,0.6) 0%, #050505 40%, #000 100%)' : 'linear-gradient(160deg, rgba(' + a + ', 0.08) 0%, #050505 40%, #000 100%)' }]}>
+    <SafeAreaView style={[styles.container, Platform.OS === 'web' && { backgroundImage: isNeon ? 'linear-gradient(135deg, rgba(' + a + ', 0.7) 0%, rgba(' + a + ', 0.3) 25%, rgba(0,0,0,0.85) 55%, #000 100%)' : isLiquid ? 'linear-gradient(160deg, #1a1a1e 0%, #111113 40%, #0a0a0c 100%)' : 'linear-gradient(170deg, rgba(' + a + ', 0.06) 0%, #050505 40%, #000 100%)' }]}>
       {hasActiveBots && (
         <View style={styles.header}>
           <TouchableOpacity style={[styles.backButton, Platform.OS === 'web' && { backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)' }]} onPress={() => router.back()}>
@@ -87,11 +90,11 @@ export default function LicenseScreen() {
               <Text style={styles.title}>Enter License Key</Text>
             </View>
             <View style={styles.form}>
-              <View style={[styles.inputWrap, Platform.OS === 'web' && { background: 'radial-gradient(ellipse 120% 50% at 20% 20%, rgba(255,255,255,0.1) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.04) 0%, rgba(0,0,0,0.6) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.2), 0 4px 16px rgba(0,0,0,0.3)' }]}>
+              <View style={[styles.inputWrap, Platform.OS === 'web' && (isNeon ? { background: 'radial-gradient(ellipse 120% 50% at 20% 20%, rgba(255,255,255,0.1) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.04) 0%, rgba(0,0,0,0.6) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.2), 0 4px 16px rgba(0,0,0,0.3)' } : isLiquid ? { background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.4) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', border: '1.5px solid rgba(' + a + ', 0.4)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15), 0 0 8px rgba(' + a + ', 0.5), 0 0 20px rgba(' + a + ', 0.35), 0 0 40px rgba(' + a + ', 0.2)' } : isCmd ? { background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '2px solid ' + ac, boxShadow: '0 0 12px rgba(' + a + ', 0.35), 0 0 24px rgba(' + a + ', 0.2), 0 8px 20px rgba(0,0,0,0.5)' } : { background: 'rgba(16,16,18,0.97)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', border: '0.5px solid rgba(255,255,255,0.04)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.1), 0 0 28px rgba(' + a + ', 0.35), 0 0 56px rgba(' + a + ', 0.15)' })]}>
                 <TextInput style={styles.input} placeholder="License Key" placeholderTextColor="rgba(255,255,255,0.35)" value={licenseKey} onChangeText={setLicenseKey} autoCapitalize="characters" />
               </View>
               <TouchableOpacity
-                style={[styles.activateButton, isActivating && styles.activateButtonDisabled, Platform.OS === 'web' && { background: 'radial-gradient(ellipse 120% 50% at 30% 25%, rgba(255,255,255,0.15) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.15) 0%, rgba(' + a + ', 0.08) 50%, rgba(0,0,0,0.5) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.25), 0 8px 24px rgba(0,0,0,0.4), 0 0 20px rgba(' + a + ', 0.1)' }]}
+                style={[styles.activateButton, isActivating && styles.activateButtonDisabled, Platform.OS === 'web' && (isNeon ? { background: 'radial-gradient(ellipse 120% 50% at 30% 25%, rgba(255,255,255,0.15) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.15) 0%, rgba(' + a + ', 0.08) 50%, rgba(0,0,0,0.5) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.25), 0 8px 24px rgba(0,0,0,0.4), 0 0 20px rgba(' + a + ', 0.1)' } : isLiquid ? { background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.4) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', border: '1.5px solid rgba(' + a + ', 0.4)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15), 0 0 8px rgba(' + a + ', 0.5), 0 0 20px rgba(' + a + ', 0.35), 0 0 40px rgba(' + a + ', 0.2), 0 0 70px rgba(' + a + ', 0.1)' } : isCmd ? { background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '2px solid ' + ac, boxShadow: '0 0 12px rgba(' + a + ', 0.35), 0 0 24px rgba(' + a + ', 0.2), 0 8px 20px rgba(0,0,0,0.5)' } : { background: 'rgba(16,16,18,0.97)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', border: '0.5px solid rgba(255,255,255,0.04)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.1), 0 0 28px rgba(' + a + ', 0.35), 0 0 56px rgba(' + a + ', 0.15)' })]}
                 onPress={handleActivate} disabled={isActivating}>
                 {isActivating ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
