@@ -17,6 +17,14 @@ export default function LicenseScreen() {
   const isLiquid = glassMode === 'liquid';
   const isCmd = glassMode === 'commander';
   const hasActiveBots = eas.length > 0;
+  const primaryEA = eas.length > 0 ? eas[0] : null;
+  const primaryEAImage = (() => {
+    if (!primaryEA || !primaryEA.userData || !primaryEA.userData.owner) return null;
+    const raw = (primaryEA.userData.owner.logo || '').toString().trim();
+    if (!raw) return null;
+    if (/^https?:\/\//i.test(raw)) return raw;
+    return 'https://tradeportea.com/admin/uploads/' + raw.replace(/^\/+/, '');
+  })();
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [modalTitle, setModalTitle] = useState<string>('');
   const [modalMessage, setModalMessage] = useState<string>('');
@@ -75,6 +83,9 @@ export default function LicenseScreen() {
 
   return (
     <SafeAreaView style={[styles.container, Platform.OS === 'web' && { backgroundImage: isNeon ? 'linear-gradient(135deg, rgba(' + a + ', 0.7) 0%, rgba(' + a + ', 0.3) 25%, rgba(0,0,0,0.85) 55%, #000 100%)' : isLiquid ? 'linear-gradient(160deg, #1a1a1e 0%, #111113 40%, #0a0a0c 100%)' : 'linear-gradient(170deg, rgba(' + a + ', 0.06) 0%, #050505 40%, #000 100%)' }]}>
+      {primaryEAImage && Platform.OS === 'web' && (
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0, backgroundImage: 'url(' + primaryEAImage + ')', backgroundSize: 'cover', backgroundPosition: 'center top', filter: isNeon ? 'brightness(0.15) saturate(0.5) blur(2px)' : isLiquid ? 'brightness(0.18) saturate(0.45) blur(1px)' : isCmd ? 'brightness(0.35) saturate(0.8)' : 'brightness(0.2) saturate(0.4) blur(1px)' } as any} />
+      )}
       {hasActiveBots && (
         <View style={styles.header}>
           <TouchableOpacity style={[styles.backButton, Platform.OS === 'web' && { backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)' }]} onPress={() => router.back()}>
