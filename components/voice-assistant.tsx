@@ -1,50 +1,23 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, Animated } from 'react-native';
 import { Mic } from 'lucide-react-native';
-import { useTheme } from '@/providers/theme-provider';
+import { router } from 'expo-router';
+import { useTheme, ThemeName, GlassMode } from '@/providers/theme-provider';
+import { useApp } from '@/providers/app-provider';
 
-interface VoiceAssistantProps {
-  robotName: string;
-  onNavigate?: (page: string) => void;
-  onToggleTrade?: () => void;
-  onChangeTheme?: () => void;
-  onColorChange?: (color: string) => void;
-  onGlassChange?: (glass: string) => void;
-  isTrading?: boolean;
-}
-
-// ===== AUDIO ENGINE =====
+// ===== AUDIO =====
 let audioCtx: AudioContext | null = null;
-function getAC() {
-  if (!audioCtx && typeof window !== 'undefined') audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-  return audioCtx;
-}
-function beepSnd(freq: number, dur: number) {
-  const c = getAC(); if (!c) return;
-  const o = c.createOscillator(), g = c.createGain(), f = c.createBiquadFilter();
-  o.type = 'sine'; o.frequency.value = freq; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = 10;
-  g.gain.setValueAtTime(0.07, c.currentTime); g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
-  o.connect(f); f.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + dur);
-}
-function staticSnd(dur: number) {
-  const c = getAC(); if (!c) return;
-  const buf = c.createBuffer(1, c.sampleRate * dur, c.sampleRate);
-  const d = buf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * 0.02;
-  const src = c.createBufferSource(), g = c.createGain(), f = c.createBiquadFilter();
-  src.buffer = buf; f.type = 'bandpass'; f.frequency.value = 3000; f.Q.value = 0.5;
-  g.gain.setValueAtTime(0.04, c.currentTime); g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
-  src.connect(f); f.connect(g); g.connect(c.destination); src.start(); src.stop(c.currentTime + dur);
-}
-function commOpen() { beepSnd(1800, 0.08); setTimeout(() => beepSnd(2200, 0.08), 100); setTimeout(() => staticSnd(0.2), 180); }
-function commClose() { beepSnd(2200, 0.06); setTimeout(() => beepSnd(1600, 0.1), 80); setTimeout(() => staticSnd(0.1), 160); }
-function chimeSnd() { [800, 1000, 1200].forEach((f, i) => setTimeout(() => beepSnd(f, 0.12), i * 80)); }
+function getAC() { if (!audioCtx && typeof window !== 'undefined') audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)(); return audioCtx; }
+function beep(f: number, d: number) { const c = getAC(); if (!c) return; const o = c.createOscillator(), g = c.createGain(), fl = c.createBiquadFilter(); o.type = 'sine'; o.frequency.value = f; fl.type = 'bandpass'; fl.frequency.value = f; fl.Q.value = 10; g.gain.setValueAtTime(0.07, c.currentTime); g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + d); o.connect(fl); fl.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + d); }
+function staticB(d: number) { const c = getAC(); if (!c) return; const buf = c.createBuffer(1, c.sampleRate * d, c.sampleRate); const da = buf.getChannelData(0); for (let i = 0; i < da.length; i++) da[i] = (Math.random() * 2 - 1) * 0.02; const src = c.createBufferSource(), g = c.createGain(), f = c.createBiquadFilter(); src.buffer = buf; f.type = 'bandpass'; f.frequency.value = 3000; f.Q.value = 0.5; g.gain.setValueAtTime(0.04, c.currentTime); g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + d); src.connect(f); f.connect(g); g.connect(c.destination); src.start(); src.stop(c.currentTime + d); }
+function commOpen() { beep(1800, 0.08); setTimeout(() => beep(2200, 0.08), 100); setTimeout(() => staticB(0.2), 180); }
+function commClose() { beep(2200, 0.06); setTimeout(() => beep(1600, 0.1), 80); setTimeout(() => staticB(0.1), 160); }
+function chime() { [800, 1000, 1200].forEach((f, i) => setTimeout(() => beep(f, 0.12), i * 80)); }
 
 function pickVoice(): SpeechSynthesisVoice | null {
   if (typeof window === 'undefined') return null;
   const voices = window.speechSynthesis.getVoices(); if (!voices.length) return null;
-  const pri = ['Microsoft Zira', 'Zira', 'Microsoft Zira Desktop',
-    'Google UK English Female', 'Microsoft Hazel', 'Samantha', 'Karen', 'Moira', 'Fiona',
-    'Google US English', 'Microsoft David', 'Daniel', 'Alex', 'Fred'];
+  const pri = ['Microsoft Zira', 'Zira', 'Microsoft Zira Desktop', 'Google UK English Female', 'Microsoft Hazel', 'Samantha', 'Karen', 'Moira', 'Fiona', 'Google US English', 'Microsoft David', 'Daniel'];
   for (const name of pri) { const f = voices.find(v => v.name.includes(name)); if (f) return f; }
   const eng = voices.filter(v => v.lang?.startsWith('en'));
   return eng.filter(v => !v.localService)[0] || eng[0] || voices[0];
@@ -55,18 +28,18 @@ function parseCmd(raw: string): { action: string; param?: string } | null {
   if (c.match(/open quote|show quote|quote|symbol|pairs/)) return { action: 'nav', param: 'quotes' };
   if (c.match(/open setting|show setting|setting/)) return { action: 'nav', param: 'settings' };
   if (c.match(/open meta|metatrader|mt5|mt4|broker/)) return { action: 'nav', param: 'metatrader' };
-  if (c.match(/go home|open home|home page|back home|back to home/)) return { action: 'nav', param: 'home' };
+  if (c.match(/go home|open home|home page|back home|back to home|home$/)) return { action: 'nav', param: 'home' };
   if (c.match(/start trad|begin trad|activate trad|trade on/)) return { action: 'trade_on' };
   if (c.match(/stop trad|end trad|deactivate|trade off/)) return { action: 'trade_off' };
   if (c.match(/change theme|switch theme|random theme|new theme/)) return { action: 'theme' };
-  const colorMatch = c.match(/colou?r(?:\s+to)?\s+(red|blue|green|purple|orange|cyan)/);
-  if (colorMatch) return { action: 'color', param: colorMatch[1] };
+  const cm = c.match(/colou?r(?:\s+to)?\s+(red|blue|green|purple|orange|cyan)/);
+  if (cm) return { action: 'color', param: cm[1] };
   if (c.match(/change colou?r|random colou?r/)) return { action: 'random_color' };
   if (c.match(/neon/)) return { action: 'glass', param: 'neon' };
   if (c.match(/minimal/)) return { action: 'glass', param: 'minimal' };
   if (c.match(/liquid/)) return { action: 'glass', param: 'liquid' };
   if (c.match(/commander/)) return { action: 'glass', param: 'commander' };
-  if (c.match(/change glow|change glass|random glow|random glass/)) return { action: 'random_glass' };
+  if (c.match(/change glow|change glass|random glow/)) return { action: 'random_glass' };
   if (c.match(/status|how.*trad|what.*status/)) return { action: 'status' };
   if (c.match(/who are you|your name|identify/)) return { action: 'identify' };
   if (c.match(/help|what can you do|commands/)) return { action: 'help' };
@@ -74,33 +47,32 @@ function parseCmd(raw: string): { action: string; param?: string } | null {
 }
 
 const CHIPS = [
-  { emoji: '📊', label: 'Open Quotes', cmd: 'open quotes' },
-  { emoji: '⚡', label: 'Start Trading', cmd: 'start trading' },
-  { emoji: '⏹', label: 'Stop Trading', cmd: 'stop trading' },
-  { emoji: '🎨', label: 'Change Theme', cmd: 'change theme' },
-  { emoji: '⚙️', label: 'Open Settings', cmd: 'open settings' },
-  { emoji: '🏠', label: 'Go Home', cmd: 'go home' },
-  { emoji: '🟣', label: 'Color Purple', cmd: 'color purple' },
-  { emoji: '✨', label: 'Neon Mode', cmd: 'neon mode' },
+  { emoji: '📊', label: 'Quotes', cmd: 'open quotes' },
+  { emoji: '⚡', label: 'Trade', cmd: 'start trading' },
+  { emoji: '⏹', label: 'Stop', cmd: 'stop trading' },
+  { emoji: '🎨', label: 'Theme', cmd: 'change theme' },
+  { emoji: '⚙️', label: 'Settings', cmd: 'open settings' },
+  { emoji: '🏠', label: 'Home', cmd: 'go home' },
 ];
 
-export function VoiceAssistant({ robotName, onNavigate, onToggleTrade, onChangeTheme, onColorChange, onGlassChange, isTrading }: VoiceAssistantProps) {
-  const { theme, glassMode } = useTheme();
+export function VoiceOverlay() {
+  const { theme, glassMode, setThemeName, setGlassMode } = useTheme();
+  const { eas, isBotActive, setBotActive } = useApp();
   const [active, setActive] = useState(false);
-  const [showBubbles, setShowBubbles] = useState(false);
-  const [label, setLabel] = useState('TAP TO ACTIVATE VOICE');
+  const [expanded, setExpanded] = useState(false);
+  const [label, setLabel] = useState('');
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  const barAnims = useRef(Array.from({ length: 7 }, () => new Animated.Value(4))).current;
-  const bubbleAnims = useRef(CHIPS.map(() => new Animated.Value(0))).current;
+  const barAnims = useRef(Array.from({ length: 5 }, () => new Animated.Value(3))).current;
+  const expandAnim = useRef(new Animated.Value(0)).current;
   const barLoopRef = useRef<any>(null);
   const recogRef = useRef<any>(null);
   const activeRef = useRef(false);
-  const ac = theme.accent, a = theme.accentRgb;
-  const isNeon = glassMode === 'neon', isLiquid = glassMode === 'liquid', isCmd = glassMode === 'commander';
+  const ac = theme.accent, ar = theme.accentRgb;
+  const robotName = eas.length > 0 ? eas[0].name : 'Royd';
 
-  // ===== USE REFS FOR CALLBACKS TO BREAK CIRCULAR DEPS =====
-  const propsRef = useRef({ robotName, onNavigate, onToggleTrade, onChangeTheme, onColorChange, onGlassChange, isTrading });
-  propsRef.current = { robotName, onNavigate, onToggleTrade, onChangeTheme, onColorChange, onGlassChange, isTrading };
+  // Keep refs fresh
+  const stateRef = useRef({ isBotActive, robotName });
+  stateRef.current = { isBotActive, robotName };
 
   useEffect(() => { activeRef.current = active; }, [active]);
   useEffect(() => () => {
@@ -112,35 +84,31 @@ export function VoiceAssistant({ robotName, onNavigate, onToggleTrade, onChangeT
   useEffect(() => {
     if (active) {
       const l = Animated.loop(Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 1.08, duration: 600, useNativeDriver: Platform.OS !== 'web' }),
-        Animated.timing(pulseAnim, { toValue: 1, duration: 600, useNativeDriver: Platform.OS !== 'web' }),
+        Animated.timing(pulseAnim, { toValue: 1.06, duration: 800, useNativeDriver: Platform.OS !== 'web' }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: Platform.OS !== 'web' }),
       ])); l.start(); return () => l.stop();
     } else pulseAnim.setValue(1);
   }, [active]);
 
-  const doBubbles = useCallback((show: boolean) => {
-    setShowBubbles(show);
-    bubbleAnims.forEach((anim, i) => {
-      Animated.timing(anim, { toValue: show ? 1 : 0, duration: 300, delay: show ? i * 60 : 0, useNativeDriver: Platform.OS !== 'web' }).start();
-    });
-  }, [bubbleAnims]);
+  const doExpand = useCallback((show: boolean) => {
+    setExpanded(show);
+    Animated.timing(expandAnim, { toValue: show ? 1 : 0, duration: 250, useNativeDriver: Platform.OS !== 'web' }).start();
+  }, [expandAnim]);
 
   const startBars = useCallback(() => {
     if (barLoopRef.current) cancelAnimationFrame(barLoopRef.current);
-    const go = () => {
-      Animated.parallel(barAnims.map(a => Animated.timing(a, { toValue: Math.random() * 22 + 4, duration: 120, useNativeDriver: false }))).start(() => { barLoopRef.current = requestAnimationFrame(go); });
-    }; go();
+    const go = () => { Animated.parallel(barAnims.map(a => Animated.timing(a, { toValue: Math.random() * 18 + 3, duration: 100, useNativeDriver: false }))).start(() => { barLoopRef.current = requestAnimationFrame(go); }); }; go();
   }, [barAnims]);
 
   const stopBars = useCallback(() => {
     if (barLoopRef.current) { cancelAnimationFrame(barLoopRef.current); barLoopRef.current = null; }
-    barAnims.forEach(a => a.setValue(4));
+    barAnims.forEach(a => a.setValue(3));
   }, [barAnims]);
 
-  // ===== SPEAK =====
+  // SPEAK
   const say = useCallback((text: string, done?: () => void) => {
     if (Platform.OS !== 'web' || !window.speechSynthesis) { done?.(); return; }
-    startBars(); setLabel(propsRef.current.robotName.toUpperCase() + ' SPEAKING...');
+    startBars(); setLabel(stateRef.current.robotName.toUpperCase() + ' SPEAKING...');
     commOpen();
     setTimeout(() => {
       const m = new SpeechSynthesisUtterance(text);
@@ -152,162 +120,169 @@ export function VoiceAssistant({ robotName, onNavigate, onToggleTrade, onChangeT
     }, 400);
   }, [startBars, stopBars]);
 
-  // ===== LISTEN — uses ref so it always has latest version =====
+  // NAVIGATE — uses router directly, works from ANY page
+  const navigate = useCallback((page: string) => {
+    try {
+      if (page === 'home') router.replace('/(tabs)/');
+      else if (page === 'quotes') router.replace('/(tabs)/quotes');
+      else if (page === 'metatrader') router.replace('/(tabs)/metatrader');
+      else if (page === 'settings') router.replace('/(tabs)/settings');
+    } catch (e) { console.log('Nav error:', e); }
+  }, []);
+
+  // LISTEN REF — always points to latest
   const listenRef = useRef<() => void>(() => {});
 
   const startListening = useCallback(() => {
     if (Platform.OS !== 'web' || !activeRef.current) return;
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) return;
+    if (!SR) { setLabel('TAP COMMANDS'); return; }
     if (recogRef.current) try { recogRef.current.abort(); } catch (e) {}
 
-    setLabel('LISTENING — SPEAK A COMMAND...'); stopBars();
+    setLabel('LISTENING...'); stopBars();
 
     const r = new SR(); recogRef.current = r;
-    r.continuous = false; r.interimResults = true; r.lang = 'en-US';
+    r.continuous = true; // KEY: stay open continuously
+    r.interimResults = true; r.lang = 'en-US';
 
     r.onresult = (e: any) => {
       let t = ''; for (let i = e.resultIndex; i < e.results.length; i++) t += e.results[i][0].transcript;
-      setLabel('🎤 ' + t); startBars(); doBubbles(false);
+      setLabel('🎤 ' + t); startBars();
       if (e.results[e.results.length - 1].isFinal) {
-        setLabel('PROCESSING...');
-        // Use execRef to always get latest exec
-        setTimeout(() => execRef.current(t), 300);
+        setLabel('...');
+        setTimeout(() => execRef.current(t), 200);
       }
     };
     r.onerror = (e: any) => {
-      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { recogRef.current = null; return; }
-      if (e.error === 'no-speech' && activeRef.current) setTimeout(() => listenRef.current(), 300);
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { recogRef.current = null; setLabel('TAP COMMANDS'); return; }
+      // Any other error: restart if active
+      if (activeRef.current) setTimeout(() => listenRef.current(), 500);
     };
     r.onend = () => {
-      // Always restart if still active — this is the key fix
+      // ALWAYS restart if still active — this is the KEY fix
       if (activeRef.current) setTimeout(() => listenRef.current(), 300);
     };
-    try { r.start(); } catch (e) {}
-  }, [startBars, stopBars, doBubbles]);
+    try { r.start(); } catch (e) { setLabel('TAP COMMANDS'); }
+  }, [startBars, stopBars]);
 
-  // Keep listenRef always pointing to latest startListening
   listenRef.current = startListening;
 
-  // ===== EXEC — uses refs so resume always works =====
+  // EXEC REF
   const execRef = useRef<(raw: string) => void>(() => {});
 
   const execCommand = useCallback((raw: string) => {
-    const p = parseCmd(raw); chimeSnd();
-    const pr = propsRef.current;
-
-    // Resume: go back to listening after speaking
+    const p = parseCmd(raw); chime();
+    const st = stateRef.current;
     const resume = () => {
       if (!activeRef.current) return;
-      setLabel('LISTENING — SPEAK A COMMAND...');
-      stopBars();
-      doBubbles(true);
-      // Wait a beat then restart listening
-      setTimeout(() => {
-        if (activeRef.current) listenRef.current();
-      }, 600);
+      setLabel('LISTENING...');
+      stopBars(); doExpand(true);
+      // Restart listening after speaking
+      setTimeout(() => { if (activeRef.current) listenRef.current(); }, 800);
     };
 
-    if (!p) { say("Sorry, I didn't catch that. Try saying open quotes, start trading, or change theme.", resume); return; }
-    switch (p.action) {
-      case 'nav': say('Opening ' + p.param + '.', resume); pr.onNavigate?.(p.param!); break;
-      case 'trade_on': if (pr.isTrading) say('Trading is already active.', resume); else { say('Trading activated. Reactor online.', resume); pr.onToggleTrade?.(); } break;
-      case 'trade_off': if (!pr.isTrading) say('Trading is already stopped.', resume); else { say('Trading deactivated. Reactor offline.', resume); pr.onToggleTrade?.(); } break;
-      case 'theme': say('Switching theme.', resume); pr.onChangeTheme?.(); break;
-      case 'color': say('Color set to ' + p.param + '.', resume); pr.onColorChange?.(p.param!); break;
-      case 'random_color': say('Switching color.', resume); pr.onColorChange?.('random'); break;
-      case 'glass': say(p.param + ' mode activated.', resume); pr.onGlassChange?.(p.param!); break;
-      case 'random_glass': say('Switching glass style.', resume); pr.onGlassChange?.('random'); break;
-      case 'status': say(pr.isTrading ? 'Trading is active. Reactor online.' : 'Trading is idle. Reactor offline.', resume); break;
-      case 'identify': say('I am ' + pr.robotName + '. Your loyal trading shadow soldier. Built by the Shadow Monarch.', resume); break;
-      case 'help': say('You can say: open quotes, start trading, stop trading, change color to purple, neon mode, change theme, open settings, go home, or ask my status.', resume); break;
-    }
-  }, [say, stopBars, doBubbles]);
+    if (!p) { say("Sorry, try again.", resume); return; }
 
-  // Keep execRef always pointing to latest execCommand
+    const colors: ThemeName[] = ['red', 'blue', 'green', 'purple', 'orange', 'cyan'];
+    const glasses: GlassMode[] = ['neon', 'minimal', 'liquid', 'commander'];
+
+    switch (p.action) {
+      case 'nav': say('Opening ' + p.param + '.', resume); navigate(p.param!); break;
+      case 'trade_on': if (st.isBotActive) say('Already active.', resume); else { say('Trading activated.', resume); try { setBotActive(true); } catch (e) {} } break;
+      case 'trade_off': if (!st.isBotActive) say('Already stopped.', resume); else { say('Trading deactivated.', resume); try { setBotActive(false); } catch (e) {} } break;
+      case 'theme': say('Theme updated.', resume); setThemeName(colors[Math.floor(Math.random() * colors.length)]); setGlassMode(glasses[Math.floor(Math.random() * glasses.length)]); break;
+      case 'color': say(p.param + '.', resume); if (colors.includes(p.param as any)) setThemeName(p.param as ThemeName); break;
+      case 'random_color': say('Done.', resume); setThemeName(colors[Math.floor(Math.random() * colors.length)]); break;
+      case 'glass': say(p.param + ' mode.', resume); if (glasses.includes(p.param as any)) setGlassMode(p.param as GlassMode); break;
+      case 'random_glass': say('Done.', resume); setGlassMode(glasses[Math.floor(Math.random() * glasses.length)]); break;
+      case 'status': say(st.isBotActive ? 'Trading active.' : 'Trading idle.', resume); break;
+      case 'identify': say('I am ' + st.robotName + '. Your shadow soldier.', resume); break;
+      case 'help': say('Say: open quotes, start trading, stop, color purple, neon mode, go home, status.', resume); break;
+    }
+  }, [say, stopBars, doExpand, navigate, setThemeName, setGlassMode, setBotActive]);
+
   execRef.current = execCommand;
 
-  // ===== RUN CHIP =====
+  // RUN CHIP
   const runChip = useCallback((cmd: string) => {
     if (!active) {
-      setActive(true); setLabel('ACTIVATING...'); startBars(); doBubbles(false);
-      setTimeout(() => {
-        say(propsRef.current.robotName + ' online.', () => {
-          if (!activeRef.current) return;
-          setLabel('PROCESSING...'); startBars();
-          setTimeout(() => execRef.current(cmd), 300);
-        });
-      }, 300);
+      setActive(true); startBars(); doExpand(false); setLabel('...');
+      setTimeout(() => say(stateRef.current.robotName + ' online.', () => {
+        if (!activeRef.current) return;
+        setLabel('...'); startBars();
+        setTimeout(() => execRef.current(cmd), 200);
+      }), 200);
       return;
     }
-    doBubbles(false); setLabel('PROCESSING...'); startBars();
-    setTimeout(() => execRef.current(cmd), 300);
-  }, [active, say, startBars, doBubbles]);
+    doExpand(false); setLabel('...'); startBars();
+    setTimeout(() => execRef.current(cmd), 200);
+  }, [active, say, startBars, doExpand]);
 
-  // ===== TOGGLE =====
+  // TOGGLE
   const toggle = useCallback(() => {
     if (active) {
-      setActive(false); setLabel('TAP TO ACTIVATE VOICE'); stopBars(); doBubbles(false);
+      setActive(false); setLabel(''); stopBars(); doExpand(false);
       if (recogRef.current) try { recogRef.current.abort(); } catch (e) {} recogRef.current = null;
       if (Platform.OS === 'web' && window.speechSynthesis) window.speechSynthesis.cancel();
       commClose();
     } else {
-      setActive(true); setLabel('ACTIVATING...'); startBars();
-      setTimeout(() => say(propsRef.current.robotName + ' online. How can I assist you today?', () => {
+      setActive(true); setLabel('...'); startBars(); doExpand(false);
+      setTimeout(() => say(stateRef.current.robotName + ' online. How can I assist?', () => {
         if (!activeRef.current) return;
-        stopBars(); setLabel('LISTENING — SPEAK A COMMAND...');
-        doBubbles(true); listenRef.current();
-      }), 600);
+        stopBars(); setLabel('LISTENING...');
+        doExpand(true); listenRef.current();
+      }), 400);
     }
-  }, [active, say, startBars, stopBars, doBubbles]);
+  }, [active, say, startBars, stopBars, doExpand]);
 
-  const btnStyle = Platform.OS === 'web' ? (
-    isNeon ? { background: 'radial-gradient(ellipse 120% 50% at 20% 20%, rgba(255,255,255,0.15) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.08) 0%, rgba(0,0,0,0.6) 100%)', backdropFilter: 'blur(80px) saturate(200%)', WebkitBackdropFilter: 'blur(80px) saturate(200%)', boxShadow: active ? '0 0 20px rgba(' + a + ', 0.4), 0 0 40px rgba(' + a + ', 0.2)' : 'inset 0 2px 6px rgba(255,255,255,0.2), 0 12px 24px rgba(0,0,0,0.35), 0 0 20px rgba(' + a + ', 0.15)' }
-    : isLiquid ? { background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.4) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', border: '1.5px solid rgba(' + a + ', 0.4)', boxShadow: active ? '0 0 20px rgba(' + a + ', 0.5), 0 0 40px rgba(' + a + ', 0.3)' : 'inset 0 1px 0 rgba(255,255,255,0.15), 0 0 8px rgba(' + a + ', 0.5), 0 0 20px rgba(' + a + ', 0.35), 0 0 40px rgba(' + a + ', 0.2)' }
-    : isCmd ? { background: active ? 'rgba(' + a + ', 0.1)' : 'rgba(0,0,0,0.45)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '2px solid ' + ac, boxShadow: active ? '0 0 20px rgba(' + a + ', 0.4), 0 0 40px rgba(' + a + ', 0.2)' : '0 0 12px rgba(' + a + ', 0.35), 0 0 24px rgba(' + a + ', 0.2)' }
-    : { background: 'rgba(16,16,18,0.97)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', border: '0.5px solid rgba(255,255,255,0.04)', boxShadow: active ? '0 0 30px rgba(' + a + ', 0.5), 0 0 60px rgba(' + a + ', 0.25)' : 'inset 0 0.5px 0 rgba(255,255,255,0.1), 0 0 28px rgba(' + a + ', 0.35), 0 0 56px rgba(' + a + ', 0.15)' }
-  ) : {};
+  if (Platform.OS !== 'web') return null;
 
   return (
-    <View style={styles.wrap}>
-      <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
-        <TouchableOpacity style={[styles.btn, Platform.OS === 'web' && btnStyle as any]} onPress={toggle} activeOpacity={0.7}>
-          <Mic color={active ? ac : 'rgba(255,255,255,0.4)'} size={28} />
-        </TouchableOpacity>
+    <View style={styles.overlay} pointerEvents="box-none">
+      {/* Expanded panel with bubbles */}
+      <Animated.View style={[styles.panel, { opacity: expandAnim, transform: [{ translateY: expandAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }]} pointerEvents={expanded ? 'auto' : 'none'}>
+        {active && label ? <Text style={[styles.labelTxt, { color: ac }]}>{label}</Text> : null}
+        <View style={styles.chipsRow}>
+          {CHIPS.map(chip => (
+            <TouchableOpacity key={chip.cmd} style={[styles.chip, { borderColor: 'rgba(' + ar + ', 0.15)' }]} onPress={() => runChip(chip.cmd)} activeOpacity={0.7}>
+              <Text style={styles.chipE}>{chip.emoji}</Text>
+              <Text style={styles.chipL}>{chip.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </Animated.View>
+
+      {/* Bars */}
       {active && (
-        <View style={styles.bars}>
+        <View style={styles.barsRow}>
           {barAnims.map((anim, i) => (
             <Animated.View key={i} style={[styles.bar, { height: anim, backgroundColor: ac }]} />
           ))}
         </View>
       )}
-      <Text style={[styles.label, active && { color: ac }]}>{label}</Text>
-      <View style={styles.bubblesWrap}>
-        {CHIPS.map((chip, i) => (
-          <Animated.View key={chip.cmd} style={{ opacity: showBubbles ? bubbleAnims[i] : 0.4, transform: [{ translateY: bubbleAnims[i].interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }}>
-            <TouchableOpacity
-              style={[styles.chipBtn, Platform.OS === 'web' && { borderColor: 'rgba(' + a + ', 0.12)' } as any]}
-              onPress={() => runChip(chip.cmd)} activeOpacity={0.7}
-            >
-              <Text style={styles.chipEmoji}>{chip.emoji}</Text>
-              <Text style={[styles.chipLabel, active && showBubbles && { color: 'rgba(255,255,255,0.6)' }]}>{chip.label}</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        ))}
-      </View>
+
+      {/* Floating mic button */}
+      <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+        <TouchableOpacity
+          style={[styles.micBtn, { borderColor: active ? ac : 'rgba(255,255,255,0.1)', backgroundColor: active ? 'rgba(' + ar + ', 0.12)' : 'rgba(0,0,0,0.7)' }, Platform.OS === 'web' && { backdropFilter: 'blur(20px)', boxShadow: active ? '0 0 20px rgba(' + ar + ', 0.4), 0 0 40px rgba(' + ar + ', 0.2)' : '0 4px 20px rgba(0,0,0,0.5)' } as any]}
+          onPress={toggle} activeOpacity={0.7}
+        >
+          <Mic color={active ? ac : 'rgba(255,255,255,0.5)'} size={22} />
+        </TouchableOpacity>
+      </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: 'center', marginBottom: 16, gap: 8 },
-  btn: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.04)', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.08)' },
-  bars: { flexDirection: 'row', alignItems: 'center', gap: 3, height: 24 },
-  bar: { width: 3, borderRadius: 2 },
-  label: { fontSize: 10, fontWeight: '600', letterSpacing: 0.5, color: 'rgba(255, 255, 255, 0.3)', textAlign: 'center' },
-  bubblesWrap: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6, paddingHorizontal: 8, marginTop: 4, maxWidth: 320 },
-  chipBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.03)', borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.08)' },
-  chipEmoji: { fontSize: 11, marginRight: 4 },
-  chipLabel: { fontSize: 10, fontWeight: '600', color: 'rgba(255,255,255,0.3)', letterSpacing: 0.2 },
+  overlay: { position: 'absolute', bottom: 20, right: 16, zIndex: 9999, alignItems: 'flex-end', gap: 8 },
+  panel: { backgroundColor: 'rgba(0,0,0,0.8)', borderRadius: 20, padding: 12, marginBottom: 4, maxWidth: 260, ...(Platform.OS === 'web' && { backdropFilter: 'blur(30px)', border: '0.5px solid rgba(255,255,255,0.08)' }) as any },
+  labelTxt: { fontSize: 9, fontWeight: '600', letterSpacing: 0.4, textAlign: 'center', marginBottom: 8 },
+  chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, justifyContent: 'center' },
+  chip: { flexDirection: 'row', alignItems: 'center', paddingVertical: 5, paddingHorizontal: 9, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.04)', borderWidth: 0.5 },
+  chipE: { fontSize: 10, marginRight: 3 },
+  chipL: { fontSize: 9, fontWeight: '600', color: 'rgba(255,255,255,0.4)' },
+  barsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 2, height: 18, alignSelf: 'center', marginBottom: 2 },
+  bar: { width: 2.5, borderRadius: 2 },
+  micBtn: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5 },
 });
