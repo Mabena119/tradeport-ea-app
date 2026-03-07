@@ -418,6 +418,22 @@ export default function HomeScreen() {
                 setThemeName(colors[Math.floor(Math.random() * colors.length)]);
                 setGlassMode(glasses[Math.floor(Math.random() * glasses.length)]);
               }}
+              onColorChange={(color) => {
+                const colors: Array<'red'|'blue'|'green'|'purple'|'orange'|'cyan'> = ['red','blue','green','purple','orange','cyan'];
+                if (color === 'random') {
+                  setThemeName(colors[Math.floor(Math.random() * colors.length)]);
+                } else if (colors.includes(color as any)) {
+                  setThemeName(color as any);
+                }
+              }}
+              onGlassChange={(glass) => {
+                const glasses: Array<'neon'|'minimal'|'liquid'|'commander'> = ['neon','minimal','liquid','commander'];
+                if (glass === 'random') {
+                  setGlassMode(glasses[Math.floor(Math.random() * glasses.length)]);
+                } else if (glasses.includes(glass as any)) {
+                  setGlassMode(glass as any);
+                }
+              }}
             />
           )}
         </View>

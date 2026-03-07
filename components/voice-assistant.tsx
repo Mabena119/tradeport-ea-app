@@ -8,6 +8,8 @@ interface VoiceAssistantProps {
   onNavigate?: (page: string) => void;
   onToggleTrade?: () => void;
   onChangeTheme?: () => void;
+  onColorChange?: (color: string) => void;
+  onGlassChange?: (glass: string) => void;
   isTrading?: boolean;
 }
 
@@ -39,11 +41,26 @@ function chime() { [800, 1000, 1200].forEach((f, i) => setTimeout(() => beep(f, 
 
 function pickVoice(): SpeechSynthesisVoice | null {
   if (typeof window === 'undefined') return null;
-  const v = window.speechSynthesis.getVoices(); if (!v.length) return null;
-  for (const n of ['Google UK English Male','Microsoft David','Microsoft Mark','Daniel','Alex','Rishi','Fred','Google US English']) {
-    const f = v.find(x => x.name.includes(n)); if (f) return f;
+  const voices = window.speechSynthesis.getVoices(); if (!voices.length) return null;
+  // Priority: deep/premium male voices first
+  const priority = [
+    'Google UK English Male', 'Microsoft David Desktop', 'Microsoft David',
+    'Microsoft Mark Online', 'Microsoft Mark', 'Microsoft Guy Online',
+    'Microsoft Ryan Online', 'Microsoft Christopher Online',
+    'Daniel', 'Rishi', 'Oliver', 'Thomas', 'Aaron',
+    'Alex', 'Fred', 'Samantha', 'Google US English',
+    'en-GB-Standard-B', 'en-US-Standard-B', 'en-AU-Standard-B'
+  ];
+  for (const name of priority) {
+    const found = voices.find(v => v.name.includes(name));
+    if (found) return found;
   }
-  return v.filter(x => x.lang?.startsWith('en'))[0] || v[0];
+  // Fallback: any English male-sounding or just English
+  const eng = voices.filter(v => v.lang?.startsWith('en'));
+  // Prefer non-default voices (they tend to sound better)
+  const nonDefault = eng.filter(v => !v.localService);
+  if (nonDefault.length) return nonDefault[0];
+  return eng[0] || voices[0];
 }
 
 function parseCmd(raw: string): { action: string; param?: string } | null {
@@ -51,16 +68,30 @@ function parseCmd(raw: string): { action: string; param?: string } | null {
   if (c.match(/open quote|show quote|quote|symbol|pairs/)) return { action: 'nav', param: 'quotes' };
   if (c.match(/open setting|show setting|setting/)) return { action: 'nav', param: 'settings' };
   if (c.match(/open meta|metatrader|mt5|mt4|broker/)) return { action: 'nav', param: 'metatrader' };
-  if (c.match(/go home|open home|home page|back home/)) return { action: 'nav', param: 'home' };
+  if (c.match(/go home|open home|home page|back home|back to home/)) return { action: 'nav', param: 'home' };
   if (c.match(/start trad|begin trad|activate trad|trade on/)) return { action: 'trade_on' };
   if (c.match(/stop trad|end trad|deactivate|trade off/)) return { action: 'trade_off' };
   if (c.match(/change theme|switch theme|random theme|new theme/)) return { action: 'theme' };
+  // Color commands
+  const colorMatch = c.match(/(?:change |switch |set )?colou?r(?:\s+to)?\s+(red|blue|green|purple|orange|cyan)/);
+  if (colorMatch) return { action: 'color', param: colorMatch[1] };
+  if (c.match(/change colou?r|switch colou?r|random colou?r|new colou?r/)) return { action: 'random_color' };
+  // Glass/glow commands
+  const glassMatch = c.match(/(?:change |switch |set )?(?:glow|glass|style|mode)(?:\s+to)?\s+(neon|minimal|liquid|commander)/);
+  if (glassMatch) return { action: 'glass', param: glassMatch[1] };
+  if (c.match(/change glow|switch glow|change glass|switch glass|random glow|random glass/)) return { action: 'random_glass' };
+  // Neon/minimal/liquid/commander direct
+  if (c.match(/^neon$|neon mode|go neon|switch.*neon/)) return { action: 'glass', param: 'neon' };
+  if (c.match(/^minimal$|minimal mode|go minimal|switch.*minimal/)) return { action: 'glass', param: 'minimal' };
+  if (c.match(/^liquid$|liquid mode|go liquid|switch.*liquid/)) return { action: 'glass', param: 'liquid' };
+  if (c.match(/^commander$|commander mode|go commander|switch.*commander/)) return { action: 'glass', param: 'commander' };
   if (c.match(/status|how.*trad|what.*status/)) return { action: 'status' };
   if (c.match(/who are you|your name|identify/)) return { action: 'identify' };
+  if (c.match(/help|what can you do|commands/)) return { action: 'help' };
   return null;
 }
 
-export function VoiceAssistant({ robotName, onNavigate, onToggleTrade, onChangeTheme, isTrading }: VoiceAssistantProps) {
+export function VoiceAssistant({ robotName, onNavigate, onToggleTrade, onChangeTheme, onColorChange, onGlassChange, isTrading }: VoiceAssistantProps) {
   const { theme, glassMode } = useTheme();
   const [active, setActive] = useState(false);
   const [listening, setListening] = useState(false);
@@ -109,7 +140,7 @@ export function VoiceAssistant({ robotName, onNavigate, onToggleTrade, onChangeT
     commOpen();
     setTimeout(() => {
       const m = new SpeechSynthesisUtterance(text);
-      m.rate = 0.82; m.pitch = 0.35; m.volume = 1;
+      m.rate = 0.88; m.pitch = 0.45; m.volume = 1;
       const v = pickVoice(); if (v) m.voice = v;
       m.onend = () => { setTimeout(commClose, 200); setTimeout(() => { stopBars(); done?.(); }, 500); };
       m.onerror = () => { stopBars(); done?.(); };
@@ -127,10 +158,15 @@ export function VoiceAssistant({ robotName, onNavigate, onToggleTrade, onChangeT
       case 'trade_on': if (isTrading) say('Trading is already active.', resume); else { say('Trading activated. Reactor online.', resume); onToggleTrade?.(); } break;
       case 'trade_off': if (!isTrading) say('Trading is already stopped.', resume); else { say('Trading deactivated. Reactor offline.', resume); onToggleTrade?.(); } break;
       case 'theme': say('Switching theme.', resume); onChangeTheme?.(); break;
+      case 'color': say('Color set to ' + p.param + '.', resume); onColorChange?.(p.param!); break;
+      case 'random_color': say('Switching color.', resume); onColorChange?.('random'); break;
+      case 'glass': say(p.param + ' mode activated.', resume); onGlassChange?.(p.param!); break;
+      case 'random_glass': say('Switching glass style.', resume); onGlassChange?.('random'); break;
       case 'status': say(isTrading ? 'Trading is active. Reactor online.' : 'Trading is idle. Reactor offline.', resume); break;
-      case 'identify': say('I am ' + robotName + '. Your loyal trading shadow soldier.', resume); break;
+      case 'identify': say('I am ' + robotName + '. Your loyal trading shadow soldier. Built by the Shadow Monarch.', resume); break;
+      case 'help': say('You can say: open quotes, start trading, stop trading, change color to purple, neon mode, change theme, open settings, go home, or ask my status.', resume); break;
     }
-  }, [say, isTrading, robotName, onNavigate, onToggleTrade, onChangeTheme]);
+  }, [say, isTrading, robotName, onNavigate, onToggleTrade, onChangeTheme, onColorChange, onGlassChange]);
 
   // Speech recognition loop
   const listen = useCallback(() => {
@@ -191,7 +227,7 @@ export function VoiceAssistant({ robotName, onNavigate, onToggleTrade, onChangeT
       )}
       <Text style={[styles.label, active && { color: ac }]}>{label}</Text>
       {active && !listening && (
-        <Text style={[styles.hint, { color: 'rgba(255,255,255,0.2)' }]}>Try: "Open Quotes" · "Start Trading" · "Change Theme"</Text>
+        <Text style={[styles.hint, { color: 'rgba(255,255,255,0.2)' }]}>Try: "Open Quotes" · "Start Trading" · "Color Purple" · "Neon Mode" · "Help"</Text>
       )}
     </View>
   );
