@@ -7,6 +7,7 @@ export type GlassMode = 'neon' | 'minimal' | 'liquid' | 'commander';
 export type FontFamily = 'system' | 'mono' | 'rounded' | 'condensed' | 'serif' | 'grotesk' | 'jetbrains' | 'outfit' | 'sora' | 'tight';
 export type HeroStyle = 'square' | 'circle';
 export type TextCase = 'normal' | 'upper' | 'lower' | 'capitalize';
+export type BgType = 'robot' | 'video1' | 'off';
 
 const FONT_MAP: Record<FontFamily, string> = {
   system: '-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif',
@@ -45,6 +46,7 @@ const GLASS_STORAGE_KEY = 'tradeport_glass_mode';
 const FONT_STORAGE_KEY = 'tradeport_font';
 const HERO_STORAGE_KEY = 'tradeport_hero_style';
 const CASE_STORAGE_KEY = 'tradeport_text_case';
+const BG_STORAGE_KEY = 'tradeport_bg_type';
 
 export interface ThemeState {
   themeName: ThemeName; theme: ThemeColors; setThemeName: (name: ThemeName) => void;
@@ -52,6 +54,7 @@ export interface ThemeState {
   fontFamily: FontFamily; fontFamilyCSS: string; setFontFamily: (f: FontFamily) => void;
   heroStyle: HeroStyle; setHeroStyle: (h: HeroStyle) => void;
   textCase: TextCase; textCaseCSS: string; setTextCase: (t: TextCase) => void;
+  bgType: BgType; setBgType: (b: BgType) => void;
 }
 
 export const [ThemeProvider, useTheme] = createContextHook<ThemeState>(() => {
@@ -60,6 +63,7 @@ export const [ThemeProvider, useTheme] = createContextHook<ThemeState>(() => {
   const [fontFamily, setFontFamilyState] = useState<FontFamily>('system');
   const [heroStyle, setHeroStyleState] = useState<HeroStyle>('circle');
   const [textCase, setTextCaseState] = useState<TextCase>('normal');
+  const [bgType, setBgTypeState] = useState<BgType>('robot');
 
   useEffect(() => {
     AsyncStorage.getItem(THEME_STORAGE_KEY).then((s) => { if (s && s in THEMES) setThemeNameState(s as ThemeName); }).catch(() => {});
@@ -67,6 +71,7 @@ export const [ThemeProvider, useTheme] = createContextHook<ThemeState>(() => {
     AsyncStorage.getItem(FONT_STORAGE_KEY).then((s) => { if (s && s in FONT_MAP) setFontFamilyState(s as FontFamily); }).catch(() => {});
     AsyncStorage.getItem(HERO_STORAGE_KEY).then((s) => { if (s === 'square' || s === 'circle') setHeroStyleState(s); }).catch(() => {});
     AsyncStorage.getItem(CASE_STORAGE_KEY).then((s) => { if (s && s in TEXT_CASE_MAP) setTextCaseState(s as TextCase); }).catch(() => {});
+    AsyncStorage.getItem(BG_STORAGE_KEY).then((s) => { if (s === 'robot' || s === 'video1' || s === 'off') setBgTypeState(s); }).catch(() => {});
   }, []);
 
   const setThemeName = useCallback((name: ThemeName) => { setThemeNameState(name); AsyncStorage.setItem(THEME_STORAGE_KEY, name).catch(() => {}); }, []);
@@ -74,12 +79,13 @@ export const [ThemeProvider, useTheme] = createContextHook<ThemeState>(() => {
   const setFontFamily = useCallback((f: FontFamily) => { setFontFamilyState(f); AsyncStorage.setItem(FONT_STORAGE_KEY, f).catch(() => {}); }, []);
   const setHeroStyle = useCallback((h: HeroStyle) => { setHeroStyleState(h); AsyncStorage.setItem(HERO_STORAGE_KEY, h).catch(() => {}); }, []);
   const setTextCase = useCallback((t: TextCase) => { setTextCaseState(t); AsyncStorage.setItem(CASE_STORAGE_KEY, t).catch(() => {}); }, []);
+  const setBgType = useCallback((b: BgType) => { setBgTypeState(b); AsyncStorage.setItem(BG_STORAGE_KEY, b).catch(() => {}); }, []);
 
   const theme = THEMES[themeName];
   const fontFamilyCSS = FONT_MAP[fontFamily];
   const textCaseCSS = TEXT_CASE_MAP[textCase];
 
-  return { themeName, theme, setThemeName, glassMode, setGlassMode, fontFamily, fontFamilyCSS, setFontFamily, heroStyle, setHeroStyle, textCase, textCaseCSS, setTextCase };
+  return { themeName, theme, setThemeName, glassMode, setGlassMode, fontFamily, fontFamilyCSS, setFontFamily, heroStyle, setHeroStyle, textCase, textCaseCSS, setTextCase, bgType, setBgType };
 });
 
 export { THEMES, FONT_MAP, TEXT_CASE_MAP, GOOGLE_FONTS_URL };

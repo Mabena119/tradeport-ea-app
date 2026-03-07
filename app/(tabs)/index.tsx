@@ -4,6 +4,7 @@ import { Play, Square, TrendingUp, Trash2, Plus, Menu } from 'lucide-react-nativ
 import { router } from 'expo-router';
 import { RobotLogo } from '@/components/robot-logo';
 import { VoiceAssistant } from '@/components/voice-assistant';
+import { PageBackground } from '@/components/page-background';
 
 import { useApp } from '@/providers/app-provider';
 import { useTheme } from '@/providers/theme-provider';
@@ -215,10 +216,8 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={[styles.container, Platform.OS === 'web' && { backgroundImage: isNeon ? 'linear-gradient(135deg, rgba(' + a + ', 0.7) 0%, rgba(' + a + ', 0.3) 25%, rgba(0,0,0,0.85) 55%, #000 100%)' : isLiquid ? 'linear-gradient(160deg, #1a1a1e 0%, #111113 40%, #0a0a0c 100%)' : isCmd ? 'none' : 'none' }]}>
-      {/* Commander robot background */}
-      {primaryEAImage && (
-        <View style={[styles.cmdBg, Platform.OS === 'web' && { backgroundImage: 'url(' + primaryEAImage + ')', backgroundSize: 'cover', backgroundPosition: 'center top', filter: isNeon ? 'brightness(0.15) saturate(0.5) blur(2px)' : isLiquid ? 'brightness(0.18) saturate(0.45) blur(1px)' : isCmd ? 'brightness(0.35) saturate(0.8)' : 'brightness(0.2) saturate(0.4) blur(1px)' }]} />
-      )}
+      {/* Background — robot image or video */}
+      <PageBackground eaImage={primaryEAImage} />
       {/* Menu Button */}
       <TouchableOpacity style={styles.menuButton} onPress={toggleSidebar} activeOpacity={0.7}>
         <Menu color="rgba(255,255,255,0.8)" size={22} />
