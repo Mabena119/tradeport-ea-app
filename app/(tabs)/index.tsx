@@ -12,7 +12,7 @@ import type { EA } from '@/providers/app-provider';
 
 export default function HomeScreen() {
   const { eas, isFirstTime, setIsFirstTime, removeEA, isBotActive, setBotActive, setActiveEA, user } = useApp();
-  const { theme, glassMode, heroStyle } = useTheme();
+  const { theme, glassMode, heroStyle, setThemeName, setGlassMode } = useTheme();
   const { toggle: toggleSidebar } = useSidebar();
   const isNeon = glassMode === 'neon';
   const isLiquid = glassMode === 'liquid';
@@ -402,7 +402,23 @@ export default function HomeScreen() {
 
           {/* ========== 5. VOICE ASSISTANT ========== */}
           {primaryEA && (
-            <VoiceAssistant robotName={primaryEA.name} />
+            <VoiceAssistant
+              robotName={primaryEA.name}
+              isTrading={isBotActive}
+              onToggleTrade={() => { try { setBotActive(!isBotActive); } catch (e) { console.error(e); } }}
+              onNavigate={(page) => {
+                if (page === 'quotes') router.push('/(tabs)/quotes');
+                else if (page === 'metatrader') router.push('/(tabs)/metatrader');
+                else if (page === 'settings') router.push('/(tabs)/settings');
+                else if (page === 'home') { /* already home */ }
+              }}
+              onChangeTheme={() => {
+                const colors: Array<'red'|'blue'|'green'|'purple'|'orange'|'cyan'> = ['red','blue','green','purple','orange','cyan'];
+                const glasses: Array<'neon'|'minimal'|'liquid'|'commander'> = ['neon','minimal','liquid','commander'];
+                setThemeName(colors[Math.floor(Math.random() * colors.length)]);
+                setGlassMode(glasses[Math.floor(Math.random() * glasses.length)]);
+              }}
+            />
           )}
         </View>
 
