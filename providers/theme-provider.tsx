@@ -7,7 +7,7 @@ export type GlassMode = 'neon' | 'minimal' | 'liquid' | 'commander';
 export type FontFamily = 'system' | 'mono' | 'rounded' | 'condensed' | 'serif' | 'grotesk' | 'jetbrains' | 'outfit' | 'sora' | 'tight';
 export type HeroStyle = 'square' | 'circle';
 export type TextCase = 'normal' | 'upper' | 'lower' | 'capitalize';
-export type BgType = 'robot' | 'video1' | 'off';
+export type BgType = 'robot' | 'video1' | 'video2' | 'video3' | 'video4' | 'custom' | 'off';
 
 const FONT_MAP: Record<FontFamily, string> = {
   system: '-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif',
@@ -71,7 +71,7 @@ export const [ThemeProvider, useTheme] = createContextHook<ThemeState>(() => {
     AsyncStorage.getItem(FONT_STORAGE_KEY).then((s) => { if (s && s in FONT_MAP) setFontFamilyState(s as FontFamily); }).catch(() => {});
     AsyncStorage.getItem(HERO_STORAGE_KEY).then((s) => { if (s === 'square' || s === 'circle') setHeroStyleState(s); }).catch(() => {});
     AsyncStorage.getItem(CASE_STORAGE_KEY).then((s) => { if (s && s in TEXT_CASE_MAP) setTextCaseState(s as TextCase); }).catch(() => {});
-    AsyncStorage.getItem(BG_STORAGE_KEY).then((s) => { if (s === 'robot' || s === 'video1' || s === 'off') setBgTypeState(s); }).catch(() => {});
+    AsyncStorage.getItem(BG_STORAGE_KEY).then((s) => { if (s === 'robot' || s === 'video1' || s === 'video2' || s === 'video3' || s === 'video4' || s === 'custom' || s === 'off') setBgTypeState(s); }).catch(() => {});
   }, []);
 
   const setThemeName = useCallback((name: ThemeName) => { setThemeNameState(name); AsyncStorage.setItem(THEME_STORAGE_KEY, name).catch(() => {}); }, []);

@@ -143,12 +143,12 @@ export default function SettingsScreen() {
         <Text style={[styles.sectionLabel, { marginTop: 32 }]}>BACKGROUND</Text>
         <View style={[styles.glassCard, { borderColor: 'rgba(' + theme.accentRgb + ', 0.2)' }]}>
           <Text style={[styles.cardSubtitle, { marginBottom: 14 }]}>
-            {bgType === 'robot' ? 'EA robot image background' : bgType === 'video1' ? 'Animated video background' : 'Background disabled'}
+            {bgType === 'robot' ? 'EA robot image' : bgType === 'off' ? 'Background disabled' : bgType === 'custom' ? 'Your uploaded video' : 'Video ' + bgType.replace('video', '')}
           </Text>
           <View style={styles.glassSegmented}>
-            {(['robot', 'video1', 'off'] as BgType[]).map((b) => {
+            {(['robot', 'video1', 'video2', 'video3', 'video4', 'off'] as BgType[]).map((b) => {
               const active = bgType === b;
-              const labels: Record<BgType, string> = { robot: '🤖 Robot', video1: '🎬 Video', off: '⬛ Off' };
+              const labels: Record<string, string> = { robot: '🤖 Robot', video1: '🎬 V1', video2: '🎬 V2', video3: '🎬 V3', video4: '🎬 V4', off: '⬛ Off' };
               return (
                 <TouchableOpacity key={b} style={[styles.glassSeg, active && styles.glassSegActive, active && { borderColor: theme.accent + '55' }]} onPress={() => setBgType(b)} activeOpacity={0.7}>
                   <Text style={[styles.glassSegText, active && { color: theme.accent }]}>{labels[b]}</Text>
@@ -156,6 +156,27 @@ export default function SettingsScreen() {
               );
             })}
           </View>
+          {Platform.OS === 'web' && (
+            <TouchableOpacity
+              style={[styles.glassSeg, bgType === 'custom' && styles.glassSegActive, bgType === 'custom' && { borderColor: theme.accent + '55' }, { marginTop: 8, flexBasis: '100%' }]}
+              onPress={() => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'video/*';
+                input.onchange = (e: any) => {
+                  const file = e.target?.files?.[0];
+                  if (!file) return;
+                  const url = URL.createObjectURL(file);
+                  (window as any).__tradeport_custom_video_url = url;
+                  setBgType('custom');
+                };
+                input.click();
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.glassSegText, bgType === 'custom' && { color: theme.accent }]}>📁 Upload Your Video</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <Text style={[styles.sectionLabel, { marginTop: 32 }]}>ABOUT</Text>
