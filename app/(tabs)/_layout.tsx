@@ -25,8 +25,6 @@ export default function TabLayout() {
       <VoiceOverlay />
     </View>
   );
-    </View>
-  );
 }
 
 const styles = StyleSheet.create({

@@ -15,6 +15,9 @@ COPY package.json bun.lock ./
 # Ensure devDependencies (e.g., @expo/cli) are installed for the build step
 RUN NODE_ENV=development bun install --frozen-lockfile
 
+# Fix ajv version mismatch (ajv-keywords needs ajv@8 codegen)
+RUN npm install ajv@8 --no-save --legacy-peer-deps 2>/dev/null || true
+
 # Copy the rest of the source
 COPY . .
 
