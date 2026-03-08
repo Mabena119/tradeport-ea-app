@@ -60,7 +60,7 @@ const CMD_CHIPS = [
 ];
 
 const COLORS: ThemeName[] = ['red', 'blue', 'green', 'purple', 'orange', 'cyan'];
-const GLASSES: GlassMode[] = ['neon', 'minimal', 'liquid', 'commander'];
+const GLASSES: GlassMode[] = ['neon', 'minimal', 'liquid', 'commander', 'pill'];
 
 interface DynamicIslandProps { visible: boolean; newSignal?: SignalLog | null; onSignalDismiss?: () => void; }
 
@@ -79,7 +79,7 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
   const execCmdRef = useRef<(raw: string) => void>(() => {});
   const ac = theme.accent, ar = theme.accentRgb;
   const isWeb = Platform.OS === 'web';
-  const isNeon = glassMode === 'neon', isLiquid = glassMode === 'liquid', isCmd = glassMode === 'commander';
+  const isNeon = glassMode === 'neon', isLiquid = glassMode === 'liquid', isCmd = glassMode === 'commander', isPill = glassMode === 'pill';
 
   // Draggable position
   const screenW = Dimensions.get('window').width;
@@ -290,11 +290,13 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
   const pillGlow = isNeon ? { border: '1px solid ' + ac + '44', boxShadow: '0 0 15px rgba(' + ar + ',0.4),0 0 30px rgba(' + ar + ',0.15)', background: 'radial-gradient(ellipse at 30% 30%,rgba(255,255,255,0.1),transparent 60%),rgba(6,6,8,0.88)' }
     : isLiquid ? { border: '1.5px solid rgba(' + ar + ',0.35)', boxShadow: '0 0 10px rgba(' + ar + ',0.4),0 0 25px rgba(' + ar + ',0.25)', background: 'linear-gradient(135deg,rgba(255,255,255,0.06),rgba(0,0,0,0.3))' }
     : isCmd ? { border: '1.5px solid ' + ac, boxShadow: '0 0 12px rgba(' + ar + ',0.4),0 0 24px rgba(' + ar + ',0.2)', background: 'rgba(6,6,8,0.92)' }
+    : isPill ? { border: '1.5px solid rgba(' + ar + ',0.25)', boxShadow: '0 0 15px rgba(' + ar + ',0.2),0 0 40px rgba(' + ar + ',0.08)', background: 'linear-gradient(135deg,rgba(' + ar + ',0.06),rgba(255,255,255,0.04) 30%,rgba(0,0,0,0.5))', borderRadius: '30px' }
     : { border: '0.5px solid rgba(255,255,255,0.04)', boxShadow: '0 0 25px rgba(' + ar + ',0.3),0 0 50px rgba(' + ar + ',0.12)', background: 'rgba(12,12,14,0.97)' };
 
   const expGlow = isNeon ? { border: '1px solid ' + ac + '33', boxShadow: '0 0 20px rgba(' + ar + ',0.35),0 0 40px rgba(' + ar + ',0.15),0 12px 48px rgba(0,0,0,0.7)', background: 'radial-gradient(ellipse 120% 40% at 20% 10%,rgba(255,255,255,0.08),transparent 50%),rgba(6,6,8,0.92)' }
     : isLiquid ? { border: '1.5px solid rgba(' + ar + ',0.3)', boxShadow: '0 0 12px rgba(' + ar + ',0.4),0 0 30px rgba(' + ar + ',0.2),0 12px 48px rgba(0,0,0,0.7)', background: 'linear-gradient(135deg,rgba(255,255,255,0.06),rgba(0,0,0,0.3)),rgba(6,6,8,0.92)' }
     : isCmd ? { border: '2px solid ' + ac, boxShadow: '0 0 15px rgba(' + ar + ',0.4),0 0 30px rgba(' + ar + ',0.2),0 12px 48px rgba(0,0,0,0.7)', background: 'rgba(6,6,8,0.94)' }
+    : isPill ? { border: '1.5px solid rgba(' + ar + ',0.25)', boxShadow: '0 0 15px rgba(' + ar + ',0.2),0 0 40px rgba(' + ar + ',0.08),0 12px 48px rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,255,255,0.08)', background: 'linear-gradient(135deg,rgba(' + ar + ',0.06),rgba(255,255,255,0.04) 30%,rgba(0,0,0,0.5))', borderRadius: '30px' }
     : { border: '0.5px solid rgba(255,255,255,0.04)', boxShadow: '0 0 30px rgba(' + ar + ',0.25),0 0 60px rgba(' + ar + ',0.1),0 12px 48px rgba(0,0,0,0.7)', background: 'rgba(10,10,12,0.97)' };
 
   const ringBg = 'conic-gradient(from 0deg,transparent,' + ac + ' 90deg,transparent 180deg,' + ac + ' 270deg,transparent)';
