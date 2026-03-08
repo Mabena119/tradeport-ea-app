@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Platform, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Platform, Image, PanResponder, Dimensions } from 'react-native';
 import { router } from 'expo-router';
 import { useApp } from '@/providers/app-provider';
 import { useTheme, ThemeName, GlassMode } from '@/providers/theme-provider';
@@ -79,6 +79,35 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
   const ac = theme.accent, ar = theme.accentRgb;
   const isNeon = glassMode === 'neon', isLiquid = glassMode === 'liquid', isCmd = glassMode === 'commander';
 
+  // Draggable position
+  const screenW = Dimensions.get('window').width;
+  const screenH = Dimensions.get('window').height;
+  const panX = useRef(new Animated.Value(Math.max(0, (screenW - 160) / 2))).current;
+  const panY = useRef(new Animated.Value(12)).current;
+  const isDragging = useRef(false);
+
+  const panResponder = useRef(PanResponder.create({
+    onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dx) > 5 || Math.abs(gs.dy) > 5,
+    onPanResponderGrant: () => {
+      isDragging.current = true;
+      panX.setOffset((panX as any)._value);
+      panY.setOffset((panY as any)._value);
+    },
+    onPanResponderMove: Animated.event([null, { dx: panX, dy: panY }], { useNativeDriver: false }),
+    onPanResponderRelease: (_, gs) => {
+      panX.flattenOffset();
+      panY.flattenOffset();
+      const curX = (panX as any)._value;
+      const curY = (panY as any)._value;
+      const maxX = screenW - 170;
+      const maxY = screenH - 60;
+      Animated.parallel([
+        Animated.spring(panX, { toValue: Math.max(4, Math.min(maxX, curX)), useNativeDriver: false, tension: 100, friction: 8 }),
+        Animated.spring(panY, { toValue: Math.max(4, Math.min(maxY, curY)), useNativeDriver: false, tension: 100, friction: 8 }),
+      ]).start(() => { isDragging.current = false; });
+    },
+  })).current;
+
   const primaryEA = Array.isArray(eas) && eas.length > 0 ? eas[0] : null;
   const getImgUrl = useCallback((ea: EA | null): string | null => {
     if (!ea?.userData?.owner) return null;
@@ -110,6 +139,7 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
 
   // Expand/collapse
   const toggle = useCallback(() => {
+    if (isDragging.current) return;
     const next = !expanded;
     setExpanded(next);
     Animated.timing(expandAnim, { toValue: next ? 1 : 0, duration: 300, useNativeDriver: Platform.OS !== 'web' }).start();
@@ -218,7 +248,7 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
   const ringBg = 'conic-gradient(from 0deg,transparent,' + ac + ' 90deg,transparent 180deg,' + ac + ' 270deg,transparent)';
 
   return (
-    <View style={styles.wrap} pointerEvents="box-none">
+    <Animated.View {...panResponder.panHandlers} style={[styles.wrap, { left: panX, top: panY }]} pointerEvents="box-none">
       {/* COLLAPSED PILL */}
       {!expanded && (
         <TouchableOpacity style={[styles.pill, Platform.OS === 'web' && { backdropFilter: 'blur(30px)', ...pillGlow } as any]} onPress={toggle} activeOpacity={0.8}>
@@ -312,17 +342,16 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
             )}
           </View>
 
-          {/* COMMAND CHIPS */}
-          {showCmds && (
-            <View style={styles.cmdsWrap}>
-              {CMD_CHIPS.map(ch => (
-                <TouchableOpacity key={ch.cmd} style={[styles.cmdChip, Platform.OS === 'web' && { borderColor: 'rgba(' + ar + ',0.08)' } as any]} onPress={() => runChip(ch.cmd)} activeOpacity={0.7}>
-                  <Text style={styles.cmdE}>{ch.emoji}</Text>
-                  <Text style={styles.cmdL}>{ch.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
+          {/* VOICE COMMAND CHIPS — always visible when expanded */}
+          <View style={styles.cmdsWrap}>
+            <Text style={[styles.secLbl, { marginBottom: 4, width: '100%' }]}>VOICE COMMANDS</Text>
+            {CMD_CHIPS.map(ch => (
+              <TouchableOpacity key={ch.cmd} style={[styles.cmdChip, Platform.OS === 'web' && { borderColor: 'rgba(' + ar + ',0.08)' } as any]} onPress={() => runChip(ch.cmd)} activeOpacity={0.7}>
+                <Text style={styles.cmdE}>{ch.emoji}</Text>
+                <Text style={[styles.cmdL, voiceOn && { color: 'rgba(255,255,255,0.5)' }]}>{ch.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
 
           {/* SIGNALS */}
           <View style={styles.sigBar}>
@@ -332,12 +361,12 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
           </View>
         </Animated.View>
       )}
-    </View>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { position: 'absolute', top: 12, left: 0, right: 0, alignItems: 'center', zIndex: 9999 },
+  wrap: { position: 'absolute', zIndex: 9999 },
   // Pill
   pill: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 5, paddingLeft: 5, paddingRight: 14, borderRadius: 24, backgroundColor: 'rgba(6,6,8,0.92)' },
   pillAv: { width: 30, height: 30, borderRadius: 15, overflow: 'hidden', position: 'relative' },
