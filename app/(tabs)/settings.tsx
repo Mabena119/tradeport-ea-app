@@ -205,7 +205,7 @@ export default function SettingsScreen() {
 
         <Text style={[styles.sectionLabel, { marginTop: 32 }]}>ABOUT</Text>
         <TouchableOpacity
-          style={[styles.glassCard, { borderColor: 'rgba(' + theme.accentRgb + ', 0.2)' }]}
+          style={[styles.glassCard, { flexDirection: 'row', alignItems: 'center', borderColor: 'rgba(' + theme.accentRgb + ', 0.2)' }]}
           activeOpacity={0.7}
         >
           <View style={[styles.cardIconContainer, { borderColor: 'rgba(' + theme.accentRgb + ', 0.2)' }]}>
@@ -312,14 +312,14 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   glassCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
     backgroundColor: 'rgba(255, 255, 255, 0.06)',
     borderRadius: 20,
     paddingVertical: 18,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     marginBottom: 12,
     borderWidth: 1,
+    overflow: 'hidden',
     ...(Platform.OS === 'web' && {
       backdropFilter: 'blur(40px)',
       WebkitBackdropFilter: 'blur(40px)',
@@ -358,11 +358,12 @@ const styles = StyleSheet.create({
   glassSegmented: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
-    justifyContent: 'space-between',
+    width: '100%',
   },
   glassSeg: {
-    width: '48%',
+    width: '47%',
+    marginRight: '3%',
+    marginBottom: 6,
     paddingVertical: 10,
     borderRadius: 14,
     backgroundColor: 'rgba(255,255,255,0.04)',
