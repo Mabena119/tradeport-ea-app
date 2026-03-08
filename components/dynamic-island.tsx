@@ -1,998 +1,391 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Animated,
-  Platform,
-  Dimensions,
-  StatusBar,
-  AppState,
-  PanResponder,
-  Image,
-} from 'react-native';
-import { Play, Square, TrendingUp, Trash2, Activity } from 'lucide-react-native';
-
-import { RobotLogo } from './robot-logo';
-import { useApp } from '@/providers/app-provider';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Platform, Image } from 'react-native';
 import { router } from 'expo-router';
+import { useApp } from '@/providers/app-provider';
+import { useTheme, ThemeName, GlassMode } from '@/providers/theme-provider';
+import { RobotLogo } from './robot-logo';
 import { SignalLog } from '@/services/signals-monitor';
 import type { EA } from '@/providers/app-provider';
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+// ===== AUDIO ENGINE =====
+let audioCtx: AudioContext | null = null;
+function getAC() { if (!audioCtx && typeof window !== 'undefined') audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)(); return audioCtx; }
+function beep(freq: number, dur: number) { const c = getAC(); if (!c) return; const o = c.createOscillator(), g = c.createGain(), fl = c.createBiquadFilter(); o.type = 'sine'; o.frequency.value = freq; fl.type = 'bandpass'; fl.frequency.value = freq; fl.Q.value = 10; g.gain.setValueAtTime(0.06, c.currentTime); g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur); o.connect(fl); fl.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + dur); }
+function commOpen() { beep(1800, 0.08); setTimeout(() => beep(2200, 0.08), 100); }
+function commClose() { beep(2200, 0.05); setTimeout(() => beep(1600, 0.08), 80); }
+function chime() { [800, 1000, 1200].forEach((f, i) => setTimeout(() => beep(f, 0.1), i * 70)); }
+function reactorOn() { const c = getAC(); if (!c) return; const o = c.createOscillator(), g = c.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(50, c.currentTime); o.frequency.exponentialRampToValueAtTime(600, c.currentTime + 0.6); g.gain.setValueAtTime(0.1, c.currentTime); g.gain.exponentialRampToValueAtTime(0.01, c.currentTime + 0.7); o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + 0.7); }
+function reactorOff() { const c = getAC(); if (!c) return; const o = c.createOscillator(), g = c.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(500, c.currentTime); o.frequency.exponentialRampToValueAtTime(30, c.currentTime + 0.8); g.gain.setValueAtTime(0.1, c.currentTime); g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.9); o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + 0.9); }
 
-interface DynamicIslandProps {
-  visible: boolean;
-  newSignal?: SignalLog | null;
-  onSignalDismiss?: () => void;
+function pickVoice(): SpeechSynthesisVoice | null {
+  if (typeof window === 'undefined') return null;
+  const voices = window.speechSynthesis.getVoices(); if (!voices.length) return null;
+  const pri = ['Microsoft Zira', 'Zira', 'Google UK English Female', 'Samantha', 'Karen', 'Daniel', 'Google US English'];
+  for (const name of pri) { const f = voices.find(v => v.name.includes(name)); if (f) return f; }
+  const eng = voices.filter(v => v.lang?.startsWith('en'));
+  return eng.filter(v => !v.localService)[0] || eng[0] || voices[0];
 }
+
+// ===== COMMAND PARSER =====
+function parseCmd(raw: string): { action: string; param?: string } | null {
+  const c = raw.toLowerCase().trim();
+  if (c.match(/open quote|show quote|quote|symbol|pairs/)) return { action: 'nav', param: 'quotes' };
+  if (c.match(/open setting|show setting|setting/)) return { action: 'nav', param: 'settings' };
+  if (c.match(/open meta|metatrader|mt5|mt4|broker/)) return { action: 'nav', param: 'metatrader' };
+  if (c.match(/go home|open home|home page|back home|home$/)) return { action: 'nav', param: 'home' };
+  if (c.match(/start trad|begin trad|activate trad|trade on/)) return { action: 'trade_on' };
+  if (c.match(/stop trad|end trad|deactivate|trade off/)) return { action: 'trade_off' };
+  if (c.match(/change theme|switch theme|random theme/)) return { action: 'theme' };
+  const cm = c.match(/colou?r(?:\s+to)?\s+(red|blue|green|purple|orange|cyan)/);
+  if (cm) return { action: 'color', param: cm[1] };
+  if (c.match(/neon/)) return { action: 'glass', param: 'neon' };
+  if (c.match(/minimal/)) return { action: 'glass', param: 'minimal' };
+  if (c.match(/liquid/)) return { action: 'glass', param: 'liquid' };
+  if (c.match(/commander/)) return { action: 'glass', param: 'commander' };
+  if (c.match(/status/)) return { action: 'status' };
+  if (c.match(/who are you|your name|identify/)) return { action: 'identify' };
+  if (c.match(/help|what can you do/)) return { action: 'help' };
+  return null;
+}
+
+const CMD_CHIPS = [
+  { emoji: '📊', label: 'Quotes', cmd: 'open quotes' },
+  { emoji: '⚡', label: 'Trade', cmd: 'start trading' },
+  { emoji: '⏹', label: 'Stop', cmd: 'stop trading' },
+  { emoji: '🏠', label: 'Home', cmd: 'go home' },
+  { emoji: '⚙️', label: 'Settings', cmd: 'open settings' },
+  { emoji: '🎨', label: 'Theme', cmd: 'change theme' },
+  { emoji: '📡', label: 'Status', cmd: 'status' },
+  { emoji: '🤖', label: 'Identity', cmd: 'who are you' },
+];
+
+const COLORS: ThemeName[] = ['red', 'blue', 'green', 'purple', 'orange', 'cyan'];
+const GLASSES: GlassMode[] = ['neon', 'minimal', 'liquid', 'commander'];
+
+interface DynamicIslandProps { visible: boolean; newSignal?: SignalLog | null; onSignalDismiss?: () => void; }
 
 export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIslandProps) {
   const { eas, isBotActive, setBotActive, removeEA, signalLogs, isSignalsMonitoring, activeSymbols, mt4Symbols, mt5Symbols, setTradingSignal, setShowTradingWebView } = useApp();
-  const [isExpanded, setIsExpanded] = useState<boolean>(false);
-  const [appState, setAppState] = useState<string>(AppState.currentState);
-  const [isOverlayMode, setIsOverlayMode] = useState<boolean>(false);
-
-  const animatedHeight = useRef(new Animated.Value(50)).current;
-  const animatedWidth = useRef(new Animated.Value(160)).current;
-  const animatedOpacity = useRef(new Animated.Value(0)).current;
-  const panX = useRef(new Animated.Value(20)).current;
-  const panY = useRef(new Animated.Value(100)).current;
-  const overlayOpacity = useRef(new Animated.Value(1)).current;
-
+  const { theme, themeName, glassMode, setThemeName, setGlassMode } = useTheme();
+  const [expanded, setExpanded] = useState(false);
+  const [voiceOn, setVoiceOn] = useState(false);
+  const [showCmds, setShowCmds] = useState(false);
+  const [vLabel, setVLabel] = useState('VOICE ASSISTANT');
+  const [vSub, setVSub] = useState('Tap to activate');
+  const expandAnim = useRef(new Animated.Value(0)).current;
+  const barAnims = useRef(Array.from({ length: 5 }, () => new Animated.Value(3))).current;
+  const barLoopRef = useRef<any>(null);
+  const voiceRef = useRef(false);
+  const ac = theme.accent, ar = theme.accentRgb;
+  const isNeon = glassMode === 'neon', isLiquid = glassMode === 'liquid', isCmd = glassMode === 'commander';
 
   const primaryEA = Array.isArray(eas) && eas.length > 0 ? eas[0] : null;
-
-  // Debug logging for EA data
-  console.log('Dynamic Island: Primary EA:', primaryEA);
-  console.log('Dynamic Island: EA userData:', primaryEA?.userData);
-  console.log('Dynamic Island: EA owner:', primaryEA?.userData?.owner);
-
-  const getEAImageUrl = useCallback((ea: EA | null): string | null => {
-    if (!ea || !ea.userData || !ea.userData.owner) {
-      console.log('Dynamic Island: Missing EA data or owner');
-      return null;
-    }
+  const getImgUrl = useCallback((ea: EA | null): string | null => {
+    if (!ea?.userData?.owner) return null;
     const raw = (ea.userData.owner.logo || '').toString().trim();
-    if (!raw) {
-      console.log('Dynamic Island: No logo found for EA:', ea.name);
-      return null;
-    }
-    // If already an absolute URL, return as-is
-    if (/^https?:\/\//i.test(raw)) {
-      console.log('Dynamic Island: Using absolute URL:', raw);
-      return raw;
-    }
-    // Otherwise, treat as filename and prefix uploads base URL
-    const filename = raw.replace(/^\/+/, '');
-    const base = 'https://tradeportea.com/admin/uploads';
-    const fullUrl = `${base}/${filename}`;
-    console.log('Dynamic Island: Constructed URL:', fullUrl, 'from filename:', filename);
-    return fullUrl;
+    if (!raw) return null;
+    if (/^https?:\/\//i.test(raw)) return raw;
+    return 'https://tradeportea.com/admin/uploads/' + raw.replace(/^\/+/, '');
   }, []);
+  const eaImage = useMemo(() => getImgUrl(primaryEA), [getImgUrl, primaryEA]);
+  const [logoErr, setLogoErr] = useState(false);
+  const robotName = primaryEA?.name || 'Royd';
 
-  const primaryEAImage = useMemo(() => getEAImageUrl(primaryEA), [getEAImageUrl, primaryEA]);
-  const [logoError, setLogoError] = useState<boolean>(false);
+  // Keep voice ref in sync
+  useEffect(() => { voiceRef.current = voiceOn; }, [voiceOn]);
 
-  // Debug logging for image URL and error state
-  console.log('Dynamic Island: Primary EA Image URL:', primaryEAImage);
-  console.log('Dynamic Island: Logo Error State:', logoError);
-
-  // Simple circular collapsed state
-  const collapsedSize = 50;
-
-  // Create pan responder for dragging the widget
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (evt, gestureState) => {
-        return Math.abs(gestureState.dx) > 5 || Math.abs(gestureState.dy) > 5;
-      },
-      onPanResponderGrant: () => {
-        panX.setOffset((panX as any)._value);
-        panY.setOffset((panY as any)._value);
-      },
-      onPanResponderMove: Animated.event(
-        [null, { dx: panX, dy: panY }],
-        { useNativeDriver: false }
-      ),
-      onPanResponderRelease: (evt, gestureState) => {
-        panX.flattenOffset();
-        panY.flattenOffset();
-
-        // Snap to edges
-        const finalX = (panX as any)._value;
-        const finalY = (panY as any)._value;
-        const widgetWidth = isExpanded ? screenWidth - 40 : collapsedSize;
-
-        let snapX = finalX;
-        if (finalX < screenWidth / 2) {
-          snapX = 20; // Snap to left
-        } else {
-          snapX = screenWidth - widgetWidth - 20; // Snap to right
-        }
-
-        // Keep within screen bounds
-        const minY = (StatusBar.currentHeight || 0) + 20;
-        const maxY = screenHeight - (isExpanded ? 220 : 50) - 100;
-        const snapY = Math.max(minY, Math.min(maxY, finalY));
-
-        Animated.parallel([
-          Animated.spring(panX, {
-            toValue: snapX,
-            useNativeDriver: false,
-            tension: 100,
-            friction: 8,
-          }),
-          Animated.spring(panY, {
-            toValue: snapY,
-            useNativeDriver: false,
-            tension: 100,
-            friction: 8,
-          }),
-        ]).start();
-      },
-    })
-  ).current;
-
-  useEffect(() => {
-    // Initialize position for Android draw-over widget
-    if (Platform.OS === 'android') {
-      const statusBarHeight = StatusBar.currentHeight || 0;
-      const initialY = statusBarHeight + 50;
-      panX.setValue(20);
-      panY.setValue(initialY);
-    }
-    // Update width for circular collapsed state
-    animatedWidth.setValue(collapsedSize);
-  }, [panX, panY, collapsedSize, animatedWidth]);
-
-  // Handle app state changes for overlay mode
-  useEffect(() => {
-    const handleAppStateChange = (nextAppState: string) => {
-      console.log('App state changed from', appState, 'to', nextAppState);
-      setAppState(nextAppState);
-
-      if (Platform.OS === 'android' && isBotActive && visible) {
-        if (nextAppState === 'background' || nextAppState === 'inactive') {
-          // App is going to background - activate overlay mode
-          console.log('Activating overlay mode');
-          setIsOverlayMode(true);
-          // Make widget semi-transparent when in overlay mode
-          Animated.timing(overlayOpacity, {
-            toValue: 0.9,
-            duration: 300,
-            useNativeDriver: false,
-          }).start();
-        } else if (nextAppState === 'active') {
-          // App is coming to foreground - deactivate overlay mode
-          console.log('Deactivating overlay mode');
-          setIsOverlayMode(false);
-          Animated.timing(overlayOpacity, {
-            toValue: 1,
-            duration: 300,
-            useNativeDriver: false,
-          }).start();
-        }
-      }
-    };
-
-    const subscription = AppState.addEventListener('change', handleAppStateChange);
-    return () => subscription?.remove();
-  }, [appState, isBotActive, visible, overlayOpacity]);
-
-  const handleExpand = React.useCallback(() => {
-    Animated.parallel([
-      Animated.timing(animatedHeight, {
-        toValue: 220,
-        duration: 300,
-        useNativeDriver: false,
-      }),
-      Animated.timing(animatedWidth, {
-        toValue: screenWidth - 40,
-        duration: 300,
-        useNativeDriver: false,
-      }),
-      Animated.timing(animatedOpacity, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: false,
-      }),
-    ]).start();
-    setIsExpanded(true);
-  }, [animatedHeight, animatedWidth, animatedOpacity]);
-
-  // Check if a signal is for an active symbol
+  // Signal handling (preserved from original)
   const isSignalForActiveSymbol = useCallback((signal: SignalLog) => {
-    const symbolName = signal.asset;
-
-    // Check if symbol is active in any of the symbol lists
-    const isActiveInLegacy = activeSymbols.some(s => s.symbol === symbolName);
-    const isActiveInMT4 = mt4Symbols.some(s => s.symbol === symbolName);
-    const isActiveInMT5 = mt5Symbols.some(s => s.symbol === symbolName);
-
-    return isActiveInLegacy || isActiveInMT4 || isActiveInMT5;
+    const sym = signal.asset;
+    return activeSymbols.some(s => s.symbol === sym) || mt4Symbols.some(s => s.symbol === sym) || mt5Symbols.some(s => s.symbol === sym);
   }, [activeSymbols, mt4Symbols, mt5Symbols]);
 
-  // Handle new signal detection - automatically trigger trading WebView for active symbols
   useEffect(() => {
     if (newSignal) {
-      console.log('🔔 New signal detected in Dynamic Island:', newSignal);
-      console.log('🔔 Signal details:', {
-        id: newSignal.id,
-        asset: newSignal.asset,
-        action: newSignal.action,
-        type: newSignal.type,
-        source: newSignal.source
-      });
-
-      // Check if this signal is for an active symbol
-      const isActiveSymbol = isSignalForActiveSymbol(newSignal);
-      console.log('🔔 Is signal for active symbol?', isActiveSymbol);
-      console.log('🔔 Active symbols check:', {
-        activeSymbols: activeSymbols.map(s => s.symbol),
-        mt4Symbols: mt4Symbols.map(s => s.symbol),
-        mt5Symbols: mt5Symbols.map(s => s.symbol)
-      });
-
-      if (!isActiveSymbol) {
-        console.log('❌ Signal ignored - not for active symbol:', newSignal.asset);
-        // Dismiss signal immediately if not for active symbol
-        if (onSignalDismiss) {
-          onSignalDismiss();
-        }
-      } else {
-        console.log('✅ Signal accepted - for active symbol:', newSignal.asset);
-        console.log('🚀 Automatically triggering trading WebView for signal:', newSignal.asset);
-
-        // Set the trading signal and show the trading WebView
-        console.log('🚀 Setting trading signal:', newSignal);
-        setTradingSignal(newSignal);
-        console.log('🚀 Showing trading WebView');
-        setShowTradingWebView(true);
-
-        // Dismiss the signal after a short delay to allow WebView to open
-        setTimeout(() => {
-          console.log('🚀 Dismissing signal after WebView opened');
-          if (onSignalDismiss) {
-            onSignalDismiss();
-          }
-        }, 500);
-      }
+      const isActive = isSignalForActiveSymbol(newSignal);
+      if (!isActive) { onSignalDismiss?.(); }
+      else { setTradingSignal(newSignal); setShowTradingWebView(true); setTimeout(() => onSignalDismiss?.(), 500); }
     }
-  }, [newSignal, onSignalDismiss, isSignalForActiveSymbol, setTradingSignal, setShowTradingWebView, activeSymbols, mt4Symbols, mt5Symbols]);
+  }, [newSignal, onSignalDismiss, isSignalForActiveSymbol, setTradingSignal, setShowTradingWebView]);
 
-  // Only show when bot is active
-  if (!visible || !isBotActive || !primaryEA) {
-    console.log('Dynamic Island: Not rendering - visible:', visible, 'isBotActive:', isBotActive, 'primaryEA:', !!primaryEA);
-    return null;
-  }
+  // Expand/collapse
+  const toggle = useCallback(() => {
+    const next = !expanded;
+    setExpanded(next);
+    Animated.timing(expandAnim, { toValue: next ? 1 : 0, duration: 300, useNativeDriver: Platform.OS !== 'web' }).start();
+  }, [expanded, expandAnim]);
 
-  console.log('Dynamic Island: Rendering with EA:', primaryEA.name);
+  // Bar anims
+  const startBars = useCallback(() => {
+    if (barLoopRef.current) cancelAnimationFrame(barLoopRef.current);
+    const go = () => { Animated.parallel(barAnims.map(a => Animated.timing(a, { toValue: Math.random() * 12 + 3, duration: 100, useNativeDriver: false }))).start(() => { barLoopRef.current = requestAnimationFrame(go); }); }; go();
+  }, [barAnims]);
+  const stopBars = useCallback(() => {
+    if (barLoopRef.current) { cancelAnimationFrame(barLoopRef.current); barLoopRef.current = null; }
+    barAnims.forEach(a => a.setValue(3));
+  }, [barAnims]);
 
-  // In overlay mode, show a persistent floating widget
-  if (isOverlayMode) {
-    return (
-      <Animated.View
-        {...panResponder.panHandlers}
-        style={[
-          styles.overlayModeContainer,
-          {
-            left: panX,
-            top: panY,
-            opacity: overlayOpacity,
-          },
-        ]}
-        pointerEvents="auto"
-      >
-        <TouchableOpacity
-          onPress={() => {
-            // Bring app to foreground when tapped
-            console.log('Overlay widget tapped - bringing app to foreground');
-            // Force app to active state
-            setIsOverlayMode(false);
-          }}
-          activeOpacity={0.8}
-          style={styles.overlayModeWidget}
-        >
-          <View style={styles.overlayModeContent}>
-            <View style={styles.overlayIcon}>
-              {primaryEAImage && !logoError ? (
-                <Image
-                  source={{ uri: primaryEAImage }}
-                  style={styles.overlayLogo}
-                  onError={(error) => {
-                    console.log('Dynamic Island Overlay: Image load error:', error);
-                    setLogoError(true);
-                  }}
-                  onLoad={() => {
-                    console.log('Dynamic Island Overlay: Image loaded successfully:', primaryEAImage);
-                  }}
-                  resizeMode="cover"
-                />
-              ) : (
-                <RobotLogo size={14} />
-              )}
-            </View>
-            <View style={styles.overlayIndicator} />
-            <Text style={styles.overlayText} numberOfLines={1}>
-              {primaryEA?.name || 'EA'}
-            </Text>
-          </View>
-        </TouchableOpacity>
-      </Animated.View>
-    );
-  }
+  // Speak
+  const sayRef = useRef<(text: string, cb?: () => void) => void>(() => {});
+  sayRef.current = useCallback((text: string, cb?: () => void) => {
+    if (Platform.OS !== 'web' || !window.speechSynthesis) { cb?.(); return; }
+    startBars(); setVLabel(robotName.toUpperCase() + ' SPEAKING...'); setVSub('');
+    commOpen();
+    setTimeout(() => {
+      const m = new SpeechSynthesisUtterance(text); m.rate = 0.88; m.pitch = 0.45; m.volume = 1;
+      const v = pickVoice(); if (v) m.voice = v;
+      m.onend = () => { commClose(); stopBars(); cb?.(); };
+      m.onerror = () => { stopBars(); cb?.(); };
+      window.speechSynthesis.speak(m);
+    }, 300);
+  }, [robotName, startBars, stopBars]);
 
+  // Execute command
+  const execRef = useRef<(raw: string) => void>(() => {});
+  execRef.current = useCallback((raw: string) => {
+    const p = parseCmd(raw); chime();
+    const done = () => {
+      if (!voiceRef.current) return;
+      setVLabel('VOICE ACTIVE'); setVSub('Tap a command'); setShowCmds(true); stopBars();
+    };
+    if (!p) { sayRef.current('Try a command below.', done); return; }
+    switch (p.action) {
+      case 'nav':
+        sayRef.current('Opening ' + p.param + '.', done);
+        try { if (p.param === 'home') router.push('/(tabs)/'); else router.push('/(tabs)/' + p.param); } catch (e) {}
+        break;
+      case 'trade_on':
+        if (isBotActive) { sayRef.current('Already active.', done); } else { reactorOn(); sayRef.current('Trading activated.', done); try { setBotActive(true); } catch (e) {} }
+        break;
+      case 'trade_off':
+        if (!isBotActive) { sayRef.current('Already stopped.', done); } else { reactorOff(); sayRef.current('Trading deactivated.', done); try { setBotActive(false); } catch (e) {} }
+        break;
+      case 'theme':
+        setThemeName(COLORS[Math.floor(Math.random() * COLORS.length)]); setGlassMode(GLASSES[Math.floor(Math.random() * GLASSES.length)]);
+        sayRef.current('Theme updated.', done); break;
+      case 'color':
+        if (COLORS.includes(p.param as any)) setThemeName(p.param as ThemeName);
+        sayRef.current(p.param + '.', done); break;
+      case 'glass':
+        if (GLASSES.includes(p.param as any)) setGlassMode(p.param as GlassMode);
+        sayRef.current(p.param + ' mode.', done); break;
+      case 'status': sayRef.current(isBotActive ? 'Trading active.' : 'Trading idle.', done); break;
+      case 'identify': sayRef.current('I am ' + robotName + '. Your shadow soldier.', done); break;
+      case 'help': sayRef.current('Say: open quotes, trade, stop, color purple, neon, go home, status.', done); break;
+    }
+  }, [isBotActive, robotName, setBotActive, setThemeName, setGlassMode, stopBars]);
 
+  // Voice toggle
+  const toggleVoice = useCallback(() => {
+    if (voiceOn) {
+      setVoiceOn(false); setShowCmds(false); stopBars(); commClose();
+      setVLabel('VOICE ASSISTANT'); setVSub('Tap to activate');
+      if (Platform.OS === 'web' && window.speechSynthesis) window.speechSynthesis.cancel();
+      return;
+    }
+    setVoiceOn(true); setShowCmds(false);
+    sayRef.current(robotName + ' online. How can I assist?', () => {
+      if (!voiceRef.current) return;
+      setVLabel('VOICE ACTIVE'); setVSub('Tap a command'); setShowCmds(true);
+    });
+  }, [voiceOn, robotName, stopBars]);
 
-  const handleCollapse = () => {
-    Animated.parallel([
-      Animated.timing(animatedHeight, {
-        toValue: 50,
-        duration: 300,
-        useNativeDriver: false,
-      }),
-      Animated.timing(animatedWidth, {
-        toValue: collapsedSize,
-        duration: 300,
-        useNativeDriver: false,
-      }),
-      Animated.timing(animatedOpacity, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: false,
-      }),
-    ]).start();
-    setIsExpanded(false);
-  };
-
-  const handlePress = () => {
-    if (isExpanded) {
-      handleCollapse();
+  // Run chip command
+  const runChip = useCallback((cmd: string) => {
+    setShowCmds(false); startBars();
+    if (!voiceOn) {
+      setVoiceOn(true);
+      sayRef.current(robotName + ' online.', () => { setTimeout(() => execRef.current(cmd), 200); });
     } else {
-      handleExpand();
+      setTimeout(() => execRef.current(cmd), 100);
     }
-  };
+  }, [voiceOn, robotName, startBars]);
 
+  if (!visible || !primaryEA) return null;
+  if (Platform.OS !== 'web') return null;
 
+  // Glass-aware styles
+  const pillGlow = isNeon ? { border: '1px solid ' + ac + '44', boxShadow: '0 0 15px rgba(' + ar + ',0.4),0 0 30px rgba(' + ar + ',0.15)', background: 'radial-gradient(ellipse at 30% 30%,rgba(255,255,255,0.1),transparent 60%),rgba(6,6,8,0.88)' }
+    : isLiquid ? { border: '1.5px solid rgba(' + ar + ',0.35)', boxShadow: '0 0 10px rgba(' + ar + ',0.4),0 0 25px rgba(' + ar + ',0.25)', background: 'linear-gradient(135deg,rgba(255,255,255,0.06),rgba(0,0,0,0.3))' }
+    : isCmd ? { border: '1.5px solid ' + ac, boxShadow: '0 0 12px rgba(' + ar + ',0.4),0 0 24px rgba(' + ar + ',0.2)', background: 'rgba(6,6,8,0.92)' }
+    : { border: '0.5px solid rgba(255,255,255,0.04)', boxShadow: '0 0 25px rgba(' + ar + ',0.3),0 0 50px rgba(' + ar + ',0.12)', background: 'rgba(12,12,14,0.97)' };
 
-  const formatTime = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      });
-    } catch {
-      return dateString;
-    }
-  };
+  const expGlow = isNeon ? { border: '1px solid ' + ac + '33', boxShadow: '0 0 20px rgba(' + ar + ',0.35),0 0 40px rgba(' + ar + ',0.15),0 12px 48px rgba(0,0,0,0.7)', background: 'radial-gradient(ellipse 120% 40% at 20% 10%,rgba(255,255,255,0.08),transparent 50%),rgba(6,6,8,0.92)' }
+    : isLiquid ? { border: '1.5px solid rgba(' + ar + ',0.3)', boxShadow: '0 0 12px rgba(' + ar + ',0.4),0 0 30px rgba(' + ar + ',0.2),0 12px 48px rgba(0,0,0,0.7)', background: 'linear-gradient(135deg,rgba(255,255,255,0.06),rgba(0,0,0,0.3)),rgba(6,6,8,0.92)' }
+    : isCmd ? { border: '2px solid ' + ac, boxShadow: '0 0 15px rgba(' + ar + ',0.4),0 0 30px rgba(' + ar + ',0.2),0 12px 48px rgba(0,0,0,0.7)', background: 'rgba(6,6,8,0.94)' }
+    : { border: '0.5px solid rgba(255,255,255,0.04)', boxShadow: '0 0 30px rgba(' + ar + ',0.25),0 0 60px rgba(' + ar + ',0.1),0 12px 48px rgba(0,0,0,0.7)', background: 'rgba(10,10,12,0.97)' };
 
-  const handleQuotes = () => {
-    router.push('/(tabs)/quotes');
-    handleCollapse();
-  };
-
-  const handleRemoveBot = async () => {
-    if (primaryEA && primaryEA.id) {
-      try {
-        console.log('Dynamic Island: Removing EA:', primaryEA.name);
-        const success = await removeEA(primaryEA.id);
-        if (success) {
-          setBotActive(false);
-          console.log('Dynamic Island: EA removed successfully');
-        }
-      } catch (error) {
-        console.error('Dynamic Island: Error removing EA:', error);
-      }
-    }
-    handleCollapse();
-  };
+  const ringBg = 'conic-gradient(from 0deg,transparent,' + ac + ' 90deg,transparent 180deg,' + ac + ' 270deg,transparent)';
 
   return (
-    <Animated.View
-      {...panResponder.panHandlers}
-      style={[
-        styles.drawOverlayContainer,
-        {
-          left: panX,
-          top: panY,
-        },
-      ]}
-    >
-      <TouchableOpacity
-        onPress={handlePress}
-        activeOpacity={0.8}
-        style={styles.touchableContainer}
-      >
-        <Animated.View
-          style={[
-            styles.overlayWidget,
-            {
-              height: animatedHeight,
-              width: animatedWidth,
-              borderColor: '#000000',
-              borderRadius: isExpanded ? 20 : 25,
-            },
-          ]}
-        >
-          {/* Collapsed State - Simple Circle with Bot Logo */}
-          {!isExpanded && (
-            <View style={styles.collapsedCircle}>
-              {primaryEAImage && !logoError ? (
-                <Image
-                  source={{ uri: primaryEAImage }}
-                  style={styles.collapsedLogo}
-                  onError={(error) => {
-                    console.log('Dynamic Island: Image load error:', error);
-                    setLogoError(true);
-                    // Reset error state after 5 seconds to retry
-                    setTimeout(() => {
-                      console.log('Dynamic Island: Retrying image load after error');
-                      setLogoError(false);
-                    }, 5000);
-                  }}
-                  onLoad={() => {
-                    console.log('Dynamic Island: Image loaded successfully:', primaryEAImage);
-                  }}
-                  resizeMode="cover"
-                />
-              ) : (
-                <RobotLogo size={24} />
-              )}
+    <View style={styles.wrap} pointerEvents="box-none">
+      {/* COLLAPSED PILL */}
+      {!expanded && (
+        <TouchableOpacity style={[styles.pill, Platform.OS === 'web' && { backdropFilter: 'blur(30px)', ...pillGlow } as any]} onPress={toggle} activeOpacity={0.8}>
+          <View style={styles.pillAv}>
+            {eaImage && !logoErr ? <Image source={{ uri: eaImage }} style={styles.pillAvImg} onError={() => setLogoErr(true)} resizeMode="cover" /> : <RobotLogo size={12} />}
+            <View style={[styles.pillRing, Platform.OS === 'web' && { background: ringBg } as any]} />
+            <View style={[styles.pillDot, { backgroundColor: isBotActive ? ac : 'rgba(255,255,255,0.3)' }]} />
+          </View>
+          <View>
+            <Text style={styles.pillName}>{robotName.toUpperCase()}</Text>
+            <Text style={[styles.pillStat, { color: isBotActive ? ac : 'rgba(255,255,255,0.3)' }]}>{isBotActive ? 'TRADING' : 'IDLE'}</Text>
+          </View>
+        </TouchableOpacity>
+      )}
+
+      {/* EXPANDED PANEL */}
+      {expanded && (
+        <Animated.View style={[styles.expPanel, Platform.OS === 'web' && { backdropFilter: 'blur(40px)', ...expGlow } as any]}>
+          {/* Header */}
+          <TouchableOpacity style={styles.expHead} onPress={toggle} activeOpacity={0.8}>
+            <View style={styles.expHeadAv}>
+              {eaImage && !logoErr ? <Image source={{ uri: eaImage }} style={styles.expHeadAvImg} onError={() => setLogoErr(true)} resizeMode="cover" /> : <RobotLogo size={14} />}
+              <View style={[styles.expHeadRing, Platform.OS === 'web' && { background: ringBg } as any]} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.expHeadName}>{robotName.toUpperCase()}</Text>
+              <Text style={[styles.expHeadSub, { color: isBotActive ? ac : 'rgba(255,255,255,0.3)' }]}>{isBotActive ? 'TRADING · ACTIVE' : 'IDLE'}</Text>
+            </View>
+            <TouchableOpacity style={styles.expX} onPress={toggle}><Text style={styles.expXTxt}>✕</Text></TouchableOpacity>
+          </TouchableOpacity>
+
+          {/* Actions */}
+          <View style={styles.actRow}>
+            <TouchableOpacity style={[styles.actBtn, Platform.OS === 'web' && { borderColor: 'rgba(' + ar + ',0.1)' } as any]} onPress={() => { try { setBotActive(!isBotActive); } catch (e) {} if (!isBotActive) reactorOn(); else reactorOff(); }} activeOpacity={0.7}>
+              <View style={[styles.actIc, Platform.OS === 'web' && { background: 'rgba(' + ar + ',0.12)', color: ac } as any]}>
+                <Text style={{ color: ac, fontSize: 14 }}>{isBotActive ? '⏸' : '▶'}</Text>
+              </View>
+              <Text style={styles.actLb}>{isBotActive ? 'STOP' : 'TRADE'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.actBtn, Platform.OS === 'web' && { borderColor: 'rgba(' + ar + ',0.1)' } as any]} onPress={() => { router.push('/(tabs)/quotes'); toggle(); }} activeOpacity={0.7}>
+              <View style={[styles.actIc, Platform.OS === 'web' && { background: 'rgba(' + ar + ',0.12)', color: ac } as any]}><Text style={{ color: ac, fontSize: 12 }}>📊</Text></View>
+              <Text style={styles.actLb}>QUOTES</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.actBtn, Platform.OS === 'web' && { borderColor: 'rgba(' + ar + ',0.1)' } as any]} onPress={() => { if (primaryEA?.id) removeEA(primaryEA.id).then(() => setBotActive(false)); toggle(); }} activeOpacity={0.7}>
+              <View style={[styles.actIc, Platform.OS === 'web' && { background: 'rgba(' + ar + ',0.12)', color: ac } as any]}><Text style={{ color: ac, fontSize: 12 }}>🗑</Text></View>
+              <Text style={styles.actLb}>REMOVE</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.divider} />
+
+          {/* COLORS */}
+          <View style={styles.sec}>
+            <Text style={styles.secLbl}>COLOR</Text>
+            <View style={styles.colorRow}>
+              {COLORS.map(c => (
+                <TouchableOpacity key={c} style={[styles.colorDot, { borderColor: themeName === c ? theme.accent : 'transparent' }]} onPress={() => setThemeName(c)} activeOpacity={0.7}>
+                  <View style={[styles.colorIn, { backgroundColor: c === 'red' ? '#FF1A1A' : c === 'blue' ? '#1A8FFF' : c === 'green' ? '#1AFF5E' : c === 'purple' ? '#A855F7' : c === 'orange' ? '#FF8C1A' : '#06D6E0' }]} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* GLASS */}
+          <View style={styles.sec}>
+            <Text style={styles.secLbl}>GLASS</Text>
+            <View style={styles.glassRow}>
+              {GLASSES.map(g => (
+                <TouchableOpacity key={g} style={[styles.glassBtn, glassMode === g && { borderColor: ac + '55', backgroundColor: 'rgba(' + ar + ',0.08)' }]} onPress={() => setGlassMode(g)} activeOpacity={0.7}>
+                  <Text style={[styles.glassTxt, glassMode === g && { color: ac }]}>{g.charAt(0).toUpperCase() + g.slice(1)}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.divider} />
+
+          {/* VOICE */}
+          <View style={styles.voiceRow}>
+            <TouchableOpacity style={[styles.micBtn, voiceOn && Platform.OS === 'web' && { border: '1.5px solid ' + ac, background: 'rgba(' + ar + ',0.12)', boxShadow: '0 0 10px rgba(' + ar + ',0.3)' } as any]} onPress={toggleVoice} activeOpacity={0.7}>
+              <Text style={{ fontSize: 14 }}>🎤</Text>
+            </TouchableOpacity>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.vLblTxt, voiceOn && { color: ac }]}>{vLabel}</Text>
+              <Text style={styles.vSubTxt}>{vSub}</Text>
+            </View>
+            {voiceOn && (
+              <View style={styles.barsRow}>
+                {barAnims.map((a, i) => <Animated.View key={i} style={[styles.bar, { height: a, backgroundColor: ac }]} />)}
+              </View>
+            )}
+          </View>
+
+          {/* COMMAND CHIPS */}
+          {showCmds && (
+            <View style={styles.cmdsWrap}>
+              {CMD_CHIPS.map(ch => (
+                <TouchableOpacity key={ch.cmd} style={[styles.cmdChip, Platform.OS === 'web' && { borderColor: 'rgba(' + ar + ',0.08)' } as any]} onPress={() => runChip(ch.cmd)} activeOpacity={0.7}>
+                  <Text style={styles.cmdE}>{ch.emoji}</Text>
+                  <Text style={styles.cmdL}>{ch.label}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
           )}
 
-          {/* Expanded State */}
-          <Animated.View
-            style={[
-              styles.expandedContent,
-              {
-                opacity: animatedOpacity,
-              },
-            ]}
-            pointerEvents={isExpanded ? 'auto' : 'none'}
-          >
-            <View style={styles.expandedHeader}>
-              <View style={styles.expandedIconContainer}>
-                {primaryEAImage && !logoError ? (
-                  <Image
-                    source={{ uri: primaryEAImage }}
-                    style={styles.expandedLogo}
-                    onError={(error) => {
-                      console.log('Dynamic Island Expanded: Image load error:', error);
-                      setLogoError(true);
-                    }}
-                    onLoad={() => {
-                      console.log('Dynamic Island Expanded: Image loaded successfully:', primaryEAImage);
-                    }}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <RobotLogo size={32} />
-                )}
-              </View>
-              <View style={styles.expandedInfo}>
-                <Text style={styles.expandedTitle} numberOfLines={2} ellipsizeMode="tail">
-                  {primaryEA?.name}
-                </Text>
-                <Text style={styles.expandedSubtitle}>
-                  TRADE PORT EA
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.expandedControls}>
-              <TouchableOpacity
-                style={styles.controlButton}
-                onPress={() => {
-                  console.log('Android Widget: Start/Stop button pressed, current state:', isBotActive);
-                  try {
-                    setBotActive(!isBotActive);
-                    console.log('Android Widget: Bot active state changed to:', !isBotActive);
-                  } catch (error) {
-                    console.error('Android Widget: Error changing bot state:', error);
-                  }
-                }}
-              >
-                {isBotActive ? (
-                  <Square color="#DC2626" size={16} fill="#DC2626" />
-                ) : (
-                  <Play color="#FFFFFF" size={16} fill="#FFFFFF" />
-                )}
-                <Text style={[styles.controlButtonText, { color: isBotActive ? "#DC2626" : "#FFFFFF" }]}>
-                  {isBotActive ? 'STOP' : 'START'}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.controlButton} onPress={handleQuotes}>
-                <TrendingUp color="#FFFFFF" size={16} />
-                <Text style={styles.controlButtonText}>QUOTES</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.controlButton} onPress={handleRemoveBot}>
-                <Trash2 color="#FFFFFF" size={16} />
-                <Text style={styles.controlButtonText}>REMOVE</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Signals Status - Only show when signals are active */}
-            {isSignalsMonitoring && (
-              <View style={styles.signalsStatus}>
-                <View style={styles.signalsStatusHeader}>
-                  <Activity color='#FFFFFF' size={14} />
-                  <Text style={styles.signalsStatusText}>
-                    MONITORING SIGNALS
-                  </Text>
-                </View>
-                <Text style={styles.signalsCount}>
-                  {signalLogs.filter(signal => isSignalForActiveSymbol(signal)).length} active signals
-                </Text>
-
-                {/* Show latest signal details - Always update when signalLogs change */}
-                {signalLogs.filter(signal => isSignalForActiveSymbol(signal)).length > 0 && (
-                  <View style={styles.latestSignalContainer}>
-                    {signalLogs
-                      .filter(signal => isSignalForActiveSymbol(signal))
-                      .slice(-1)
-                      .map((signal, index) => {
-                        // Use signal ID and timestamp for unique key to force re-render
-                        const uniqueKey = `${signal.id}-${signal.latestupdate}-${index}`;
-                        return (
-                          <View key={uniqueKey} style={styles.latestSignalDetails}>
-                            <View style={styles.latestSignalHeader}>
-                              <Text style={styles.latestSignalAsset}>{signal.asset}</Text>
-                              <View style={[
-                                styles.latestSignalBadge,
-                                signal.action === 'BUY' ? styles.latestBuyBadge : styles.latestSellBadge
-                              ]}>
-                                <Text style={styles.latestSignalAction}>{signal.action}</Text>
-                              </View>
-                            </View>
-                            <View style={styles.latestSignalPrices}>
-                              <View style={styles.latestPriceItem}>
-                                <Text style={styles.latestPriceLabel}>Entry:</Text>
-                                <Text style={styles.latestPriceValue}>{signal.price}</Text>
-                              </View>
-                              <View style={styles.latestPriceItem}>
-                                <Text style={styles.latestPriceLabel}>TP:</Text>
-                                <Text style={[styles.latestPriceValue, styles.latestTpValue]}>{signal.tp}</Text>
-                              </View>
-                              <View style={styles.latestPriceItem}>
-                                <Text style={styles.latestPriceLabel}>SL:</Text>
-                                <Text style={[styles.latestPriceValue, styles.latestSlValue]}>{signal.sl}</Text>
-                              </View>
-                            </View>
-                            <View style={styles.latestSignalFooter}>
-                              <Text style={styles.latestSignalTime}>
-                                {formatTime(signal.time)}
-                              </Text>
-                              <Text style={styles.latestSignalId}>ID: {signal.id}</Text>
-                            </View>
-                          </View>
-                        );
-                      })
-                    }
-                  </View>
-                )}
-
-              </View>
-            )}
-
-
-          </Animated.View>
+          {/* SIGNALS */}
+          <View style={styles.sigBar}>
+            <View style={styles.sigDot} />
+            <Text style={styles.sigTxt}>{isSignalsMonitoring ? 'MONITORING SIGNALS' : 'SIGNALS IDLE'}</Text>
+            <Text style={styles.sigCnt}>{signalLogs.length} ACTIVE</Text>
+          </View>
         </Animated.View>
-      </TouchableOpacity>
-    </Animated.View>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  drawOverlayContainer: {
-    position: 'absolute',
-    zIndex: 9999,
-  },
-  overlayModeContainer: {
-    position: 'absolute',
-    zIndex: 99999,
-    elevation: 999,
-  },
-  overlayModeWidget: {
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 20,
-    backdropFilter: 'blur(1px)',
-  },
-  overlayModeContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  overlayIcon: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: '#000000',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 6,
-    overflow: 'hidden',
-  },
-  overlayLogo: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-  },
-  overlayIndicator: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#10B981',
-    marginRight: 6,
-  },
-  overlayText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-    maxWidth: 80,
-    textAlign: 'center',
-  },
-  touchableContainer: {
-    flex: 1,
-  },
-  overlayWidget: {
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    backdropFilter: 'blur(1px)',
-  },
-  collapsedCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#000000',
-    overflow: 'hidden',
-  },
-  collapsedLogo: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-  },
-  expandedContent: {
-    flex: 1,
-    width: '100%',
-    paddingHorizontal: 18,
-    paddingVertical: 18,
-    position: 'relative',
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
-    borderRadius: 20,
-    backdropFilter: 'blur(1px)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  expandedHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  expandedIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#000000',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
-    overflow: 'hidden',
-  },
-  expandedLogo: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-  },
-  expandedInfo: {
-    marginLeft: 16,
-    flex: 1,
-  },
-  expandedTitle: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-    flexWrap: 'wrap',
-    textAlign: 'center',
-  },
-  expandedSubtitle: {
-    color: '#999999',
-    fontSize: 11,
-    fontWeight: '500',
-    letterSpacing: 0.3,
-    marginTop: 3,
-  },
-  expandedControls: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 16,
-    paddingHorizontal: 8,
-  },
-  controlButton: {
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    minWidth: 70,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  controlButtonText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '600',
-    marginTop: 6,
-    letterSpacing: 0.5,
-  },
-  bottomControls: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 16,
-    paddingHorizontal: 8,
-  },
-  expandedInfoButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  signalAppIcon: {
-    backgroundColor: '#F59E0B',
-  },
-  signalIndicator: {
-    backgroundColor: '#F59E0B',
-  },
-  signalIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(245, 158, 11, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  signalDetails: {
-    backgroundColor: 'rgba(245, 158, 11, 0.1)',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.3)',
-  },
-  signalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  signalAsset: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  signalAssetText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginRight: 8,
-  },
-  signalActionBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  buyBadge: {
-    backgroundColor: '#16A34A',
-  },
-  sellBadge: {
-    backgroundColor: '#DC2626',
-  },
-  signalActionText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '600',
-    marginLeft: 3,
-  },
-  dismissButton: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dismissButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  signalPrices: {
-    marginBottom: 12,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  priceLabel: {
-    fontSize: 12,
-    color: '#CCCCCC',
-    fontWeight: '500',
-  },
-  priceValue: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  tpValue: {
-    color: '#16A34A',
-  },
-  slValue: {
-    color: '#DC2626',
-  },
-  signalFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  signalTime: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  signalTimeText: {
-    fontSize: 10,
-    color: '#CCCCCC',
-    marginLeft: 4,
-  },
-  signalId: {
-    fontSize: 9,
-    color: '#999999',
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-  },
-  signalsStatus: {
-    backgroundColor: '#10B981',
-    borderRadius: 12,
-    padding: 12,
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: '#10B981',
-  },
-  signalsStatusHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  signalsStatusText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginLeft: 8,
-  },
-  signalsCount: {
-    fontSize: 10,
-    color: '#FFFFFF',
-    marginTop: 2,
-  },
-  latestSignalContainer: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  latestSignalDetails: {
-    backgroundColor: 'rgba(245, 158, 11, 0.1)',
-    borderRadius: 10,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.3)',
-  },
-  latestSignalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  latestSignalAsset: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  latestSignalBadge: {
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  latestBuyBadge: {
-    backgroundColor: '#16A34A',
-  },
-  latestSellBadge: {
-    backgroundColor: '#DC2626',
-  },
-  latestSignalAction: {
-    color: '#FFFFFF',
-    fontSize: 8,
-    fontWeight: '600',
-  },
-  latestSignalPrices: {
-    marginBottom: 6,
-  },
-  latestPriceItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 2,
-  },
-  latestPriceLabel: {
-    fontSize: 9,
-    color: '#CCCCCC',
-    fontWeight: '500',
-  },
-  latestPriceValue: {
-    fontSize: 9,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  latestTpValue: {
-    color: '#16A34A',
-  },
-  latestSlValue: {
-    color: '#DC2626',
-  },
-  latestSignalFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  latestSignalTime: {
-    fontSize: 8,
-    color: '#CCCCCC',
-  },
-  latestSignalId: {
-    fontSize: 7,
-    color: '#999999',
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-  },
+  wrap: { position: 'absolute', top: 12, left: 0, right: 0, alignItems: 'center', zIndex: 9999 },
+  // Pill
+  pill: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 5, paddingLeft: 5, paddingRight: 14, borderRadius: 24, backgroundColor: 'rgba(6,6,8,0.92)' },
+  pillAv: { width: 30, height: 30, borderRadius: 15, overflow: 'hidden', position: 'relative' },
+  pillAvImg: { width: 30, height: 30, borderRadius: 15 },
+  pillRing: { position: 'absolute', top: -2, left: -2, right: -2, bottom: -2, borderRadius: 17 },
+  pillDot: { position: 'absolute', bottom: -1, right: -1, width: 9, height: 9, borderRadius: 5, borderWidth: 2, borderColor: 'rgba(6,6,8,0.92)' },
+  pillName: { fontSize: 10, fontWeight: '800', color: '#fff', letterSpacing: 0.4 },
+  pillStat: { fontSize: 7, fontWeight: '600', letterSpacing: 0.8 },
+  // Expanded
+  expPanel: { width: 330, borderRadius: 24, overflow: 'hidden', backgroundColor: 'rgba(6,6,8,0.94)' },
+  expHead: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 11, paddingHorizontal: 12 },
+  expHeadAv: { width: 34, height: 34, borderRadius: 17, overflow: 'hidden', position: 'relative' },
+  expHeadAvImg: { width: 34, height: 34, borderRadius: 17 },
+  expHeadRing: { position: 'absolute', top: -2, left: -2, right: -2, bottom: -2, borderRadius: 19 },
+  expHeadName: { fontSize: 12, fontWeight: '800', color: '#fff' },
+  expHeadSub: { fontSize: 7.5, fontWeight: '600', letterSpacing: 0.6, marginTop: 1 },
+  expX: { width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.06)', alignItems: 'center', justifyContent: 'center' },
+  expXTxt: { fontSize: 10, color: 'rgba(255,255,255,0.35)' },
+  // Actions
+  actRow: { flexDirection: 'row', gap: 4, paddingHorizontal: 10, paddingBottom: 6 },
+  actBtn: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: 7, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.03)', borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.04)' },
+  actIc: { width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  actLb: { fontSize: 6.5, fontWeight: '700', color: 'rgba(255,255,255,0.4)', letterSpacing: 0.5 },
+  divider: { height: 0.5, backgroundColor: 'rgba(255,255,255,0.04)', marginHorizontal: 10, marginVertical: 2 },
+  // Theme
+  sec: { paddingVertical: 6, paddingHorizontal: 10 },
+  secLbl: { fontSize: 6.5, fontWeight: '600', color: 'rgba(255,255,255,0.2)', letterSpacing: 0.8, marginBottom: 5 },
+  colorRow: { flexDirection: 'row', gap: 5 },
+  colorDot: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  colorIn: { width: 12, height: 12, borderRadius: 6 },
+  glassRow: { flexDirection: 'row', gap: 3 },
+  glassBtn: { flex: 1, paddingVertical: 5, borderRadius: 9, alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.03)', borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.04)' },
+  glassTxt: { fontSize: 7, fontWeight: '700', color: 'rgba(255,255,255,0.3)', letterSpacing: 0.2 },
+  // Voice
+  voiceRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6, paddingHorizontal: 10 },
+  micBtn: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)', backgroundColor: 'rgba(255,255,255,0.03)' },
+  vLblTxt: { fontSize: 8, fontWeight: '700', color: 'rgba(255,255,255,0.4)', letterSpacing: 0.3 },
+  vSubTxt: { fontSize: 7, color: 'rgba(255,255,255,0.2)', marginTop: 1 },
+  barsRow: { flexDirection: 'row', gap: 1.5, alignItems: 'center', height: 14 },
+  bar: { width: 2, borderRadius: 1 },
+  // Commands
+  cmdsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 3, paddingHorizontal: 10, paddingBottom: 6 },
+  cmdChip: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4, paddingHorizontal: 8, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.03)', borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.04)' },
+  cmdE: { fontSize: 8, marginRight: 3 },
+  cmdL: { fontSize: 7.5, fontWeight: '600', color: 'rgba(255,255,255,0.3)' },
+  // Signals
+  sigBar: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 10, borderTopWidth: 0.5, borderTopColor: 'rgba(16,185,129,0.12)', backgroundColor: 'rgba(16,185,129,0.03)' },
+  sigDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#10B981' },
+  sigTxt: { fontSize: 7.5, fontWeight: '600', color: '#10B981', letterSpacing: 0.4 },
+  sigCnt: { fontSize: 7, color: 'rgba(255,255,255,0.2)', marginLeft: 'auto' as any },
 });

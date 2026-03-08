@@ -3,7 +3,6 @@ import React from "react";
 import { View, StyleSheet } from "react-native";
 import { useApp } from "@/providers/app-provider";
 import { Sidebar } from "@/components/sidebar";
-import { VoiceOverlay } from "@/components/voice-assistant";
 
 export default function TabLayout() {
   const { isFirstTime } = useApp();
@@ -22,7 +21,6 @@ export default function TabLayout() {
         <Tabs.Screen name="quotes" options={{ tabBarButton: () => null }} />
       </Tabs>
       {!isFirstTime && <Sidebar />}
-      <VoiceOverlay />
     </View>
   );
 }

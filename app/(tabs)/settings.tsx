@@ -334,12 +334,12 @@ const styles = StyleSheet.create({
   glassSegmented: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
   },
   glassSeg: {
-    flexBasis: '47%',
-    flexGrow: 1,
-    paddingVertical: 12,
+    flexBasis: '46%',
+    flexGrow: 0,
+    paddingVertical: 10,
     borderRadius: 14,
     backgroundColor: 'rgba(255,255,255,0.04)',
     borderWidth: 1,
