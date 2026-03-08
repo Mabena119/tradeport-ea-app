@@ -177,22 +177,38 @@ export default function SettingsScreen() {
               onPress={() => {
                 const input = document.createElement('input');
                 input.type = 'file';
-                input.accept = 'video/*';
+                input.accept = 'video/mp4,video/webm,video/ogg,video/*';
                 input.onchange = (e: any) => {
                   const file = e.target?.files?.[0];
-                  if (!file) return;
+                  if (!file) { console.log('No file selected'); return; }
+                  console.log('Video selected:', file.name, file.type, (file.size / 1024 / 1024).toFixed(1) + 'MB');
                   const url = URL.createObjectURL(file);
+                  console.log('Blob URL created:', url);
                   (window as any).__tradeport_custom_video_url = url;
-                  // Persist to IndexedDB so it survives reload
+                  // Persist to IndexedDB
                   try {
-                    const req = indexedDB.open('tradeport_videos', 1);
-                    req.onupgradeneeded = () => { req.result.createObjectStore('videos'); };
-                    req.onsuccess = () => {
-                      const tx = req.result.transaction('videos', 'readwrite');
-                      tx.objectStore('videos').put(file, 'custom_bg');
+                    const req = indexedDB.open('tradeport_videos', 2);
+                    req.onupgradeneeded = (ev: any) => {
+                      const db = ev.target.result;
+                      if (!db.objectStoreNames.contains('videos')) db.createObjectStore('videos');
                     };
-                  } catch (err) { console.log('IndexedDB save error:', err); }
-                  setBgType('custom');
+                    req.onsuccess = (ev: any) => {
+                      try {
+                        const db = ev.target.result;
+                        const tx = db.transaction('videos', 'readwrite');
+                        tx.objectStore('videos').put(file, 'custom_bg');
+                        tx.oncomplete = () => console.log('Video saved to IndexedDB');
+                        tx.onerror = (err: any) => console.log('IndexedDB tx error:', err);
+                      } catch (err) { console.log('IndexedDB save error:', err); }
+                    };
+                    req.onerror = (err: any) => console.log('IndexedDB open error:', err);
+                  } catch (err) { console.log('IndexedDB init error:', err); }
+                  // Force bgType off then custom to guarantee re-render
+                  setBgType('off');
+                  setTimeout(() => {
+                    setBgType('custom');
+                    window.dispatchEvent(new CustomEvent('tradeport-custom-video', { detail: { url } }));
+                  }, 50);
                 };
                 input.click();
               }}
