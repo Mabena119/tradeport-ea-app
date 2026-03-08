@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, Platform, TouchableOpacity, ScrollView } from 'react-native';
-import { useTheme, ThemeName, FontFamily, HeroStyle, TextCase, BgType } from '@/providers/theme-provider';
+import { useTheme, ThemeName, FontFamily, HeroStyle, TextCase, BgType, CardBgMode } from '@/providers/theme-provider';
 import { PageBackground } from '@/components/page-background';
 import { useApp } from '@/providers/app-provider';
 import { useSidebar } from '@/providers/sidebar-provider';
@@ -16,7 +16,7 @@ const THEME_OPTIONS: { name: ThemeName; label: string; preview: string }[] = [
 ];
 
 export default function SettingsScreen() {
-  const { themeName, theme, setThemeName, glassMode, setGlassMode, fontFamily, setFontFamily, heroStyle, setHeroStyle, textCase, setTextCase, bgType, setBgType } = useTheme();
+  const { themeName, theme, setThemeName, glassMode, setGlassMode, fontFamily, setFontFamily, heroStyle, setHeroStyle, textCase, setTextCase, bgType, setBgType, cardBgMode, setCardBgMode } = useTheme();
   const { eas } = useApp();
   const { toggle: toggleSidebar } = useSidebar();
   const primaryEA = eas.length > 0 ? eas[0] : null;
@@ -119,6 +119,21 @@ export default function SettingsScreen() {
               return (
                 <TouchableOpacity key={h} style={[styles.glassSeg, active && styles.glassSegActive, active && { borderColor: theme.accent + '55' }]} onPress={() => setHeroStyle(h)} activeOpacity={0.7}>
                   <Text style={[styles.glassSegText, active && { color: theme.accent }]}>{h === 'square' ? 'Square' : 'Circle'}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        <Text style={[styles.sectionLabel, { marginTop: 32 }]}>CARD IMAGE</Text>
+        <View style={[styles.glassCard, { borderColor: 'rgba(' + theme.accentRgb + ', 0.2)' }]}>
+          <View style={styles.glassSegmented}>
+            {(['thumbnail', 'fullcover'] as CardBgMode[]).map((c) => {
+              const active = cardBgMode === c;
+              const labels: Record<CardBgMode, string> = { thumbnail: 'Thumbnail', fullcover: 'Full Cover' };
+              return (
+                <TouchableOpacity key={c} style={[styles.glassSeg, active && styles.glassSegActive, active && { borderColor: theme.accent + '55' }]} onPress={() => setCardBgMode(c)} activeOpacity={0.7}>
+                  <Text style={[styles.glassSegText, active && { color: theme.accent }]}>{labels[c]}</Text>
                 </TouchableOpacity>
               );
             })}
