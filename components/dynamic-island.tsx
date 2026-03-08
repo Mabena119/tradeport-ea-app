@@ -69,7 +69,6 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
   const { theme, themeName, glassMode, setThemeName, setGlassMode } = useTheme();
   const [expanded, setExpanded] = useState(false);
   const [voiceOn, setVoiceOn] = useState(false);
-  const [showCmds, setShowCmds] = useState(false);
   const [vLabel, setVLabel] = useState('VOICE ASSISTANT');
   const [vSub, setVSub] = useState('Tap to activate');
   const expandAnim = useRef(new Animated.Value(0)).current;
@@ -155,126 +154,96 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
     barAnims.forEach(a => a.setValue(3));
   }, [barAnims]);
 
-  // Speak — with Chrome workarounds and fallback timer
-  const sayRef = useRef<(text: string, cb?: () => void) => void>(() => {});
-  sayRef.current = useCallback((text: string, cb?: () => void) => {
+  // Speak — simple direct approach, no stale closures
+  const speakText = (text: string, cb?: () => void) => {
     if (Platform.OS !== 'web') { cb?.(); return; }
     const synth = window.speechSynthesis;
     if (!synth) { cb?.(); return; }
 
-    // Cancel any ongoing speech first
     synth.cancel();
-
     startBars();
     setVLabel(robotName.toUpperCase() + ' SPEAKING...');
     setVSub('');
-
-    // Comm beeps
     commOpen();
 
     setTimeout(() => {
       const m = new SpeechSynthesisUtterance(text);
       m.rate = 0.88; m.pitch = 0.45; m.volume = 1;
-
-      // Re-pick voice every time (they can load late)
       const v = pickVoice(); if (v) m.voice = v;
 
-      let finished = false;
-      const onFinish = () => {
-        if (finished) return;
-        finished = true;
-        commClose();
-        stopBars();
+      let done = false;
+      const finish = () => {
+        if (done) return; done = true;
+        commClose(); stopBars();
         if (voiceRef.current) {
-          setVLabel('LISTENING...');
-          setVSub('Tap a command below');
+          setVLabel('LISTENING...'); setVSub('Tap a command or speak');
         }
         if (cb) setTimeout(cb, 300);
       };
 
-      m.onend = onFinish;
-      m.onerror = () => { console.log('Speech error'); onFinish(); };
+      m.onend = finish;
+      m.onerror = () => finish();
 
       synth.speak(m);
 
-      // Chrome bug: synth can get stuck paused. Force resume periodically.
+      // Chrome bug: force resume if paused
       const keepAlive = setInterval(() => {
-        if (finished) { clearInterval(keepAlive); return; }
-        if (synth.paused) { synth.resume(); }
+        if (done) { clearInterval(keepAlive); return; }
+        if (synth.paused) synth.resume();
       }, 3000);
 
-      // Fallback: if speech doesn't fire events within 5s, continue anyway
-      setTimeout(() => {
-        if (!finished) { console.log('Speech fallback triggered'); onFinish(); }
-        clearInterval(keepAlive);
-      }, Math.max(5000, text.length * 100));
-    }, 300);
-  }, [robotName, startBars, stopBars]);
+      // Fallback timer — continue even if speech events don't fire
+      setTimeout(() => { finish(); clearInterval(keepAlive); }, Math.max(4000, text.length * 90));
+    }, 250);
+  };
 
-  // Execute command
-  const execRef = useRef<(raw: string) => void>(() => {});
-  execRef.current = useCallback((raw: string) => {
+  // Execute command — direct function, always fresh state via refs
+  const executeCommand = (raw: string) => {
     const p = parseCmd(raw); chime();
-    const done = () => {
-      if (!voiceRef.current) return;
-      setVLabel('LISTENING...'); setVSub('Tap a command below'); stopBars();
-    };
-    if (!p) { sayRef.current('Try a command below.', done); return; }
+    if (!p) { speakText('Try a command below.'); return; }
     switch (p.action) {
       case 'nav':
-        sayRef.current('Opening ' + p.param + '.', done);
+        speakText('Opening ' + p.param + '.');
         try { if (p.param === 'home') router.push('/(tabs)/'); else router.push('/(tabs)/' + p.param); } catch (e) {}
         break;
       case 'trade_on':
-        if (isBotActive) { sayRef.current('Already active.', done); } else { reactorOn(); sayRef.current('Trading activated.', done); try { setBotActive(true); } catch (e) {} }
+        if (isBotActive) { speakText('Already active.'); } else { reactorOn(); speakText('Trading activated.'); try { setBotActive(true); } catch (e) {} }
         break;
       case 'trade_off':
-        if (!isBotActive) { sayRef.current('Already stopped.', done); } else { reactorOff(); sayRef.current('Trading deactivated.', done); try { setBotActive(false); } catch (e) {} }
+        if (!isBotActive) { speakText('Already stopped.'); } else { reactorOff(); speakText('Trading deactivated.'); try { setBotActive(false); } catch (e) {} }
         break;
       case 'theme':
         setThemeName(COLORS[Math.floor(Math.random() * COLORS.length)]); setGlassMode(GLASSES[Math.floor(Math.random() * GLASSES.length)]);
-        sayRef.current('Theme updated.', done); break;
+        speakText('Theme updated.'); break;
       case 'color':
         if (COLORS.includes(p.param as any)) setThemeName(p.param as ThemeName);
-        sayRef.current(p.param + '.', done); break;
+        speakText(p.param + '.'); break;
       case 'glass':
         if (GLASSES.includes(p.param as any)) setGlassMode(p.param as GlassMode);
-        sayRef.current(p.param + ' mode.', done); break;
-      case 'status': sayRef.current(isBotActive ? 'Trading active.' : 'Trading idle.', done); break;
-      case 'identify': sayRef.current('I am ' + robotName + '. Your shadow soldier.', done); break;
-      case 'help': sayRef.current('Say: open quotes, trade, stop, color purple, neon, go home, status.', done); break;
+        speakText(p.param + ' mode.'); break;
+      case 'status': speakText(isBotActive ? 'Trading active.' : 'Trading idle.'); break;
+      case 'identify': speakText('I am ' + robotName + '. Your shadow soldier.'); break;
+      case 'help': speakText('Say: open quotes, trade, stop, color purple, neon, go home, status.'); break;
     }
-  }, [isBotActive, robotName, setBotActive, setThemeName, setGlassMode, stopBars]);
+  };
 
   // Voice toggle
-  const toggleVoice = useCallback(() => {
+  const toggleVoice = () => {
     if (voiceOn) {
-      setVoiceOn(false); setShowCmds(false); stopBars(); commClose();
+      setVoiceOn(false); stopBars(); commClose();
       setVLabel('VOICE ASSISTANT'); setVSub('Tap 🎤 to activate');
       if (Platform.OS === 'web' && window.speechSynthesis) window.speechSynthesis.cancel();
       return;
     }
-    setVoiceOn(true); setShowCmds(true);
-    setVLabel('ACTIVATING...'); setVSub('');
-    sayRef.current(robotName + ' online. How can I assist you today?', () => {
-      if (!voiceRef.current) return;
-      setVLabel('LISTENING...'); setVSub('Tap a command below');
-    });
-  }, [voiceOn, robotName, stopBars]);
+    setVoiceOn(true);
+    speakText(robotName + ' online. How can I assist you today?');
+  };
 
-  // Run chip command
-  const runChip = useCallback((cmd: string) => {
-    setShowCmds(true); startBars();
-    setVLabel('PROCESSING...'); setVSub('');
-    if (!voiceOn) {
-      setVoiceOn(true);
-      sayRef.current(robotName + ' online.', () => {
-        setTimeout(() => execRef.current(cmd), 200);
-      });
-    } else {
-      setTimeout(() => execRef.current(cmd), 100);
-    }
-  }, [voiceOn, robotName, startBars]);
+  // Run chip command — always works, auto-activates voice
+  const runChip = (cmd: string) => {
+    if (!voiceOn) setVoiceOn(true);
+    executeCommand(cmd);
+  };
 
   if (!visible || !primaryEA) return null;
   if (Platform.OS !== 'web') return null;
