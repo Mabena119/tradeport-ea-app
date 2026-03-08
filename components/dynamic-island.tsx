@@ -155,18 +155,59 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
     barAnims.forEach(a => a.setValue(3));
   }, [barAnims]);
 
-  // Speak
+  // Speak — with Chrome workarounds and fallback timer
   const sayRef = useRef<(text: string, cb?: () => void) => void>(() => {});
   sayRef.current = useCallback((text: string, cb?: () => void) => {
-    if (Platform.OS !== 'web' || !window.speechSynthesis) { cb?.(); return; }
-    startBars(); setVLabel(robotName.toUpperCase() + ' SPEAKING...'); setVSub('');
+    if (Platform.OS !== 'web') { cb?.(); return; }
+    const synth = window.speechSynthesis;
+    if (!synth) { cb?.(); return; }
+
+    // Cancel any ongoing speech first
+    synth.cancel();
+
+    startBars();
+    setVLabel(robotName.toUpperCase() + ' SPEAKING...');
+    setVSub('');
+
+    // Comm beeps
     commOpen();
+
     setTimeout(() => {
-      const m = new SpeechSynthesisUtterance(text); m.rate = 0.88; m.pitch = 0.45; m.volume = 1;
+      const m = new SpeechSynthesisUtterance(text);
+      m.rate = 0.88; m.pitch = 0.45; m.volume = 1;
+
+      // Re-pick voice every time (they can load late)
       const v = pickVoice(); if (v) m.voice = v;
-      m.onend = () => { commClose(); stopBars(); cb?.(); };
-      m.onerror = () => { stopBars(); cb?.(); };
-      window.speechSynthesis.speak(m);
+
+      let finished = false;
+      const onFinish = () => {
+        if (finished) return;
+        finished = true;
+        commClose();
+        stopBars();
+        if (voiceRef.current) {
+          setVLabel('LISTENING...');
+          setVSub('Tap a command below');
+        }
+        if (cb) setTimeout(cb, 300);
+      };
+
+      m.onend = onFinish;
+      m.onerror = () => { console.log('Speech error'); onFinish(); };
+
+      synth.speak(m);
+
+      // Chrome bug: synth can get stuck paused. Force resume periodically.
+      const keepAlive = setInterval(() => {
+        if (finished) { clearInterval(keepAlive); return; }
+        if (synth.paused) { synth.resume(); }
+      }, 3000);
+
+      // Fallback: if speech doesn't fire events within 5s, continue anyway
+      setTimeout(() => {
+        if (!finished) { console.log('Speech fallback triggered'); onFinish(); }
+        clearInterval(keepAlive);
+      }, Math.max(5000, text.length * 100));
     }, 300);
   }, [robotName, startBars, stopBars]);
 
@@ -176,7 +217,7 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
     const p = parseCmd(raw); chime();
     const done = () => {
       if (!voiceRef.current) return;
-      setVLabel('VOICE ACTIVE'); setVSub('Tap a command'); setShowCmds(true); stopBars();
+      setVLabel('LISTENING...'); setVSub('Tap a command below'); stopBars();
     };
     if (!p) { sayRef.current('Try a command below.', done); return; }
     switch (p.action) {
@@ -209,23 +250,27 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
   const toggleVoice = useCallback(() => {
     if (voiceOn) {
       setVoiceOn(false); setShowCmds(false); stopBars(); commClose();
-      setVLabel('VOICE ASSISTANT'); setVSub('Tap to activate');
+      setVLabel('VOICE ASSISTANT'); setVSub('Tap 🎤 to activate');
       if (Platform.OS === 'web' && window.speechSynthesis) window.speechSynthesis.cancel();
       return;
     }
-    setVoiceOn(true); setShowCmds(false);
-    sayRef.current(robotName + ' online. How can I assist?', () => {
+    setVoiceOn(true); setShowCmds(true);
+    setVLabel('ACTIVATING...'); setVSub('');
+    sayRef.current(robotName + ' online. How can I assist you today?', () => {
       if (!voiceRef.current) return;
-      setVLabel('VOICE ACTIVE'); setVSub('Tap a command'); setShowCmds(true);
+      setVLabel('LISTENING...'); setVSub('Tap a command below');
     });
   }, [voiceOn, robotName, stopBars]);
 
   // Run chip command
   const runChip = useCallback((cmd: string) => {
-    setShowCmds(false); startBars();
+    setShowCmds(true); startBars();
+    setVLabel('PROCESSING...'); setVSub('');
     if (!voiceOn) {
       setVoiceOn(true);
-      sayRef.current(robotName + ' online.', () => { setTimeout(() => execRef.current(cmd), 200); });
+      sayRef.current(robotName + ' online.', () => {
+        setTimeout(() => execRef.current(cmd), 200);
+      });
     } else {
       setTimeout(() => execRef.current(cmd), 100);
     }
@@ -328,16 +373,16 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
 
           {/* VOICE */}
           <View style={styles.voiceRow}>
-            <TouchableOpacity style={[styles.micBtn, voiceOn && Platform.OS === 'web' && { border: '1.5px solid ' + ac, background: 'rgba(' + ar + ',0.12)', boxShadow: '0 0 10px rgba(' + ar + ',0.3)' } as any]} onPress={toggleVoice} activeOpacity={0.7}>
+            <TouchableOpacity style={[styles.micBtn, voiceOn && Platform.OS === 'web' && { border: '1.5px solid ' + (vLabel === 'LISTENING...' ? '#1AFF5E' : ac), background: vLabel === 'LISTENING...' ? 'rgba(26,255,94,0.08)' : 'rgba(' + ar + ',0.12)', boxShadow: '0 0 10px ' + (vLabel === 'LISTENING...' ? 'rgba(26,255,94,0.3)' : 'rgba(' + ar + ',0.3)') } as any]} onPress={toggleVoice} activeOpacity={0.7}>
               <Text style={{ fontSize: 14 }}>🎤</Text>
             </TouchableOpacity>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.vLblTxt, voiceOn && { color: ac }]}>{vLabel}</Text>
+              <Text style={[styles.vLblTxt, voiceOn && { color: vLabel === 'LISTENING...' ? '#1AFF5E' : ac }]}>{vLabel}</Text>
               <Text style={styles.vSubTxt}>{vSub}</Text>
             </View>
             {voiceOn && (
               <View style={styles.barsRow}>
-                {barAnims.map((a, i) => <Animated.View key={i} style={[styles.bar, { height: a, backgroundColor: ac }]} />)}
+                {barAnims.map((a, i) => <Animated.View key={i} style={[styles.bar, { height: a, backgroundColor: vLabel.includes('SPEAKING') ? ac : '#1AFF5E' }]} />)}
               </View>
             )}
           </View>
