@@ -76,6 +76,7 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
   const barLoopRef = useRef<any>(null);
   const voiceRef = useRef(false);
   const recogRef = useRef<any>(null);
+  const execCmdRef = useRef<(raw: string) => void>(() => {});
   const ac = theme.accent, ar = theme.accentRgb;
   const isWeb = Platform.OS === 'web';
   const isNeon = glassMode === 'neon', isLiquid = glassMode === 'liquid', isCmd = glassMode === 'commander';
@@ -233,6 +234,7 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
       case 'help': speakText('Say: open quotes, trade, stop, color purple, neon, go home, status.'); break;
     }
   };
+  execCmdRef.current = executeCommand;
 
   // Start listening with SpeechRecognition
   const startListening = useCallback(() => {
@@ -248,7 +250,7 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
       r.onresult = (e: any) => {
         const transcript = e.results[e.results.length - 1][0].transcript;
         console.log('Voice heard:', transcript);
-        if (voiceRef.current) executeCommand(transcript);
+        if (voiceRef.current) execCmdRef.current(transcript);
       };
       r.onerror = (e: any) => { console.log('Recognition error:', e.error); };
       r.onend = () => { if (voiceRef.current) { setTimeout(() => { try { r.start(); } catch (e) {} }, 300); } };
