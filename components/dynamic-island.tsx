@@ -75,7 +75,9 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
   const barAnims = useRef(Array.from({ length: 5 }, () => new Animated.Value(3))).current;
   const barLoopRef = useRef<any>(null);
   const voiceRef = useRef(false);
+  const recogRef = useRef<any>(null);
   const ac = theme.accent, ar = theme.accentRgb;
+  const isWeb = Platform.OS === 'web';
   const isNeon = glassMode === 'neon', isLiquid = glassMode === 'liquid', isCmd = glassMode === 'commander';
 
   // Draggable position
@@ -141,7 +143,7 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
     if (isDragging.current) return;
     const next = !expanded;
     setExpanded(next);
-    Animated.timing(expandAnim, { toValue: next ? 1 : 0, duration: 300, useNativeDriver: Platform.OS !== 'web' }).start();
+    Animated.timing(expandAnim, { toValue: next ? 1 : 0, duration: 300, useNativeDriver: !isWeb }).start();
   }, [expanded, expandAnim]);
 
   // Bar anims
@@ -156,7 +158,12 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
 
   // Speak — simple direct approach, no stale closures
   const speakText = (text: string, cb?: () => void) => {
-    if (Platform.OS !== 'web') { cb?.(); return; }
+    if (!isWeb) {
+      // On native, skip speech but still show state transitions
+      startBars(); setVLabel(robotName.toUpperCase() + ' PROCESSING...'); setVSub('');
+      setTimeout(() => { stopBars(); if (voiceRef.current) { setVLabel('LISTENING...'); setVSub('Tap a command below'); } cb?.(); }, 1500);
+      return;
+    }
     const synth = window.speechSynthesis;
     if (!synth) { cb?.(); return; }
 
@@ -227,26 +234,55 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
     }
   };
 
+  // Start listening with SpeechRecognition
+  const startListening = useCallback(() => {
+    if (!isWeb) return;
+    try {
+      const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SR) { console.log('SpeechRecognition not available'); return; }
+      if (recogRef.current) try { recogRef.current.abort(); } catch (e) {}
+      const r = new SR();
+      r.continuous = true;
+      r.interimResults = false;
+      r.lang = 'en-US';
+      r.onresult = (e: any) => {
+        const transcript = e.results[e.results.length - 1][0].transcript;
+        console.log('Voice heard:', transcript);
+        if (voiceRef.current) executeCommand(transcript);
+      };
+      r.onerror = (e: any) => { console.log('Recognition error:', e.error); };
+      r.onend = () => { if (voiceRef.current) { setTimeout(() => { try { r.start(); } catch (e) {} }, 300); } };
+      r.start();
+      recogRef.current = r;
+      console.log('SpeechRecognition started — mic active');
+    } catch (e) { console.log('SpeechRecognition init error:', e); }
+  }, []);
+
+  const stopListening = useCallback(() => {
+    if (recogRef.current) { try { recogRef.current.abort(); } catch (e) {} recogRef.current = null; }
+  }, []);
+
   // Voice toggle
   const toggleVoice = () => {
     if (voiceOn) {
-      setVoiceOn(false); stopBars(); commClose();
+      setVoiceOn(false); stopBars(); stopListening(); commClose();
       setVLabel('VOICE ASSISTANT'); setVSub('Tap 🎤 to activate');
-      if (Platform.OS === 'web' && window.speechSynthesis) window.speechSynthesis.cancel();
+      if (isWeb && window.speechSynthesis) window.speechSynthesis.cancel();
       return;
     }
     setVoiceOn(true);
     speakText(robotName + ' online. How can I assist you today?');
+    // Start mic listening after greeting
+    setTimeout(() => { if (voiceRef.current) startListening(); }, 3000);
   };
 
   // Run chip command — always works, auto-activates voice
   const runChip = (cmd: string) => {
-    if (!voiceOn) setVoiceOn(true);
+    if (!voiceOn) { setVoiceOn(true); startListening(); }
     executeCommand(cmd);
   };
 
   if (!visible || !primaryEA) return null;
-  if (Platform.OS !== 'web') return null;
 
   // Glass-aware styles
   const pillGlow = isNeon ? { border: '1px solid ' + ac + '44', boxShadow: '0 0 15px rgba(' + ar + ',0.4),0 0 30px rgba(' + ar + ',0.15)', background: 'radial-gradient(ellipse at 30% 30%,rgba(255,255,255,0.1),transparent 60%),rgba(6,6,8,0.88)' }
@@ -265,10 +301,10 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
     <Animated.View {...panResponder.panHandlers} style={[styles.wrap, { left: panX, top: panY }]} pointerEvents="box-none">
       {/* COLLAPSED PILL */}
       {!expanded && (
-        <TouchableOpacity style={[styles.pill, Platform.OS === 'web' && { backdropFilter: 'blur(30px)', ...pillGlow } as any]} onPress={toggle} activeOpacity={0.8}>
+        <TouchableOpacity style={[styles.pill, isWeb && { backdropFilter: 'blur(30px)', ...pillGlow } as any]} onPress={toggle} activeOpacity={0.8}>
           <View style={styles.pillAv}>
             {eaImage && !logoErr ? <Image source={{ uri: eaImage }} style={styles.pillAvImg} onError={() => setLogoErr(true)} resizeMode="cover" /> : <RobotLogo size={12} />}
-            <View style={[styles.pillRing, Platform.OS === 'web' && { background: ringBg } as any]} />
+            <View style={[styles.pillRing, isWeb && { background: ringBg } as any]} />
             <View style={[styles.pillDot, { backgroundColor: isBotActive ? ac : 'rgba(255,255,255,0.3)' }]} />
           </View>
           <View>
@@ -280,12 +316,12 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
 
       {/* EXPANDED PANEL */}
       {expanded && (
-        <Animated.View style={[styles.expPanel, Platform.OS === 'web' && { backdropFilter: 'blur(40px)', ...expGlow } as any]}>
+        <Animated.View style={[styles.expPanel, isWeb && { backdropFilter: 'blur(40px)', ...expGlow } as any]}>
           {/* Header */}
           <TouchableOpacity style={styles.expHead} onPress={toggle} activeOpacity={0.8}>
             <View style={styles.expHeadAv}>
               {eaImage && !logoErr ? <Image source={{ uri: eaImage }} style={styles.expHeadAvImg} onError={() => setLogoErr(true)} resizeMode="cover" /> : <RobotLogo size={14} />}
-              <View style={[styles.expHeadRing, Platform.OS === 'web' && { background: ringBg } as any]} />
+              <View style={[styles.expHeadRing, isWeb && { background: ringBg } as any]} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.expHeadName}>{robotName.toUpperCase()}</Text>
@@ -296,18 +332,18 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
 
           {/* Actions */}
           <View style={styles.actRow}>
-            <TouchableOpacity style={[styles.actBtn, Platform.OS === 'web' && { borderColor: 'rgba(' + ar + ',0.1)' } as any]} onPress={() => { try { setBotActive(!isBotActive); } catch (e) {} if (!isBotActive) reactorOn(); else reactorOff(); }} activeOpacity={0.7}>
-              <View style={[styles.actIc, Platform.OS === 'web' && { background: 'rgba(' + ar + ',0.12)', color: ac } as any]}>
+            <TouchableOpacity style={[styles.actBtn, isWeb && { borderColor: 'rgba(' + ar + ',0.1)' } as any]} onPress={() => { try { setBotActive(!isBotActive); } catch (e) {} if (!isBotActive) reactorOn(); else reactorOff(); }} activeOpacity={0.7}>
+              <View style={[styles.actIc, isWeb && { background: 'rgba(' + ar + ',0.12)', color: ac } as any]}>
                 <Text style={{ color: ac, fontSize: 14 }}>{isBotActive ? '⏸' : '▶'}</Text>
               </View>
               <Text style={styles.actLb}>{isBotActive ? 'STOP' : 'TRADE'}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.actBtn, Platform.OS === 'web' && { borderColor: 'rgba(' + ar + ',0.1)' } as any]} onPress={() => { router.push('/(tabs)/quotes'); toggle(); }} activeOpacity={0.7}>
-              <View style={[styles.actIc, Platform.OS === 'web' && { background: 'rgba(' + ar + ',0.12)', color: ac } as any]}><Text style={{ color: ac, fontSize: 12 }}>📊</Text></View>
+            <TouchableOpacity style={[styles.actBtn, isWeb && { borderColor: 'rgba(' + ar + ',0.1)' } as any]} onPress={() => { router.push('/(tabs)/quotes'); toggle(); }} activeOpacity={0.7}>
+              <View style={[styles.actIc, isWeb && { background: 'rgba(' + ar + ',0.12)', color: ac } as any]}><Text style={{ color: ac, fontSize: 12 }}>📊</Text></View>
               <Text style={styles.actLb}>QUOTES</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.actBtn, Platform.OS === 'web' && { borderColor: 'rgba(' + ar + ',0.1)' } as any]} onPress={() => { if (primaryEA?.id) removeEA(primaryEA.id).then(() => setBotActive(false)); toggle(); }} activeOpacity={0.7}>
-              <View style={[styles.actIc, Platform.OS === 'web' && { background: 'rgba(' + ar + ',0.12)', color: ac } as any]}><Text style={{ color: ac, fontSize: 12 }}>🗑</Text></View>
+            <TouchableOpacity style={[styles.actBtn, isWeb && { borderColor: 'rgba(' + ar + ',0.1)' } as any]} onPress={() => { if (primaryEA?.id) removeEA(primaryEA.id).then(() => setBotActive(false)); toggle(); }} activeOpacity={0.7}>
+              <View style={[styles.actIc, isWeb && { background: 'rgba(' + ar + ',0.12)', color: ac } as any]}><Text style={{ color: ac, fontSize: 12 }}>🗑</Text></View>
               <Text style={styles.actLb}>REMOVE</Text>
             </TouchableOpacity>
           </View>
@@ -342,7 +378,7 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
 
           {/* VOICE */}
           <View style={styles.voiceRow}>
-            <TouchableOpacity style={[styles.micBtn, voiceOn && Platform.OS === 'web' && { border: '1.5px solid ' + (vLabel === 'LISTENING...' ? '#1AFF5E' : ac), background: vLabel === 'LISTENING...' ? 'rgba(26,255,94,0.08)' : 'rgba(' + ar + ',0.12)', boxShadow: '0 0 10px ' + (vLabel === 'LISTENING...' ? 'rgba(26,255,94,0.3)' : 'rgba(' + ar + ',0.3)') } as any]} onPress={toggleVoice} activeOpacity={0.7}>
+            <TouchableOpacity style={[styles.micBtn, voiceOn && isWeb && { border: '1.5px solid ' + (vLabel === 'LISTENING...' ? '#1AFF5E' : ac), background: vLabel === 'LISTENING...' ? 'rgba(26,255,94,0.08)' : 'rgba(' + ar + ',0.12)', boxShadow: '0 0 10px ' + (vLabel === 'LISTENING...' ? 'rgba(26,255,94,0.3)' : 'rgba(' + ar + ',0.3)') } as any]} onPress={toggleVoice} activeOpacity={0.7}>
               <Text style={{ fontSize: 14 }}>🎤</Text>
             </TouchableOpacity>
             <View style={{ flex: 1 }}>
@@ -360,7 +396,7 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
           <View style={styles.cmdsWrap}>
             <Text style={[styles.secLbl, { marginBottom: 4, width: '100%' }]}>VOICE COMMANDS</Text>
             {CMD_CHIPS.map(ch => (
-              <TouchableOpacity key={ch.cmd} style={[styles.cmdChip, Platform.OS === 'web' && { borderColor: 'rgba(' + ar + ',0.08)' } as any]} onPress={() => runChip(ch.cmd)} activeOpacity={0.7}>
+              <TouchableOpacity key={ch.cmd} style={[styles.cmdChip, isWeb && { borderColor: 'rgba(' + ar + ',0.08)' } as any]} onPress={() => runChip(ch.cmd)} activeOpacity={0.7}>
                 <Text style={styles.cmdE}>{ch.emoji}</Text>
                 <Text style={[styles.cmdL, voiceOn && { color: 'rgba(255,255,255,0.5)' }]}>{ch.label}</Text>
               </TouchableOpacity>

@@ -173,7 +173,7 @@ export default function SettingsScreen() {
           </View>
           {Platform.OS === 'web' && (
             <TouchableOpacity
-              style={[styles.glassSeg, bgType === 'custom' && styles.glassSegActive, bgType === 'custom' && { borderColor: theme.accent + '55' }, { marginTop: 8, flexBasis: '100%' }]}
+              style={[styles.glassSeg, bgType === 'custom' && styles.glassSegActive, bgType === 'custom' && { borderColor: theme.accent + '55' }, { marginTop: 8, width: '100%' }]}
               onPress={() => {
                 const input = document.createElement('input');
                 input.type = 'file';
@@ -183,6 +183,15 @@ export default function SettingsScreen() {
                   if (!file) return;
                   const url = URL.createObjectURL(file);
                   (window as any).__tradeport_custom_video_url = url;
+                  // Persist to IndexedDB so it survives reload
+                  try {
+                    const req = indexedDB.open('tradeport_videos', 1);
+                    req.onupgradeneeded = () => { req.result.createObjectStore('videos'); };
+                    req.onsuccess = () => {
+                      const tx = req.result.transaction('videos', 'readwrite');
+                      tx.objectStore('videos').put(file, 'custom_bg');
+                    };
+                  } catch (err) { console.log('IndexedDB save error:', err); }
                   setBgType('custom');
                 };
                 input.click();
@@ -350,10 +359,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
+    justifyContent: 'space-between',
   },
   glassSeg: {
-    flexBasis: '46%',
-    flexGrow: 0,
+    width: '48%',
     paddingVertical: 10,
     borderRadius: 14,
     backgroundColor: 'rgba(255,255,255,0.04)',

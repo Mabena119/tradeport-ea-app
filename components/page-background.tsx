@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Platform } from 'react-native';
 import { useTheme } from '@/providers/theme-provider';
 
@@ -16,10 +16,35 @@ interface PageBackgroundProps {
 export function PageBackground({ eaImage }: PageBackgroundProps) {
   const { theme, glassMode, bgType } = useTheme();
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [customVideoUrl, setCustomVideoUrl] = useState<string>('');
   const a = theme.accentRgb;
   const isNeon = glassMode === 'neon';
   const isLiquid = glassMode === 'liquid';
   const isCmd = glassMode === 'commander';
+
+  // Load custom video from IndexedDB on mount or when bgType changes to 'custom'
+  useEffect(() => {
+    if (Platform.OS !== 'web' || bgType !== 'custom') return;
+    // Check if already in memory
+    const memUrl = (window as any).__tradeport_custom_video_url;
+    if (memUrl) { setCustomVideoUrl(memUrl); return; }
+    // Load from IndexedDB
+    try {
+      const req = indexedDB.open('tradeport_videos', 1);
+      req.onupgradeneeded = () => { req.result.createObjectStore('videos'); };
+      req.onsuccess = () => {
+        const tx = req.result.transaction('videos', 'readonly');
+        const get = tx.objectStore('videos').get('custom_bg');
+        get.onsuccess = () => {
+          if (get.result) {
+            const url = URL.createObjectURL(get.result);
+            (window as any).__tradeport_custom_video_url = url;
+            setCustomVideoUrl(url);
+          }
+        };
+      };
+    } catch (err) { console.log('IndexedDB load error:', err); }
+  }, [bgType]);
 
   // Manage video playback + fix freeze/loop issue
   useEffect(() => {
@@ -89,16 +114,15 @@ export function PageBackground({ eaImage }: PageBackgroundProps) {
     );
   }
 
-  // Custom video (user uploaded — stored in localStorage as blob URL or data URL)
+  // Custom video (user uploaded — persisted in IndexedDB)
   if (bgType === 'custom') {
-    const customSrc = typeof window !== 'undefined' ? (window as any).__tradeport_custom_video_url || '' : '';
-    if (!customSrc) return null;
+    if (!customVideoUrl) return null;
     return (
       <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0, overflow: 'hidden' } as any}>
         <video
           id="tradeport-bg-video"
           key="custom"
-          src={customSrc}
+          src={customVideoUrl}
           autoPlay
           muted
           loop
