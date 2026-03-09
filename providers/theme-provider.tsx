@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type ThemeName = 'red' | 'blue' | 'green' | 'purple' | 'orange' | 'cyan';
-export type GlassMode = 'neon' | 'minimal' | 'liquid' | 'commander' | 'pill';
+export type GlassMode = 'neon' | 'minimal' | 'liquid' | 'commander' | 'pill' | 'mech';
 export type FontFamily = 'system' | 'mono' | 'rounded' | 'condensed' | 'serif' | 'grotesk' | 'jetbrains' | 'outfit' | 'sora' | 'tight';
 export type HeroStyle = 'square' | 'circle';
 export type TextCase = 'normal' | 'upper' | 'lower' | 'capitalize';
@@ -75,7 +75,7 @@ export const [ThemeProvider, useTheme] = createContextHook<ThemeState>(() => {
 
   useEffect(() => {
     AsyncStorage.getItem(THEME_STORAGE_KEY).then((s) => { if (s && s in THEMES) setThemeNameState(s as ThemeName); }).catch(() => {});
-    AsyncStorage.getItem(GLASS_STORAGE_KEY).then((s) => { if (s === 'neon' || s === 'minimal' || s === 'liquid' || s === 'commander' || s === 'pill') setGlassModeState(s); }).catch(() => {});
+    AsyncStorage.getItem(GLASS_STORAGE_KEY).then((s) => { if (s === 'neon' || s === 'minimal' || s === 'liquid' || s === 'commander' || s === 'pill' || s === 'mech') setGlassModeState(s); }).catch(() => {});
     AsyncStorage.getItem(FONT_STORAGE_KEY).then((s) => { if (s && s in FONT_MAP) setFontFamilyState(s as FontFamily); }).catch(() => {});
     AsyncStorage.getItem(HERO_STORAGE_KEY).then((s) => { if (s === 'square' || s === 'circle') setHeroStyleState(s); }).catch(() => {});
     AsyncStorage.getItem(CASE_STORAGE_KEY).then((s) => { if (s && s in TEXT_CASE_MAP) setTextCaseState(s as TextCase); }).catch(() => {});

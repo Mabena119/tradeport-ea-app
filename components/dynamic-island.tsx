@@ -28,23 +28,37 @@ function pickVoice(): SpeechSynthesisVoice | null {
 
 // ===== COMMAND PARSER =====
 function parseCmd(raw: string): { action: string; param?: string } | null {
-  const c = raw.toLowerCase().trim();
-  if (c.match(/open quote|show quote|quote|symbol|pairs/)) return { action: 'nav', param: 'quotes' };
-  if (c.match(/open setting|show setting|setting/)) return { action: 'nav', param: 'settings' };
-  if (c.match(/open meta|metatrader|mt5|mt4|broker/)) return { action: 'nav', param: 'metatrader' };
-  if (c.match(/go home|open home|home page|back home|home$/)) return { action: 'nav', param: 'home' };
-  if (c.match(/start trad|begin trad|activate trad|trade on/)) return { action: 'trade_on' };
-  if (c.match(/stop trad|end trad|deactivate|trade off/)) return { action: 'trade_off' };
-  if (c.match(/change theme|switch theme|random theme/)) return { action: 'theme' };
-  const cm = c.match(/colou?r(?:\s+to)?\s+(red|blue|green|purple|orange|cyan)/);
+  const c = raw.toLowerCase().trim().replace(/[.,!?]/g, '');
+  // Navigation — broad matching
+  if (c.match(/quote|pair|symbol|open.*quote|go.*quote|show.*quote|take.*quote/)) return { action: 'nav', param: 'quotes' };
+  if (c.match(/setting|config|option|preference|open.*setting|go.*setting/)) return { action: 'nav', param: 'settings' };
+  if (c.match(/metatrader|meta.*trader|mt5|mt4|broker|open.*meta|go.*meta|connect/)) return { action: 'nav', param: 'metatrader' };
+  if (c.match(/home|main|dashboard|go.*home|take.*home|back.*home|open.*home/)) return { action: 'nav', param: 'home' };
+  // Trading — catch many variations
+  if (c.match(/start|begin|activate|trade on|enable|launch|run|execute|go live/)) return { action: 'trade_on' };
+  if (c.match(/stop|end|deactivate|trade off|disable|halt|pause|kill|shut/)) return { action: 'trade_off' };
+  // Theme
+  if (c.match(/change.*theme|switch.*theme|random.*theme|new.*theme|shuffle/)) return { action: 'theme' };
+  // Color
+  const cm = c.match(/(?:colou?r|set|make|change).*?(red|blue|green|purple|orange|cyan)/);
   if (cm) return { action: 'color', param: cm[1] };
+  if (c.match(/^red$/)) return { action: 'color', param: 'red' };
+  if (c.match(/^blue$/)) return { action: 'color', param: 'blue' };
+  if (c.match(/^green$/)) return { action: 'color', param: 'green' };
+  if (c.match(/^purple$/)) return { action: 'color', param: 'purple' };
+  if (c.match(/^orange$/)) return { action: 'color', param: 'orange' };
+  if (c.match(/^cyan$/)) return { action: 'color', param: 'cyan' };
+  // Glass mode
   if (c.match(/neon/)) return { action: 'glass', param: 'neon' };
   if (c.match(/minimal/)) return { action: 'glass', param: 'minimal' };
   if (c.match(/liquid/)) return { action: 'glass', param: 'liquid' };
   if (c.match(/commander/)) return { action: 'glass', param: 'commander' };
-  if (c.match(/status/)) return { action: 'status' };
-  if (c.match(/who are you|your name|identify/)) return { action: 'identify' };
-  if (c.match(/help|what can you do/)) return { action: 'help' };
+  if (c.match(/pill/)) return { action: 'glass', param: 'pill' };
+  if (c.match(/mech/)) return { action: 'glass', param: 'mech' };
+  // Info
+  if (c.match(/status|how.*doing|what.*status|report/)) return { action: 'status' };
+  if (c.match(/who.*you|your.*name|identify|what.*are.*you/)) return { action: 'identify' };
+  if (c.match(/help|command|what.*can|how.*use/)) return { action: 'help' };
   return null;
 }
 
@@ -60,7 +74,7 @@ const CMD_CHIPS = [
 ];
 
 const COLORS: ThemeName[] = ['red', 'blue', 'green', 'purple', 'orange', 'cyan'];
-const GLASSES: GlassMode[] = ['neon', 'minimal', 'liquid', 'commander', 'pill'];
+const GLASSES: GlassMode[] = ['neon', 'minimal', 'liquid', 'commander', 'pill', 'mech'];
 
 interface DynamicIslandProps { visible: boolean; newSignal?: SignalLog | null; onSignalDismiss?: () => void; }
 

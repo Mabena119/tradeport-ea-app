@@ -100,7 +100,9 @@ export function PageBackground({ eaImage }: PageBackgroundProps) {
   if (Platform.OS !== 'web') return null;
   if (bgType === 'off') return null;
 
-  const filter = isNeon ? 'brightness(0.15) saturate(0.5) blur(2px)' : isLiquid ? 'brightness(0.18) saturate(0.45) blur(1px)' : isCmd ? 'brightness(0.35) saturate(0.8)' : 'brightness(0.2) saturate(0.4) blur(1px)';
+  const isMech = glassMode === 'mech';
+
+  const filter = isMech ? 'brightness(0.4) saturate(0.7)' : isNeon ? 'brightness(0.15) saturate(0.5) blur(2px)' : isLiquid ? 'brightness(0.18) saturate(0.45) blur(1px)' : isCmd ? 'brightness(0.35) saturate(0.8)' : 'brightness(0.2) saturate(0.4) blur(1px)';
 
   // CUSTOM VIDEO — check FIRST
   if (bgType === 'custom') {
