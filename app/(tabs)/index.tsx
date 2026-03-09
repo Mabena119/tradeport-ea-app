@@ -310,7 +310,7 @@ export default function HomeScreen() {
         )}
 
         {/* ========== STANDARD LAYOUT (all other themes) ========== */}
-        {!isMech && primaryEA ? (
+        {!isMech && primaryEA && (
           <View style={styles.mainEAContainer}>
 
             {/* ========== 1. HERO — CIRCLE or SQUARE ========== */}
@@ -360,7 +360,10 @@ export default function HomeScreen() {
             )}
 
           </View>
-        ) : (
+        )}
+
+        {/* NO EA — only when genuinely no EA connected */}
+        {!primaryEA && (
           <View style={styles.mainEAContainer}>
             <RobotLogo size={200} />
             <View style={styles.botInfoContainer}>
