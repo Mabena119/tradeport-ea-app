@@ -287,6 +287,9 @@ export function DynamicIsland({ visible, newSignal, onSignalDismiss }: DynamicIs
     setTimeout(() => { if (voiceRef.current) startListening(); }, 3000);
   };
 
+  // Expose toggleVoice to window so Mech mic can trigger it
+  useEffect(() => { if (isWeb) (window as any).__tradeport_toggleVoice = toggleVoice; }, [toggleVoice]);
+
   // Run chip command — always works, auto-activates voice
   const runChip = (cmd: string) => {
     if (!voiceOn) { setVoiceOn(true); startListening(); }
