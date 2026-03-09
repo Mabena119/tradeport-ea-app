@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type ThemeName = 'red' | 'blue' | 'green' | 'purple' | 'orange' | 'cyan';
-export type GlassMode = 'commander' | 'mech';
+export type GlassMode = 'neon' | 'minimal' | 'liquid' | 'commander' | 'pill' | 'mech';
 export type FontFamily = 'system' | 'mono' | 'rounded' | 'condensed' | 'serif' | 'grotesk' | 'jetbrains' | 'outfit' | 'sora' | 'tight';
 export type HeroStyle = 'square' | 'circle';
 export type TextCase = 'normal' | 'upper' | 'lower' | 'capitalize';
@@ -75,7 +75,7 @@ export const [ThemeProvider, useTheme] = createContextHook<ThemeState>(() => {
 
   useEffect(() => {
     AsyncStorage.getItem(THEME_STORAGE_KEY).then((s) => { if (s && s in THEMES) setThemeNameState(s as ThemeName); }).catch(() => {});
-    AsyncStorage.getItem(GLASS_STORAGE_KEY).then((s) => { if (s === 'commander' || s === 'mech') setGlassModeState(s); }).catch(() => {});
+    AsyncStorage.getItem(GLASS_STORAGE_KEY).then((s) => { if (s === 'neon' || s === 'minimal' || s === 'liquid' || s === 'commander' || s === 'pill' || s === 'mech') setGlassModeState(s); }).catch(() => {});
     AsyncStorage.getItem(FONT_STORAGE_KEY).then((s) => { if (s && s in FONT_MAP) setFontFamilyState(s as FontFamily); }).catch(() => {});
     AsyncStorage.getItem(HERO_STORAGE_KEY).then((s) => { if (s === 'square' || s === 'circle') setHeroStyleState(s); }).catch(() => {});
     AsyncStorage.getItem(CASE_STORAGE_KEY).then((s) => { if (s && s in TEXT_CASE_MAP) setTextCaseState(s as TextCase); }).catch(() => {});
@@ -85,7 +85,7 @@ export const [ThemeProvider, useTheme] = createContextHook<ThemeState>(() => {
   }, []);
 
   const setThemeName = useCallback((name: ThemeName) => { setThemeNameState(name); AsyncStorage.setItem(THEME_STORAGE_KEY, name).catch(() => {}); }, []);
-  const setGlassMode = useCallback((mode: GlassMode) => { setGlassModeState(mode); AsyncStorage.setItem(GLASS_STORAGE_KEY, mode).catch(() => {}); }, []);
+  const setGlassMode = useCallback((mode: GlassMode) => { setGlassModeState(mode); AsyncStorage.setItem(GLASS_STORAGE_KEY, mode).catch(() => {}); if (mode === 'pill') { setCardShapeState('superpill'); AsyncStorage.setItem(SHAPE_STORAGE_KEY, 'superpill').catch(() => {}); } }, []);
   const setFontFamily = useCallback((f: FontFamily) => { setFontFamilyState(f); AsyncStorage.setItem(FONT_STORAGE_KEY, f).catch(() => {}); }, []);
   const setHeroStyle = useCallback((h: HeroStyle) => { setHeroStyleState(h); AsyncStorage.setItem(HERO_STORAGE_KEY, h).catch(() => {}); }, []);
   const setTextCase = useCallback((t: TextCase) => { setTextCaseState(t); AsyncStorage.setItem(CASE_STORAGE_KEY, t).catch(() => {}); }, []);

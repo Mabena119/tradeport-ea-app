@@ -72,10 +72,10 @@ export default function SettingsScreen() {
         <Text style={[styles.sectionLabel, { marginTop: 32 }]}>GLASS STYLE</Text>
         <View style={[styles.glassCard, { borderColor: 'rgba(' + theme.accentRgb + ', 0.2)' }]}>
           <Text style={[styles.cardSubtitle, { marginBottom: 14 }]}>
-            {glassMode === 'mech' ? 'Robot background with voice circle' : 'Commander with robot background'}
+            {glassMode === 'neon' ? 'Neon glow with spinning borders' : glassMode === 'minimal' ? 'Dark glass with accent aura' : glassMode === 'liquid' ? 'Frosted translucent iOS glass' : glassMode === 'pill' ? 'Soft floating pill cards' : glassMode === 'mech' ? 'Robot background with voice circle' : 'Red commander with robot background'}
           </Text>
           <View style={styles.glassSegmented}>
-            {(['commander', 'mech'] as const).map((m) => {
+            {(['neon', 'minimal', 'liquid', 'commander', 'pill', 'mech'] as const).map((m) => {
               const active = glassMode === m;
               return (
                 <TouchableOpacity
@@ -84,7 +84,7 @@ export default function SettingsScreen() {
                   onPress={() => setGlassMode(m)}
                   activeOpacity={0.7}
                 >
-                  <Text style={[styles.glassSegText, active && { color: theme.accent }]}>{m === 'mech' ? 'Mech' : 'Commander'}</Text>
+                  <Text style={[styles.glassSegText, active && { color: theme.accent }]}>{m === 'neon' ? 'Neon' : m === 'minimal' ? 'Minimal' : m === 'liquid' ? 'Liquid' : m === 'pill' ? 'Pill' : m === 'mech' ? 'Mech' : 'Commander'}</Text>
                 </TouchableOpacity>
               );
             })}
