@@ -34,7 +34,6 @@ function parseCmd(raw: string): { action: string; param?: string } | null {
   if (c.match(/\bminimal\b/)) return { action: 'glass', param: 'minimal' };
   if (c.match(/\bliquid\b/)) return { action: 'glass', param: 'liquid' };
   if (c.match(/\bcommander\b/)) return { action: 'glass', param: 'commander' };
-  if (c.match(/\bpill\b/)) return { action: 'glass', param: 'pill' };
   if (c.match(/\bmech\b/)) return { action: 'glass', param: 'mech' };
   // Colors — check early (very specific)
   const cm = c.match(/\b(red|blue|green|purple|orange|cyan)\b/);
@@ -69,7 +68,7 @@ const CMD_CHIPS = [
 ];
 
 const COLORS: ThemeName[] = ['red', 'blue', 'green', 'purple', 'orange', 'cyan'];
-const GLASSES: GlassMode[] = ['neon', 'minimal', 'liquid', 'commander', 'pill', 'mech'];
+const GLASSES: GlassMode[] = ['neon', 'minimal', 'liquid', 'commander', 'mech'];
 
 interface DynamicIslandProps { visible: boolean; newSignal?: SignalLog | null; onSignalDismiss?: () => void; }
 

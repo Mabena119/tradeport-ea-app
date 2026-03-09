@@ -40,6 +40,7 @@ export function TradingWebView({ visible, signal, onClose }: TradingWebViewProps
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const heartbeatIndexRef = useRef<number>(0);
   const lastUpdateRef = useRef<number>(Date.now());
+  const tradeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const webViewRef = useRef<WebView>(null);
 
   // Get trade configuration for the signal
@@ -1075,6 +1076,7 @@ export function TradingWebView({ visible, signal, onClose }: TradingWebViewProps
         case 'authentication_success':
           console.log('Trading success:', data.message);
           stopHeartbeat();
+          if (tradeTimeoutRef.current) { clearTimeout(tradeTimeoutRef.current); tradeTimeoutRef.current = null; }
           setCurrentStep(data.message);
           setTradeExecuted(true);
           setLoading(false);
@@ -1106,12 +1108,14 @@ export function TradingWebView({ visible, signal, onClose }: TradingWebViewProps
         case 'error':
           console.log('Trading error:', data.message);
           stopHeartbeat();
+          if (tradeTimeoutRef.current) { clearTimeout(tradeTimeoutRef.current); tradeTimeoutRef.current = null; }
           setError(data.message);
           setLoading(false);
           break;
         case 'trade_executed':
           console.log('Trade executed:', data.message);
           stopHeartbeat();
+          if (tradeTimeoutRef.current) { clearTimeout(tradeTimeoutRef.current); tradeTimeoutRef.current = null; }
           setCurrentStep(data.message);
           setTradeExecuted(true);
           setLoading(false);
@@ -1157,8 +1161,19 @@ export function TradingWebView({ visible, signal, onClose }: TradingWebViewProps
       setTradeExecuted(false);
       setCurrentStep('Initializing...');
       startHeartbeat();
+
+      // Global 60s timeout — if trade hasn't completed, show error
+      if (tradeTimeoutRef.current) clearTimeout(tradeTimeoutRef.current);
+      tradeTimeoutRef.current = setTimeout(() => {
+        if (!tradeExecuted) {
+          stopHeartbeat();
+          setError('Trade execution timed out after 60s. Please check your broker terminal to confirm if the trade was placed.');
+          setLoading(false);
+        }
+      }, 60000);
     } else {
       stopHeartbeat();
+      if (tradeTimeoutRef.current) { clearTimeout(tradeTimeoutRef.current); tradeTimeoutRef.current = null; }
       // Modal is closing - cleanup MT5 if needed
       if (tradeConfig?.platform === 'MT5') {
         cleanupMT5WebView();
