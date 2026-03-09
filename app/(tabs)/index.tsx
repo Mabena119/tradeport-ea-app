@@ -235,7 +235,7 @@ export default function HomeScreen() {
 
         {/* ========== MECH LAYOUT — completely different layout ========== */}
         {isMech && primaryEA && (
-          <View style={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: 30 }}>
+          <View style={{ paddingHorizontal: 20, paddingTop: 40, paddingBottom: 30 }}>
             {/* Hero circle */}
             <View style={{ alignItems: 'center', marginBottom: 12 }}>
               <View style={[{ width: 110, height: 110, borderRadius: 55, overflow: 'hidden', padding: 3, position: 'relative' }, Platform.OS === 'web' && { boxShadow: '0 0 4px rgba(' + a + ',0.8), 0 0 15px rgba(' + a + ',0.5), 0 0 40px rgba(' + a + ',0.25)' } as any]}>
@@ -257,40 +257,54 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            {/* Split: Buttons left + Voice circle right */}
-            <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', marginBottom: 14 }}>
-              {/* Left buttons */}
-              <View style={{ flex: 1, gap: 8 }}>
-                <TouchableOpacity onPress={handleQuotes} activeOpacity={0.7} style={[{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 18, borderRadius: 28, backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 2, borderColor: 'rgba(' + ca + ',0.5)' }, Platform.OS === 'web' && { backdropFilter: 'blur(20px)', boxShadow: '0 0 4px rgba(' + ca + ',0.7), 0 0 10px rgba(' + ca + ',0.4), 0 0 25px rgba(' + ca + ',0.2)' } as any]}>
-                  <TrendingUp color={cc} size={16} />
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: cc }}>Quotes</Text>
+            {/* Split: Buttons left + Voice mic right */}
+            <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 14, marginTop: 6 }}>
+              {/* Left buttons — smaller, max-width */}
+              <View style={{ flex: 1, gap: 12, maxWidth: 220 }}>
+                <TouchableOpacity onPress={handleQuotes} activeOpacity={0.7} style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 24, backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 2, borderColor: 'rgba(' + ca + ',0.5)' }, Platform.OS === 'web' && { backdropFilter: 'blur(20px)', boxShadow: '0 0 4px rgba(' + ca + ',0.7), 0 0 10px rgba(' + ca + ',0.4), 0 0 25px rgba(' + ca + ',0.2)' } as any]}>
+                  <TrendingUp color={cc} size={14} />
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: cc }}>Quotes</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => { try { setBotActive(!isBotActive); } catch (e) {} }} activeOpacity={0.7} style={[{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 18, borderRadius: 28, backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 2, borderColor: 'rgba(' + ca + ',0.5)' }, Platform.OS === 'web' && { backdropFilter: 'blur(20px)', boxShadow: '0 0 4px rgba(' + ca + ',0.7), 0 0 10px rgba(' + ca + ',0.4), 0 0 25px rgba(' + ca + ',0.2)' } as any]}>
-                  {isBotActive ? <Square color={cc} size={16} fill={cc} /> : <Play color={cc} size={16} fill={cc} />}
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: cc }}>{isBotActive ? 'Stop' : 'Start'}</Text>
+                <TouchableOpacity onPress={() => { try { setBotActive(!isBotActive); } catch (e) {} }} activeOpacity={0.7} style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 24, backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 2, borderColor: 'rgba(' + ca + ',0.5)' }, Platform.OS === 'web' && { backdropFilter: 'blur(20px)', boxShadow: '0 0 4px rgba(' + ca + ',0.7), 0 0 10px rgba(' + ca + ',0.4), 0 0 25px rgba(' + ca + ',0.2)' } as any]}>
+                  {isBotActive ? <Square color={cc} size={14} fill={cc} /> : <Play color={cc} size={14} fill={cc} />}
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: cc }}>{isBotActive ? 'Stop' : 'Start'}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={handleRemoveActiveBot} activeOpacity={0.7} style={[{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 18, borderRadius: 28, backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 2, borderColor: 'rgba(' + ca + ',0.5)' }, Platform.OS === 'web' && { backdropFilter: 'blur(20px)', boxShadow: '0 0 4px rgba(' + ca + ',0.7), 0 0 10px rgba(' + ca + ',0.4), 0 0 25px rgba(' + ca + ',0.2)' } as any]}>
-                  <Trash2 color={cc} size={16} />
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: cc }}>Remove</Text>
+                <TouchableOpacity onPress={handleRemoveActiveBot} activeOpacity={0.7} style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 24, backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 2, borderColor: 'rgba(' + ca + ',0.5)' }, Platform.OS === 'web' && { backdropFilter: 'blur(20px)', boxShadow: '0 0 4px rgba(' + ca + ',0.7), 0 0 10px rgba(' + ca + ',0.4), 0 0 25px rgba(' + ca + ',0.2)' } as any]}>
+                  <Trash2 color={cc} size={14} />
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: cc }}>Remove</Text>
                 </TouchableOpacity>
               </View>
 
-              {/* Voice circle */}
+              {/* Voice mic — 52px, same style as Dynamic Island mic */}
               <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-                <View style={[{ width: 100, height: 100, borderRadius: 50, position: 'relative', alignItems: 'center', justifyContent: 'center' }, Platform.OS === 'web' && { boxShadow: '0 0 4px rgba(' + ca + ',0.6), 0 0 12px rgba(' + ca + ',0.3), 0 0 30px rgba(' + ca + ',0.15), 0 0 60px rgba(' + ca + ',0.06)' } as any]}>
-                  <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 50, transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent, ' + cc + ' 60deg, rgba(' + ca + ', 0.4) 120deg, transparent 180deg, transparent 240deg, ' + cc + ' 300deg, transparent)' } as any]} />
-                  <Animated.View style={[{ position: 'absolute', top: -5, left: -5, right: -5, bottom: -5, borderRadius: 55, opacity: 0.35, transform: [{ rotate: tradeSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 180deg, transparent, rgba(' + ca + ', 0.25) 60deg, transparent 120deg, transparent 240deg, rgba(' + ca + ', 0.25) 300deg, transparent)' } as any]} />
-                  <View style={[{ width: 70, height: 70, borderRadius: 35, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.08)' }, Platform.OS === 'web' && { backdropFilter: 'blur(20px)' } as any]}>
-                    <Text style={{ fontSize: 28 }}>🎤</Text>
-                  </View>
-                </View>
+                <TouchableOpacity activeOpacity={0.7} style={[{ width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.08)', backgroundColor: 'rgba(0,0,0,0.5)' }, Platform.OS === 'web' && { backdropFilter: 'blur(20px)', boxShadow: '0 0 4px rgba(' + ca + ',0.6), 0 0 12px rgba(' + ca + ',0.3), 0 0 30px rgba(' + ca + ',0.15)' } as any]}>
+                  <Text style={{ fontSize: 20 }}>🎤</Text>
+                </TouchableOpacity>
               </View>
             </View>
 
-            {/* Add Robot */}
-            <TouchableOpacity onPress={handleAddNewEA} activeOpacity={0.7} style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 28, backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 2, borderColor: 'rgba(' + ca + ',0.4)' }, Platform.OS === 'web' && { backdropFilter: 'blur(20px)', boxShadow: '0 0 4px rgba(' + ca + ',0.7), 0 0 10px rgba(' + ca + ',0.4), 0 0 25px rgba(' + ca + ',0.2)' } as any]}>
+            {/* Robot info card */}
+            <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 2, borderColor: 'rgba(' + ca + ',0.4)', marginBottom: 10 }, Platform.OS === 'web' && { backdropFilter: 'blur(20px)', boxShadow: '0 0 4px rgba(' + ca + ',0.7), 0 0 10px rgba(' + ca + ',0.4), 0 0 25px rgba(' + ca + ',0.2)' } as any]}>
+              <View style={{ width: 46, height: 46, borderRadius: 14, overflow: 'hidden', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)' }}>
+                {primaryEAImage && !logoError ? (
+                  <Image source={{ uri: primaryEAImage }} style={{ width: 46, height: 46 }} resizeMode="cover" />
+                ) : (
+                  <Image source={require('../../assets/images/icon.png')} style={{ width: 46, height: 46 }} resizeMode="contain" />
+                )}
+              </View>
+              <View>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#fff' }}>{primaryEA.name}</Text>
+                <Text style={{ fontSize: 8, fontWeight: '600', letterSpacing: 0.6, color: isBotActive ? '#16A34A' : 'rgba(255,255,255,0.4)' }}>{isBotActive ? 'RUNNING' : 'IDLE'}</Text>
+              </View>
+            </View>
+
+            {/* Add a New EA */}
+            <TouchableOpacity onPress={handleAddNewEA} activeOpacity={0.7} style={[{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 2, borderColor: 'rgba(' + ca + ',0.3)' }, Platform.OS === 'web' && { backdropFilter: 'blur(20px)', boxShadow: '0 0 4px rgba(' + ca + ',0.7), 0 0 10px rgba(' + ca + ',0.4), 0 0 25px rgba(' + ca + ',0.2)' } as any]}>
               <Plus color={cc} size={18} />
-              <Text style={{ fontSize: 16, fontWeight: '700', color: cc }}>Add Robot</Text>
+              <View>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: '#fff' }}>ADD A NEW EA</Text>
+                <Text style={{ fontSize: 8, color: 'rgba(255,255,255,0.3)' }}>HAVE A VALID LICENSE KEY</Text>
+              </View>
             </TouchableOpacity>
           </View>
         )}
