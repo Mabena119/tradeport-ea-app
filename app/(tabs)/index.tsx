@@ -231,60 +231,60 @@ export default function HomeScreen() {
         <Menu color="rgba(255,255,255,0.8)" size={22} />
       </TouchableOpacity>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={ac} colors={[ac]} />}>
+      <ScrollView style={styles.content} contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={ac} colors={[ac]} />}>
 
         {/* ========== MECH LAYOUT — completely different layout ========== */}
         {isMech && primaryEA && (
-          <View style={{ paddingHorizontal: 20, paddingTop: 40, paddingBottom: 30 }}>
+          <View style={{ paddingHorizontal: 20, paddingTop: 40, paddingBottom: 80 }}>
             {/* Hero circle */}
-            <View style={{ alignItems: 'center', marginBottom: 12 }}>
-              <View style={[{ width: 110, height: 110, borderRadius: 55, overflow: 'hidden', padding: 3, position: 'relative' }, Platform.OS === 'web' && { boxShadow: '0 0 4px rgba(' + a + ',0.8), 0 0 15px rgba(' + a + ',0.5), 0 0 40px rgba(' + a + ',0.25)' } as any]}>
-                <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 55, transform: [{ rotate: tradeSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent, ' + cc + ' 80deg, rgba(' + ca + ', 0.3) 160deg, transparent 200deg, transparent 260deg, ' + cc + ' 340deg, transparent)' } as any]} />
+            <View style={{ alignItems: 'center', marginBottom: 24 }}>
+              <View style={[{ width: 130, height: 130, borderRadius: 65, overflow: 'hidden', padding: 3, position: 'relative' }, Platform.OS === 'web' && { boxShadow: '0 0 4px rgba(' + a + ',0.8), 0 0 15px rgba(' + a + ',0.5), 0 0 40px rgba(' + a + ',0.25)' } as any]}>
+                <Animated.View style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 65, transform: [{ rotate: tradeSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent, ' + cc + ' 80deg, rgba(' + ca + ', 0.3) 160deg, transparent 200deg, transparent 260deg, ' + cc + ' 340deg, transparent)' } as any]} />
                 {primaryEAImage && !logoError ? (
-                  <Image source={{ uri: primaryEAImage }} style={{ width: '100%', height: '100%', borderRadius: 53 }} resizeMode="cover" />
+                  <Image source={{ uri: primaryEAImage }} style={{ width: '100%', height: '100%', borderRadius: 63 }} resizeMode="cover" />
                 ) : (
-                  <Image source={require('../../assets/images/icon.png')} style={{ width: '100%', height: '100%', borderRadius: 53 }} resizeMode="contain" />
+                  <Image source={require('../../assets/images/icon.png')} style={{ width: '100%', height: '100%', borderRadius: 63 }} resizeMode="contain" />
                 )}
               </View>
-              <Text style={{ fontSize: 20, fontWeight: '900', color: '#fff', marginTop: 8 }}>{primaryEA.name}</Text>
+              <Text style={{ fontSize: 20, fontWeight: '900', color: '#fff', marginTop: 10 }}>{primaryEA.name}</Text>
               <Text style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', marginTop: 3, textAlign: 'center' }}>Your Shadow Soldier Is Ready.</Text>
             </View>
 
             {/* Powered By */}
-            <View style={{ alignItems: 'center', marginBottom: 14 }}>
+            <View style={{ alignItems: 'center', marginBottom: 20 }}>
               <View style={[{ paddingVertical: 5, paddingHorizontal: 16, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', backgroundColor: 'rgba(0,0,0,0.4)' }, Platform.OS === 'web' && { backdropFilter: 'blur(10px)' } as any]}>
                 <Text style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>Powered By <Text style={{ fontWeight: '700', color: cc }}>Trade Port EA</Text></Text>
               </View>
             </View>
 
             {/* Split: Buttons left + Voice mic right */}
-            <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center', marginBottom: 14, marginTop: 6 }}>
-              {/* Left buttons — smaller, max-width */}
+            <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', marginBottom: 20 }}>
+              {/* Left buttons */}
               <View style={{ flex: 1, gap: 12, maxWidth: 220 }}>
-                <TouchableOpacity onPress={handleQuotes} activeOpacity={0.7} style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 24, backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 2, borderColor: 'rgba(' + ca + ',0.5)' }, Platform.OS === 'web' && { backdropFilter: 'blur(20px)', boxShadow: '0 0 4px rgba(' + ca + ',0.7), 0 0 10px rgba(' + ca + ',0.4), 0 0 25px rgba(' + ca + ',0.2)' } as any]}>
+                <TouchableOpacity onPress={handleQuotes} activeOpacity={0.6} style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 24, backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 2, borderColor: 'rgba(' + ca + ',0.5)' }, Platform.OS === 'web' && { backdropFilter: 'blur(20px)', boxShadow: '0 0 4px rgba(' + ca + ',0.7), 0 0 10px rgba(' + ca + ',0.4), 0 0 25px rgba(' + ca + ',0.2)', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s' } as any]}>
                   <TrendingUp color={cc} size={14} />
                   <Text style={{ fontSize: 12, fontWeight: '700', color: cc }}>Quotes</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => { try { setBotActive(!isBotActive); } catch (e) {} }} activeOpacity={0.7} style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 24, backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 2, borderColor: 'rgba(' + ca + ',0.5)' }, Platform.OS === 'web' && { backdropFilter: 'blur(20px)', boxShadow: '0 0 4px rgba(' + ca + ',0.7), 0 0 10px rgba(' + ca + ',0.4), 0 0 25px rgba(' + ca + ',0.2)' } as any]}>
+                <TouchableOpacity onPress={() => { try { setBotActive(!isBotActive); } catch (e) {} }} activeOpacity={0.6} style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 24, backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 2, borderColor: 'rgba(' + ca + ',0.5)' }, Platform.OS === 'web' && { backdropFilter: 'blur(20px)', boxShadow: '0 0 4px rgba(' + ca + ',0.7), 0 0 10px rgba(' + ca + ',0.4), 0 0 25px rgba(' + ca + ',0.2)', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s' } as any]}>
                   {isBotActive ? <Square color={cc} size={14} fill={cc} /> : <Play color={cc} size={14} fill={cc} />}
                   <Text style={{ fontSize: 12, fontWeight: '700', color: cc }}>{isBotActive ? 'Stop' : 'Start'}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={handleRemoveActiveBot} activeOpacity={0.7} style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 24, backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 2, borderColor: 'rgba(' + ca + ',0.5)' }, Platform.OS === 'web' && { backdropFilter: 'blur(20px)', boxShadow: '0 0 4px rgba(' + ca + ',0.7), 0 0 10px rgba(' + ca + ',0.4), 0 0 25px rgba(' + ca + ',0.2)' } as any]}>
+                <TouchableOpacity onPress={handleRemoveActiveBot} activeOpacity={0.6} style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 24, backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 2, borderColor: 'rgba(' + ca + ',0.5)' }, Platform.OS === 'web' && { backdropFilter: 'blur(20px)', boxShadow: '0 0 4px rgba(' + ca + ',0.7), 0 0 10px rgba(' + ca + ',0.4), 0 0 25px rgba(' + ca + ',0.2)', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s' } as any]}>
                   <Trash2 color={cc} size={14} />
                   <Text style={{ fontSize: 12, fontWeight: '700', color: cc }}>Remove</Text>
                 </TouchableOpacity>
               </View>
 
-              {/* Voice mic — 52px, same style as Dynamic Island mic */}
+              {/* Voice mic — tappable, triggers Dynamic Island voice */}
               <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-                <TouchableOpacity activeOpacity={0.7} style={[{ width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.08)', backgroundColor: 'rgba(0,0,0,0.5)' }, Platform.OS === 'web' && { backdropFilter: 'blur(20px)', boxShadow: '0 0 4px rgba(' + ca + ',0.6), 0 0 12px rgba(' + ca + ',0.3), 0 0 30px rgba(' + ca + ',0.15)' } as any]}>
+                <TouchableOpacity onPress={() => { if (Platform.OS === 'web' && window.speechSynthesis) { const u = new SpeechSynthesisUtterance(primaryEA.name + ' online. How can I assist?'); u.rate = 0.88; u.pitch = 0.45; window.speechSynthesis.speak(u); } }} activeOpacity={0.6} style={[{ width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: 'rgba(' + ca + ',0.3)', backgroundColor: 'rgba(0,0,0,0.5)' }, Platform.OS === 'web' && { backdropFilter: 'blur(20px)', boxShadow: '0 0 4px rgba(' + ca + ',0.6), 0 0 12px rgba(' + ca + ',0.3), 0 0 30px rgba(' + ca + ',0.15)', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s' } as any]}>
                   <Text style={{ fontSize: 20 }}>🎤</Text>
                 </TouchableOpacity>
               </View>
             </View>
 
             {/* Robot info card */}
-            <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 2, borderColor: 'rgba(' + ca + ',0.4)', marginBottom: 10 }, Platform.OS === 'web' && { backdropFilter: 'blur(20px)', boxShadow: '0 0 4px rgba(' + ca + ',0.7), 0 0 10px rgba(' + ca + ',0.4), 0 0 25px rgba(' + ca + ',0.2)' } as any]}>
+            <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 2, borderColor: 'rgba(' + ca + ',0.4)', marginBottom: 12 }, Platform.OS === 'web' && { backdropFilter: 'blur(20px)', boxShadow: '0 0 4px rgba(' + ca + ',0.7), 0 0 10px rgba(' + ca + ',0.4), 0 0 25px rgba(' + ca + ',0.2)' } as any]}>
               <View style={{ width: 46, height: 46, borderRadius: 14, overflow: 'hidden', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.15)' }}>
                 {primaryEAImage && !logoError ? (
                   <Image source={{ uri: primaryEAImage }} style={{ width: 46, height: 46 }} resizeMode="cover" />
@@ -299,7 +299,7 @@ export default function HomeScreen() {
             </View>
 
             {/* Add a New EA */}
-            <TouchableOpacity onPress={handleAddNewEA} activeOpacity={0.7} style={[{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 2, borderColor: 'rgba(' + ca + ',0.3)' }, Platform.OS === 'web' && { backdropFilter: 'blur(20px)', boxShadow: '0 0 4px rgba(' + ca + ',0.7), 0 0 10px rgba(' + ca + ',0.4), 0 0 25px rgba(' + ca + ',0.2)' } as any]}>
+            <TouchableOpacity onPress={handleAddNewEA} activeOpacity={0.6} style={[{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.5)', borderWidth: 2, borderColor: 'rgba(' + ca + ',0.3)' }, Platform.OS === 'web' && { backdropFilter: 'blur(20px)', boxShadow: '0 0 4px rgba(' + ca + ',0.7), 0 0 10px rgba(' + ca + ',0.4), 0 0 25px rgba(' + ca + ',0.2)', cursor: 'pointer', transition: 'transform 0.15s, opacity 0.15s' } as any]}>
               <Plus color={cc} size={18} />
               <View>
                 <Text style={{ fontSize: 11, fontWeight: '700', color: '#fff' }}>ADD A NEW EA</Text>
@@ -376,7 +376,7 @@ export default function HomeScreen() {
         {!isMech && <View style={styles.connectedBotsSection}>
           {/* ========== 2. TRADING PANEL — SAME WIDTH AS OTHER CARDS ========== */}
           {primaryEA && (
-            <View style={[styles.neonWrap, !isNeon && { padding: 0 }]}>
+            <View style={[styles.neonWrap, !isNeon && { padding: 0 }, isPill && { alignSelf: 'center' as any }]}>
               {isNeon && <Animated.View style={[styles.neonSpinner, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 40deg, rgba(' + a + ', 0.5) 80deg, transparent 120deg, transparent 180deg, ' + ac + ' 220deg, rgba(' + a + ', 0.5) 260deg, transparent 300deg, transparent 360deg)' }]} />}
               {isNeon && <Animated.View style={[styles.neonGlowSpinner, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.4) 40deg, transparent 120deg, transparent 180deg, rgba(' + a + ', 0.4) 220deg, transparent 300deg, transparent 360deg)' }]} />}
               <View style={[styles.liquidInner, Platform.OS === 'web' && (isNeon ? { background: 'radial-gradient(ellipse 120% 40% at 30% 25%, rgba(255,255,255,0.25) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.12) 0%, rgba(' + a + ', 0.08) 30%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0.8) 100%)', backdropFilter: 'blur(80px) saturate(200%)', WebkitBackdropFilter: 'blur(80px) saturate(200%)', boxShadow: 'inset 0 2px 8px rgba(255,255,255,0.25), inset 0 -4px 12px rgba(0,0,0,0.4), inset 0 40px 60px -20px rgba(255,255,255,0.08), 0 20px 60px rgba(0,0,0,0.6), 0 0 30px rgba(' + a + ', 0.2), 0 0 80px rgba(' + a + ', 0.08)' } : isLiquid ? { background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 50%, rgba(0,0,0,0.4) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -1px 0 rgba(0,0,0,0.1), 0 0 8px rgba(' + a + ', 0.5), 0 0 20px rgba(' + a + ', 0.35), 0 0 40px rgba(' + a + ', 0.2), 0 0 70px rgba(' + a + ', 0.1)' } : isCmd ? { background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 0 12px rgba(' + cmdRedRgb + ', 0.35), 0 0 24px rgba(' + cmdRedRgb + ', 0.2), 0 8px 20px rgba(0,0,0,0.5)' } : isPill ? { background: 'linear-gradient(135deg, rgba(' + a + ', 0.06), rgba(255,255,255,0.04) 30%, rgba(' + a + ', 0.04) 60%, rgba(0,0,0,0.5))', backdropFilter: 'blur(50px) saturate(160%)', WebkitBackdropFilter: 'blur(50px) saturate(160%)', borderRadius: shapeR + 'px', border: '1.5px solid rgba(' + a + ', 0.25)', boxShadow: '0 0 15px rgba(' + a + ', 0.2), 0 0 40px rgba(' + a + ', 0.08), 0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)', width: shapeWidth } : { background: 'linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.5) 100%)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.1), 0 8px 24px rgba(0,0,0,0.4), 0 0 30px rgba(' + a + ', 0.35), 0 0 60px rgba(' + a + ', 0.15)' }), !isNeon && !isPill && { borderRadius: shapeR, borderWidth: isCmd ? 2 : isLiquid ? 1.5 : 0.5, borderColor: isCmd ? cmdRed : isLiquid ? 'rgba(' + a + ', 0.4)' : 'rgba(255,255,255,0.08)' }, { overflow: 'hidden' }]}>
@@ -454,7 +454,7 @@ export default function HomeScreen() {
 
           {/* ========== 3. ACTIVE EA INFO CARD — NEON WRAPPED ========== */}
           {primaryEA && (
-            <View style={[styles.neonWrapInfo, !isNeon && { padding: 0 }]}>
+            <View style={[styles.neonWrapInfo, !isNeon && { padding: 0 }, isPill && { alignSelf: 'center' as any }]}>
               {isNeon && <Animated.View style={[styles.neonSpinnerInfo, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 40deg, rgba(' + a + ', 0.5) 80deg, transparent 120deg, transparent 180deg, ' + ac + ' 220deg, rgba(' + a + ', 0.5) 260deg, transparent 300deg, transparent 360deg)' }]} />}
               {isNeon && <Animated.View style={[styles.neonGlowInfo, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.4) 40deg, transparent 120deg, transparent 180deg, rgba(' + a + ', 0.4) 220deg, transparent 300deg, transparent 360deg)' }]} />}
               <TouchableOpacity activeOpacity={0.7} onPress={() => {}} style={[styles.eaInfoCard, !isNeon && { borderWidth: isCmd ? 2 : isLiquid ? 1.5 : 0.5, borderColor: isCmd ? cmdRed : isLiquid ? 'rgba(' + a + ', 0.4)' : 'rgba(255,255,255,0.08)' }, Platform.OS === 'web' && (isNeon ? { background: 'radial-gradient(ellipse 120% 50% at 20% 20%, rgba(255,255,255,0.15) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.08) 0%, rgba(0,0,0,0.75) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)' } : isLiquid ? { background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 50%, rgba(0,0,0,0.4) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15), 0 0 8px rgba(' + a + ', 0.5), 0 0 20px rgba(' + a + ', 0.35), 0 0 40px rgba(' + a + ', 0.2), 0 0 70px rgba(' + a + ', 0.1)' } : isCmd ? { background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 0 10px rgba(' + cmdRedRgb + ', 0.3), 0 0 20px rgba(' + cmdRedRgb + ', 0.18), 0 4px 14px rgba(0,0,0,0.4)' } : isPill ? { background: 'linear-gradient(135deg, rgba(' + a + ', 0.05), rgba(255,255,255,0.03) 40%, rgba(0,0,0,0.5))', backdropFilter: 'blur(50px)', WebkitBackdropFilter: 'blur(50px)', borderRadius: shapeRInfo + 'px', border: '1.5px solid rgba(' + a + ', 0.2)', boxShadow: '0 0 12px rgba(' + a + ', 0.15), 0 6px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)', width: shapeWidth } : { background: 'linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.5) 100%)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.1), 0 4px 12px rgba(0,0,0,0.35), 0 0 24px rgba(' + a + ', 0.3), 0 0 48px rgba(' + a + ', 0.12)' }), { borderRadius: shapeRInfo }, { overflow: 'hidden' }]}>
@@ -482,7 +482,7 @@ export default function HomeScreen() {
           )}
         
 {/* ========== 4. ADD EA — LIQUID GLASS PILL ========== */}
-          <View style={[styles.neonWrapPill, !isNeon && { padding: 0 }]}>
+          <View style={[styles.neonWrapPill, !isNeon && { padding: 0 }, isPill && { alignSelf: 'center' as any }]}>
             {isNeon && <Animated.View style={[styles.neonSpinnerPill, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 40deg, rgba(' + a + ', 0.5) 80deg, transparent 120deg, transparent 180deg, ' + ac + ' 220deg, rgba(' + a + ', 0.5) 260deg, transparent 300deg, transparent 360deg)' }]} />}
             {isNeon && <Animated.View style={[styles.neonGlowSpinnerPill, { transform: [{ rotate: cardSpinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.4) 40deg, transparent 120deg, transparent 180deg, rgba(' + a + ', 0.4) 220deg, transparent 300deg, transparent 360deg)' }]} />}
             <TouchableOpacity style={[styles.liquidInnerPill, !isNeon && !isPill && { borderRadius: shapeRAdd, borderWidth: isCmd ? 2 : isLiquid ? 1.5 : 0.5, borderColor: isCmd ? cmdRed : isLiquid ? 'rgba(' + a + ', 0.4)' : 'rgba(255,255,255,0.08)' }, Platform.OS === 'web' && (isNeon ? { background: 'radial-gradient(ellipse 120% 40% at 30% 25%, rgba(255,255,255,0.25) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.12) 0%, rgba(' + a + ', 0.08) 30%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0.8) 100%)', backdropFilter: 'blur(80px) saturate(200%)', WebkitBackdropFilter: 'blur(80px) saturate(200%)', boxShadow: 'inset 0 2px 8px rgba(255,255,255,0.25), inset 0 -4px 12px rgba(0,0,0,0.4), inset 0 40px 60px -20px rgba(255,255,255,0.08), 0 20px 60px rgba(0,0,0,0.6), 0 0 30px rgba(' + a + ', 0.2), 0 0 80px rgba(' + a + ', 0.08)' } : isLiquid ? { background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 50%, rgba(0,0,0,0.4) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15), 0 0 8px rgba(' + a + ', 0.5), 0 0 20px rgba(' + a + ', 0.35), 0 0 40px rgba(' + a + ', 0.2), 0 0 70px rgba(' + a + ', 0.1)' } : isCmd ? { background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 0 10px rgba(' + cmdRedRgb + ', 0.3), 0 0 20px rgba(' + cmdRedRgb + ', 0.18), 0 6px 18px rgba(0,0,0,0.4)' } : { background: 'linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.5) 100%)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.1), 0 8px 24px rgba(0,0,0,0.4), 0 0 30px rgba(' + a + ', 0.35), 0 0 60px rgba(' + a + ', 0.15)' })] } onPress={handleAddNewEA} activeOpacity={0.7}>
@@ -586,13 +586,14 @@ const styles = StyleSheet.create({
   },
   cmdHero: {
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingTop: 20,
+    paddingBottom: 28,
     paddingHorizontal: 20,
   },
   cmdPortrait: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
     position: 'relative',
     overflow: 'hidden',
     marginBottom: 18,
@@ -606,7 +607,7 @@ const styles = StyleSheet.create({
   cmdPortraitImg: {
     width: '100%',
     height: '100%',
-    borderRadius: 70,
+    borderRadius: 80,
     zIndex: 1,
     borderWidth: 3,
     borderColor: '#111',

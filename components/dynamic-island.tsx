@@ -28,37 +28,32 @@ function pickVoice(): SpeechSynthesisVoice | null {
 
 // ===== COMMAND PARSER =====
 function parseCmd(raw: string): { action: string; param?: string } | null {
-  const c = raw.toLowerCase().trim().replace(/[.,!?]/g, '');
-  // Navigation — broad matching
-  if (c.match(/quote|pair|symbol|open.*quote|go.*quote|show.*quote|take.*quote/)) return { action: 'nav', param: 'quotes' };
-  if (c.match(/setting|config|option|preference|open.*setting|go.*setting/)) return { action: 'nav', param: 'settings' };
-  if (c.match(/metatrader|meta.*trader|mt5|mt4|broker|open.*meta|go.*meta|connect/)) return { action: 'nav', param: 'metatrader' };
-  if (c.match(/home|main|dashboard|go.*home|take.*home|back.*home|open.*home/)) return { action: 'nav', param: 'home' };
-  // Trading — catch many variations
-  if (c.match(/start|begin|activate|trade on|enable|launch|run|execute|go live/)) return { action: 'trade_on' };
-  if (c.match(/stop|end|deactivate|trade off|disable|halt|pause|kill|shut/)) return { action: 'trade_off' };
-  // Theme
-  if (c.match(/change.*theme|switch.*theme|random.*theme|new.*theme|shuffle/)) return { action: 'theme' };
-  // Color
-  const cm = c.match(/(?:colou?r|set|make|change).*?(red|blue|green|purple|orange|cyan)/);
+  const c = raw.toLowerCase().trim().replace(/[.,!?']/g, '');
+  // Glass modes — check FIRST (very specific words)
+  if (c.match(/\bneon\b/)) return { action: 'glass', param: 'neon' };
+  if (c.match(/\bminimal\b/)) return { action: 'glass', param: 'minimal' };
+  if (c.match(/\bliquid\b/)) return { action: 'glass', param: 'liquid' };
+  if (c.match(/\bcommander\b/)) return { action: 'glass', param: 'commander' };
+  if (c.match(/\bpill\b/)) return { action: 'glass', param: 'pill' };
+  if (c.match(/\bmech\b/)) return { action: 'glass', param: 'mech' };
+  // Colors — check early (very specific)
+  const cm = c.match(/\b(red|blue|green|purple|orange|cyan)\b/);
   if (cm) return { action: 'color', param: cm[1] };
-  if (c.match(/^red$/)) return { action: 'color', param: 'red' };
-  if (c.match(/^blue$/)) return { action: 'color', param: 'blue' };
-  if (c.match(/^green$/)) return { action: 'color', param: 'green' };
-  if (c.match(/^purple$/)) return { action: 'color', param: 'purple' };
-  if (c.match(/^orange$/)) return { action: 'color', param: 'orange' };
-  if (c.match(/^cyan$/)) return { action: 'color', param: 'cyan' };
-  // Glass mode
-  if (c.match(/neon/)) return { action: 'glass', param: 'neon' };
-  if (c.match(/minimal/)) return { action: 'glass', param: 'minimal' };
-  if (c.match(/liquid/)) return { action: 'glass', param: 'liquid' };
-  if (c.match(/commander/)) return { action: 'glass', param: 'commander' };
-  if (c.match(/pill/)) return { action: 'glass', param: 'pill' };
-  if (c.match(/mech/)) return { action: 'glass', param: 'mech' };
-  // Info
-  if (c.match(/status|how.*doing|what.*status|report/)) return { action: 'status' };
-  if (c.match(/who.*you|your.*name|identify|what.*are.*you/)) return { action: 'identify' };
-  if (c.match(/help|command|what.*can|how.*use/)) return { action: 'help' };
+  // Theme shuffle
+  if (c.match(/theme|shuffle/)) return { action: 'theme' };
+  // Identity/help — check before navigation (specific phrases)
+  if (c.match(/who are you|your name|identify|what are you/)) return { action: 'identify' };
+  if (c.match(/\bhelp\b|what can you/)) return { action: 'help' };
+  // Status
+  if (c.match(/\bstatus\b|how.*doing|report/)) return { action: 'status' };
+  // Navigation — specific page names
+  if (c.match(/\bquote|pairs?\b|symbols?\b/)) return { action: 'nav', param: 'quotes' };
+  if (c.match(/\bsetting/)) return { action: 'nav', param: 'settings' };
+  if (c.match(/\bmetatrader\b|\bmt[45]\b|\bbroker\b/)) return { action: 'nav', param: 'metatrader' };
+  if (c.match(/\bhome\b|\bdashboard\b/)) return { action: 'nav', param: 'home' };
+  // Trading — LAST priority, require trade-related context
+  if (c.match(/\bstart\b|\bbegin\b|\bactivate\b|\btrade on\b|\benable\b|\blaunch\b|\bgo live\b|\btrade\b/)) return { action: 'trade_on' };
+  if (c.match(/\bstop\b|\bend\b|\bdeactivate\b|\btrade off\b|\bdisable\b|\bhalt\b|\bpause\b/)) return { action: 'trade_off' };
   return null;
 }
 
