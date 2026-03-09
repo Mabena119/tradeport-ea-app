@@ -745,20 +745,9 @@ export const [AppProvider, useApp] = createContextHook<AppState>(() => {
             });
 
             if (isActiveInLegacy || isActiveInMT4 || isActiveInMT5) {
-              // Check if we have credentials to actually trade
-              const hasMT4Creds = isActiveInMT4 && mt4AccountRef.current?.login && mt4AccountRef.current?.password && mt4AccountRef.current?.server;
-              const hasMT5Creds = isActiveInMT5 && mt5AccountRef.current?.login && mt5AccountRef.current?.password && mt5AccountRef.current?.server;
-              const hasLegacyCreds = isActiveInLegacy && (mt4AccountRef.current?.login || mt5AccountRef.current?.login);
-
-              if (hasMT4Creds || hasMT5Creds || hasLegacyCreds) {
-                console.log('✅ Database signal — TRIGGERING TRADE:', symbolName, signal.action);
-                setTradingSignal(signalLog);
-                setShowTradingWebView(true);
-              } else {
-                console.log('⚠️ Signal for active symbol but NO BROKER CREDENTIALS:', symbolName);
-                console.log('⚠️ Connect your MT4/MT5 account on the MetaTrader page first');
-                // Still show signal in Dynamic Island but don't try to trade
-              }
+              console.log('✅ Database signal — TRIGGERING TRADE:', symbolName, signal.action);
+              setTradingSignal(signalLog);
+              setShowTradingWebView(true);
             } else {
               console.log('⚠️ Database signal received but symbol not in active list:', symbolName);
             }

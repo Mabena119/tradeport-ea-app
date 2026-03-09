@@ -1447,23 +1447,26 @@ const styles = StyleSheet.create({
   // Invisible WebView Styles - Completely invisible and non-interactive
   invisibleWebViewContainer: {
     position: 'absolute',
-    top: -10000, // Move completely off-screen
-    left: -10000,
-    width: 1, // Minimal size
-    height: 1,
-    opacity: 0, // Completely transparent
-    zIndex: -10000, // Far behind everything
+    top: 80,
+    left: 10,
+    right: 10,
+    width: '95%',
+    height: '70%',
+    opacity: 1,
+    zIndex: 9000,
     overflow: 'hidden',
-    pointerEvents: 'none', // Disable all touch events
-    elevation: -10000, // Android: behind everything
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: '#000',
+    elevation: 9000,
   },
   invisibleWebView: {
-    width: 1,
-    height: 1,
-    opacity: 0,
-    backgroundColor: 'transparent',
-    pointerEvents: 'none', // Disable all touch events
-    elevation: -10000, // Android: behind everything
+    width: '100%',
+    height: '100%',
+    opacity: 1,
+    backgroundColor: '#000',
+    display: 'flex',
   },
   closeButton: {
     position: 'absolute',

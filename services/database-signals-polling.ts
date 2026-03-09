@@ -187,12 +187,10 @@ class DatabaseSignalsPollingService {
   // Get new signals for EA since last poll
   private async getNewSignalsForEA(ea: string): Promise<DatabaseSignal[]> {
     try {
-      const sinceTime = this.lastPollTime || new Date(Date.now() - 60 * 60 * 1000).toISOString();
-      console.log('🔍 Fetching signals for EA:', ea, 'since:', sinceTime);
+      console.log('🔍 Fetching signals for EA:', ea);
 
       const params = new URLSearchParams({
-        eaId: ea,
-        since: sinceTime
+        eaId: ea
       });
 
       const apiUrl = `${API_BASE_URL}/api/get-new-signals?${params}`;
