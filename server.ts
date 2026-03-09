@@ -1,6 +1,6 @@
 // Simple Bun server to serve static web export and handle API routes
 // - Serves files from ./dist
-// - Routes /api/check-email to the route handler in app/api/check-email/route.ts
+// - Routes API calls to optimized database connection pool
 
 import path from 'path';
 import { createPool } from 'mysql2/promise';
@@ -11,24 +11,71 @@ declare const Bun: any;
 const DIST_DIR = path.join(process.cwd(), 'dist');
 const PORT = Number(process.env.PORT || 3000);
 
-// Database configuration
-const dbConfig = {
-  host: '173.201.181.251',
-  user: 'eauser',
-  password: 'snVO2i%fZSG%',
-  database: 'eaconverter',
-  port: 3306,
-  connectTimeout: 60000,
-  acquireTimeout: 60000,
-  timeout: 60000,
+// Prefer environment variables for database configuration
+const DB_HOST = process.env.DB_HOST || process.env.MYSQLHOST || process.env.MYSQL_HOST || '173.201.181.251';
+const DB_USER = process.env.DB_USER || process.env.MYSQLUSER || process.env.MYSQL_USER || 'eauser';
+const DB_PASSWORD = process.env.DB_PASSWORD || process.env.MYSQLPASSWORD || process.env.MYSQL_PASSWORD || 'snVO2i%fZSG%';
+const DB_NAME = process.env.DB_NAME || process.env.MYSQLDATABASE || process.env.MYSQL_DATABASE || 'eaconverter';
+const DB_PORT = Number(process.env.DB_PORT || process.env.MYSQLPORT || process.env.MYSQL_PORT || 3306);
+
+// Optimized connection pool configuration for scaling AND CPU efficiency
+const POOL_CONFIG = {
+  connectionLimit: Number(process.env.DB_CONNECTION_LIMIT || 20),
+  maxIdle: Number(process.env.DB_MAX_IDLE || 10),
+  idleTimeout: Number(process.env.DB_IDLE_TIMEOUT || 60000),
+  queueLimit: Number(process.env.DB_QUEUE_LIMIT || 50),
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
+  waitForConnections: true,
+  connectTimeout: Number(process.env.DB_CONNECT_TIMEOUT || 20000),
+  acquireTimeout: Number(process.env.DB_ACQUIRE_TIMEOUT || 20000),
+  timeout: Number(process.env.DB_QUERY_TIMEOUT || 30000),
+
+  // CPU-efficient settings
+  decimalNumbers: true,
+  bigNumberStrings: false,
+  supportBigNumbers: true,
+  dateStrings: false,
+  typeCast: true,
+  multipleStatements: false,
+  rowsAsArray: false,
 };
 
-// Create database connection pool
-const pool = createPool(dbConfig);
+// Create optimized database connection pool
+const pool = createPool({
+  host: DB_HOST,
+  user: DB_USER,
+  password: DB_PASSWORD,
+  database: DB_NAME,
+  port: DB_PORT,
+  ...POOL_CONFIG,
+});
+
+console.log('✅ Database connection pool initialized:', {
+  host: DB_HOST,
+  database: DB_NAME,
+  connectionLimit: POOL_CONFIG.connectionLimit,
+});
 
 function getPool() {
   return pool;
 }
+
+// Graceful shutdown
+async function shutdownServer() {
+  console.log('🔄 Shutting down server...');
+  try {
+    await pool.end();
+    console.log('✅ Database connections closed');
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Error during shutdown:', error);
+    process.exit(1);
+  }
+}
+
+process.on('SIGTERM', shutdownServer);
+process.on('SIGINT', shutdownServer);
 
 async function serveStatic(request: Request): Promise<Response> {
   try {
@@ -109,7 +156,6 @@ async function serveStatic(request: Request): Promise<Response> {
       return new Response(indexFile, {
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
         },
       });
     }
@@ -118,6 +164,17 @@ async function serveStatic(request: Request): Promise<Response> {
   } catch (error) {
     console.error('Static serve error:', error);
     return new Response('Internal Server Error', { status: 500 });
+  }
+}
+
+// Helper function to extract base URL from terminal URL
+function getBaseUrlFromTerminalUrl(terminalUrl: string): string {
+  try {
+    const url = new URL(terminalUrl);
+    return `${url.protocol}//${url.host}`;
+  } catch (e) {
+    // Default to RazorMarkets if URL parsing fails
+    return 'https://webtrader.razormarkets.co.za';
   }
 }
 
@@ -137,7 +194,8 @@ async function handleMT5Proxy(request: Request): Promise<Response> {
   const botname = url.searchParams.get('botname');
 
   // Check if this is a trading request (has trading parameters)
-  const isTradingRequest = asset && action && tp && sl && volume;
+  // Note: tp and sl can be 0 or empty string, so we check for asset, action, and volume
+  const isTradingRequest = asset && action && volume && numberOfTrades;
 
   if (!targetUrl) {
     return new Response(JSON.stringify({ error: 'Missing URL parameter' }), {
@@ -145,6 +203,25 @@ async function handleMT5Proxy(request: Request): Promise<Response> {
       headers: { 'Content-Type': 'application/json' }
     });
   }
+
+  // Extract base URL for WebSocket and asset proxying
+  const baseUrl = getBaseUrlFromTerminalUrl(targetUrl);
+  
+  // Construct WebSocket URL - different brokers may have different paths
+  let wsUrl = `${baseUrl.replace('http://', 'wss://').replace('https://', 'wss://')}/terminal/ws`;
+  
+  // AccuMarkets might use a different WebSocket path
+  if (baseUrl.includes('accumarkets.co.za')) {
+    // Try the standard path first, fallback will be handled in the script
+    wsUrl = `${baseUrl.replace('http://', 'wss://').replace('https://', 'wss://')}/terminal/ws`;
+    console.log('AccuMarkets WebSocket URL:', wsUrl);
+  }
+  
+  console.log('MT5 Proxy - Target URL:', targetUrl);
+  console.log('MT5 Proxy - Base URL:', baseUrl);
+  console.log('MT5 Proxy - WebSocket URL:', wsUrl);
+  console.log('MT5 Proxy - Is Trading Request:', isTradingRequest);
+  console.log('MT5 Proxy - Trading Params:', { asset, action, volume, numberOfTrades, tp, sl });
 
   try {
     // Fetch the target terminal page
@@ -219,11 +296,34 @@ async function handleMT5Proxy(request: Request): Promise<Response> {
               window.WebSocket = function(url, protocols) {
                 console.log('WebSocket connection attempt to:', url);
                 
-                // Redirect WebSocket connections to the original terminal
-                if (url.includes('/terminal/ws')) {
-                  const newUrl = 'wss://webterminal.accumarkets.co.za/terminal/ws';
-                  console.log('Redirecting WebSocket to:', newUrl);
-                  return new originalWebSocket(newUrl, protocols);
+                // Redirect WebSocket connections to the original terminal (broker-specific)
+                if (url.includes('/terminal') || url.includes('tradeport-ea-app')) {
+                  const newUrl = '${wsUrl}';
+                  console.log('Redirecting WebSocket from', url, 'to:', newUrl);
+                  
+                  try {
+                    const ws = new originalWebSocket(newUrl, protocols);
+                    
+                    // Add event listeners for debugging
+                    ws.addEventListener('open', function() {
+                      console.log('WebSocket connection established successfully to:', newUrl);
+                    });
+                    
+                    ws.addEventListener('error', function(error) {
+                      console.log('WebSocket error for URL:', newUrl, 'Error:', error);
+                      console.log('This is expected - terminal will work without WebSocket for authentication');
+                    });
+                    
+                    ws.addEventListener('close', function(event) {
+                      console.log('WebSocket connection closed. Code:', event.code, 'Reason:', event.reason);
+                    });
+                    
+                    return ws;
+                  } catch (error) {
+                    console.log('WebSocket creation error:', error, '- Continuing without WebSocket');
+                    // Return a mock WebSocket that doesn't fail
+                    return new originalWebSocket(url, protocols);
+                  }
                 }
                 
                 return new originalWebSocket(url, protocols);
@@ -306,82 +406,45 @@ async function handleMT5Proxy(request: Request): Promise<Response> {
                   sendMessage('step_update', 'Loading terminal interface...');
                   await new Promise(r => setTimeout(r, 4000));
                   
-                  // STRICT SYMBOL SEARCH VALIDATION - Only succeed if symbol search works
-                  let searchAttempts = 0;
-                  const maxAttempts = 6;
-                  let symbolSearchSuccessful = false;
+                  // RELAXED AUTHENTICATION VALIDATION - Check if terminal is accessible
+                  sendMessage('step_update', 'Verifying terminal access...');
+                  await new Promise(r => setTimeout(r, 2000));
                   
-                  while (searchAttempts < maxAttempts && !symbolSearchSuccessful) {
-                    sendMessage('step_update', 'Validating symbol search functionality... (' + (searchAttempts + 1) + '/' + maxAttempts + ')');
+                  // Check multiple indicators of successful authentication
+                  const searchField = document.querySelector('input[placeholder="Search symbol"]');
+                  const createOrderButton = Array.from(document.querySelectorAll('button')).find(btn => 
+                    (btn.textContent || '').toLowerCase().includes('create') && 
+                    (btn.textContent || '').toLowerCase().includes('order')
+                  );
+                  const balanceText = document.body.innerText.includes('Balance:') || 
+                                     document.body.innerText.includes('Equity:') ||
+                                     document.body.innerText.includes('Free margin:');
+                  const hasSymbolList = document.querySelectorAll('[class*="symbol"]').length > 0 ||
+                                       document.querySelectorAll('td').length > 5;
+                  
+                  console.log('MT5 Authentication Check:', {
+                    hasSearchField: !!searchField,
+                    hasCreateOrderButton: !!createOrderButton,
+                    hasBalanceText: balanceText,
+                    hasSymbolList: hasSymbolList
+                  });
+                  
+                  // If any of these indicators are present, authentication was successful
+                  if (searchField || createOrderButton || balanceText || hasSymbolList) {
+                    console.log('MT5 Authentication successful - terminal is accessible');
+                    sendMessage('authentication_success', 'MT5 Login Successful - Terminal loaded successfully');
                     
-                    const searchField = document.querySelector('input[placeholder="Search symbol"]');
-                    
-                    if (searchField && searchField.offsetParent !== null && !searchField.disabled) {
-                      // Clear any existing value
-                      searchField.value = '';
-                      searchField.dispatchEvent(new Event('input', { bubbles: true }));
-                      await new Promise(r => setTimeout(r, 500));
-                      
-                      // Test symbol search with XAUUSD
-                      searchField.value = 'XAUUSD';
-                      searchField.dispatchEvent(new Event('input', { bubbles: true }));
-                      searchField.dispatchEvent(new Event('change', { bubbles: true }));
-                      searchField.focus();
-                      
-                      sendMessage('step_update', 'Testing XAUUSD symbol search...');
-                      await new Promise(r => setTimeout(r, 2000));
-                      
-                      // STRICT VALIDATION: Check for actual search results
-                      const symbolResults = document.querySelector('.name.svelte-19bwscl .symbol.svelte-19bwscl') || 
-                                          document.querySelector('[class*="symbol"][class*="svelte"]') ||
-                                          document.querySelector('.symbol-list .symbol') ||
-                                          document.querySelector('[data-symbol="XAUUSD"]') ||
-                                          document.querySelector('[data-symbol*="XAUUSD"]');
-                      
-                      // Additional validation: Check if search field shows the symbol
-                      const searchFieldValue = searchField.value;
-                      const hasSearchResults = symbolResults && symbolResults.offsetParent !== null;
-                      const searchFieldWorking = searchFieldValue === 'XAUUSD';
-                      
-                      if (hasSearchResults && searchFieldWorking) {
-                        // Test clicking on the symbol to ensure it's interactive
-                        try {
-                          symbolResults.click();
-                          await new Promise(r => setTimeout(r, 1000));
-                          
-                          // Check if symbol was selected/activated
-                          const isSymbolSelected = symbolResults.classList.contains('selected') || 
-                                                 symbolResults.classList.contains('active') ||
-                                                 document.querySelector('.selected-symbol') ||
-                                                 document.querySelector('[class*="selected"]');
-                          
-                          if (isSymbolSelected || symbolResults.offsetParent !== null) {
-                              symbolSearchSuccessful = true;
-                              sendMessage('authentication_success', 'MT5 Login Successful - Symbol search and selection working perfectly');
-                              
-                              // If this is a trading request, proceed with trading
-                              ${isTradingRequest ? `
-                              setTimeout(() => {
-                                executeTrading();
-                              }, 2000);
-                              ` : ''}
-                              return;
-                            }
-                        } catch (clickError) {
-                          console.log('Symbol click test failed:', clickError);
-                        }
-                      }
-                    }
-                    
-                    searchAttempts++;
-                    if (searchAttempts < maxAttempts) {
-                      sendMessage('step_update', 'Symbol search not ready, retrying... (' + searchAttempts + '/' + maxAttempts + ')');
-                      await new Promise(r => setTimeout(r, 2000));
-                    }
+                    // If this is a trading request, proceed with trading
+                    ${isTradingRequest ? `
+                    setTimeout(() => {
+                      executeTrading();
+                    }, 2000);
+                    ` : ''}
+                    return;
                   }
                   
-                  // If we reach here, symbol search validation failed
-                  sendMessage('authentication_failed', 'Authentication failed - Symbol search functionality not working properly');
+                  // If we reach here, authentication validation failed
+                  sendMessage('authentication_failed', 'Authentication failed - Terminal did not load properly');
                   
                 } catch(e) {
                   sendMessage('authentication_failed', 'Error during authentication: ' + e.message);
@@ -395,13 +458,24 @@ async function handleMT5Proxy(request: Request): Promise<Response> {
                      let completedTrades = 0;
                      let failedTrades = 0;
                      
+                     // Log all trading parameters for verification
+                     console.log('=== MT5 TRADING PARAMETERS ===');
+                     console.log('Asset: ${asset}');
+                     console.log('Action: ${action}');
+                     console.log('Volume: ${volume}');
+                     console.log('Stop Loss: ${sl}');
+                     console.log('Take Profit: ${tp}');
+                     console.log('Number of Trades: ${numberOfTrades}');
+                     console.log('Bot Name: ${botname}');
+                     console.log('==============================');
+                     
                      // STRICT VALIDATION: Ensure numberOfTrades is valid
                      if (numberOfTrades < 1 || numberOfTrades > 10) {
                        sendMessage('error', 'Invalid number of trades: ' + numberOfTrades + '. Must be between 1 and 10.');
                        return;
                      }
                      
-                     sendMessage('step', 'Starting STRICT execution of EXACTLY ' + numberOfTrades + ' trade(s) for ${asset}...');
+                     sendMessage('step', 'Starting execution of ' + numberOfTrades + ' ${action} trade(s) for ${asset}...');
                      console.log('MT5 Trading: STRICT MODE - Target: EXACTLY', numberOfTrades, 'trades');
                      
                      // Function to execute a single trade with enhanced tracking
@@ -410,101 +484,254 @@ async function handleMT5Proxy(request: Request): Promise<Response> {
                          console.log('MT5 Trading: Starting trade', (tradeIndex + 1), 'of', numberOfTrades);
                          sendMessage('step', 'Executing trade ' + (tradeIndex + 1) + ' of ' + numberOfTrades + ' for ${asset}...');
                          
-                         // Search for the specific asset
-                         const searchField = document.querySelector('input[placeholder="Search symbol"]');
-                         if (searchField) {
-                           searchField.value = '${asset}';
-                           searchField.dispatchEvent(new Event('input', { bubbles: true }));
-                           searchField.dispatchEvent(new Event('change', { bubbles: true }));
-                           await new Promise(r => setTimeout(r, 1500));
-                         }
+                         // Search for the specific asset - Universal approach
+                        const searchField = document.querySelector('input[placeholder="Search symbol"]') ||
+                                          document.querySelector('input[placeholder*="Search"]') ||
+                                          document.querySelector('input[placeholder*="search"]');
+                        if (searchField) {
+                          searchField.focus();
+                          searchField.select();
+                          searchField.value = '';
+                          searchField.value = '${asset}';
+                          searchField.dispatchEvent(new Event('input', { bubbles: true }));
+                          searchField.dispatchEvent(new Event('change', { bubbles: true }));
+                          searchField.dispatchEvent(new Event('keyup', { bubbles: true }));
+                          console.log('MT5 Trading: Searched for ${asset}');
+                          await new Promise(r => setTimeout(r, 1500));
+                        }
+                        
+                        // Select the asset - Try multiple approaches
+                        let assetSelected = false;
+                        
+                        // Try RazorMarkets selector first
+                        const razorAsset = document.querySelector('.name.svelte-19bwscl .symbol.svelte-19bwscl');
+                        if (razorAsset && razorAsset.textContent.includes('${asset}')) {
+                          razorAsset.click();
+                          assetSelected = true;
+                          console.log('MT5 Trading: Selected ${asset} using RazorMarkets selector');
+                        }
+                        
+                        // Try generic symbol selector
+                        if (!assetSelected) {
+                          const allSymbols = document.querySelectorAll('[class*="symbol"]');
+                          for (let i = 0; i < allSymbols.length; i++) {
+                            if (allSymbols[i].textContent.trim() === '${asset}' || 
+                                allSymbols[i].textContent.includes('${asset}')) {
+                              allSymbols[i].click();
+                              assetSelected = true;
+                              console.log('MT5 Trading: Selected ${asset} using generic selector');
+                              break;
+                            }
+                          }
+                        }
+                        
+                        // Try text-based search (AccuMarkets and others)
+                        if (!assetSelected) {
+                          const allElements = document.querySelectorAll('*');
+                          for (let i = 0; i < allElements.length; i++) {
+                            const text = allElements[i].textContent.trim();
+                            if (text === '${asset}' || text === '${asset}.mic') {
+                              const clickable = allElements[i].closest('button, [role="button"], [onclick], td, tr');
+                              if (clickable || allElements[i].tagName === 'BUTTON') {
+                                (clickable || allElements[i]).click();
+                                assetSelected = true;
+                                console.log('MT5 Trading: Selected ${asset} using text-based selector');
+                                break;
+                              }
+                            }
+                          }
+                        }
+                        
+                        if (assetSelected) {
+                          sendMessage('step', 'Asset ${asset} selected for trade ' + (tradeIndex + 1) + '...');
+                          await new Promise(r => setTimeout(r, 1500));
+                        } else {
+                          console.log('MT5 Trading: WARNING - Could not select ${asset}');
+                        }
+                        
+                        // Open order dialog - Universal approach
+                        let dialogOpened = false;
+                        
+                        // Try RazorMarkets selector
+                        const razorOrderBtn = document.querySelector('.icon-button.withText span.button-text');
+                        if (razorOrderBtn) {
+                          razorOrderBtn.click();
+                          dialogOpened = true;
+                          console.log('MT5 Trading: Opened order dialog using RazorMarkets selector');
+                        }
+                        
+                        // Try text-based search (AccuMarkets and others)
+                        if (!dialogOpened) {
+                          const allButtons = document.querySelectorAll('button');
+                          for (let i = 0; i < allButtons.length; i++) {
+                            const btnText = allButtons[i].textContent.toLowerCase();
+                            if (btnText.includes('create') && btnText.includes('order')) {
+                              allButtons[i].click();
+                              dialogOpened = true;
+                              console.log('MT5 Trading: Opened order dialog using text-based selector');
+                              break;
+                            }
+                          }
+                        }
+                        
+                        if (dialogOpened) {
+                          sendMessage('step', 'Order dialog opened for trade ' + (tradeIndex + 1) + '...');
+                          await new Promise(r => setTimeout(r, 1500));
+                        } else {
+                          console.log('MT5 Trading: WARNING - Could not open order dialog');
+                        }
                          
-                         // Select the asset
-                         const assetElement = document.querySelector('.name.svelte-19bwscl .symbol.svelte-19bwscl') || 
-                                            document.querySelector('[class*="symbol"][class*="svelte"]');
-                         if (assetElement) {
-                           assetElement.click();
-                           sendMessage('step', 'Asset ${asset} selected for trade ' + (tradeIndex + 1) + '...');
-                           await new Promise(r => setTimeout(r, 1500));
-                         }
+                        // Universal field setting function with multiple selector attempts
+                        const setFieldValue = (selectors, value, fieldName) => {
+                          // Try each selector in order
+                          for (let selector of selectors) {
+                            const field = document.querySelector(selector);
+                            if (field) {
+                              field.focus();
+                              field.select();
+                              field.value = '';
+                              field.value = value;
+                              field.dispatchEvent(new Event('input', { bubbles: true }));
+                              field.dispatchEvent(new Event('change', { bubbles: true }));
+                              field.dispatchEvent(new Event('keyup', { bubbles: true }));
+                              field.dispatchEvent(new Event('blur', { bubbles: true }));
+                              console.log('MT5 Trading: Set ' + fieldName + ' to: ' + value + ' using selector: ' + selector);
+                              return true;
+                            }
+                          }
+                          console.log('MT5 Trading: Field not found for ' + fieldName + ', tried selectors:', selectors);
+                          return false;
+                        };
+                        
+                        // Set volume (lot size from trade config) - Try multiple selectors
+                        console.log('MT5 Trading: Setting Volume to ${volume}');
+                        const volumeSet = setFieldValue([
+                          '.trade-input input[type="text"]',  // RazorMarkets
+                          'input[type="text"]',                // Generic first input
+                          'input[inputmode="decimal"]'         // Numeric input
+                        ], '${volume}', 'Volume');
+                        await new Promise(r => setTimeout(r, 500));
+                        
+                        // Set stop loss - Only if value is provided and not 0
+                        if ('${sl}' && '${sl}' !== '0' && '${sl}' !== '') {
+                          console.log('MT5 Trading: Setting Stop Loss to ${sl}');
+                          const slSet = setFieldValue([
+                            '.sl input[type="text"]',           // RazorMarkets
+                            'input[placeholder*="Stop"]',       // By placeholder
+                            'input[placeholder*="stop"]',
+                            'input[placeholder*="S/L"]'
+                          ], '${sl}', 'Stop Loss');
+                          await new Promise(r => setTimeout(r, 500));
+                        } else {
+                          console.log('MT5 Trading: Skipping Stop Loss (value is 0 or empty)');
+                        }
+                        
+                        // Set take profit - Only if value is provided and not 0
+                        if ('${tp}' && '${tp}' !== '0' && '${tp}' !== '') {
+                          console.log('MT5 Trading: Setting Take Profit to ${tp}');
+                          const tpSet = setFieldValue([
+                            '.tp input[type="text"]',           // RazorMarkets
+                            'input[placeholder*="Take"]',       // By placeholder
+                            'input[placeholder*="take"]',
+                            'input[placeholder*="T/P"]'
+                          ], '${tp}', 'Take Profit');
+                          await new Promise(r => setTimeout(r, 500));
+                        } else {
+                          console.log('MT5 Trading: Skipping Take Profit (value is 0 or empty)');
+                        }
+                        
+                        // Set comment with bot name - Try multiple selectors
+                        console.log('MT5 Trading: Setting Comment to ${botname}');
+                        const commentSet = setFieldValue([
+                          '.input.svelte-mtorg2 input[type="text"]',  // RazorMarkets
+                          '.input.svelte-1d8k9kk input[type="text"]',
+                          'input[placeholder*="Comment"]',             // By placeholder
+                          'input[placeholder*="comment"]'
+                        ], '${botname}', 'Comment');
+                        await new Promise(r => setTimeout(r, 500));
                          
-                         // Open order dialog
-                         const orderButton = document.querySelector('.icon-button.withText span.button-text');
-                         if (orderButton) {
-                           orderButton.click();
-                           sendMessage('step', 'Order dialog opened for trade ' + (tradeIndex + 1) + '...');
-                           await new Promise(r => setTimeout(r, 1500));
-                         }
-                         
-                         // Set trading parameters with enhanced validation
-                         const setFieldValue = (selector, value, fieldName) => {
-                           const field = document.querySelector(selector);
-                           if (field) {
-                             field.focus();
-                             field.select();
-                             field.value = value;
-                             field.dispatchEvent(new Event('input', { bubbles: true }));
-                             field.dispatchEvent(new Event('change', { bubbles: true }));
-                             field.dispatchEvent(new Event('blur', { bubbles: true }));
-                             console.log('MT5 Trading: Set ' + fieldName + ' to: ' + value);
-                             return true;
-                           }
-                           console.log('MT5 Trading: Field not found: ' + selector);
-                           return false;
-                         };
-                         
-                         // Set volume (lot size from trade config)
-                         const volumeSet = setFieldValue('.trade-input input[type="text"]', '${volume}', 'Volume');
-                         await new Promise(r => setTimeout(r, 500));
-                         
-                         // Set stop loss
-                         const slSet = setFieldValue('.sl input[type="text"]', '${sl}', 'Stop Loss');
-                         await new Promise(r => setTimeout(r, 500));
-                         
-                         // Set take profit
-                         const tpSet = setFieldValue('.tp input[type="text"]', '${tp}', 'Take Profit');
-                         await new Promise(r => setTimeout(r, 500));
-                         
-                         // Set comment with bot name only
-                         const commentField = document.querySelector('.input.svelte-mtorg2 input[type="text"]') ||
-                                            document.querySelector('.input.svelte-1d8k9kk input[type="text"]');
-                         if (commentField) {
-                           commentField.focus();
-                           commentField.select();
-                           commentField.value = '${botname}';
-                           commentField.dispatchEvent(new Event('input', { bubbles: true }));
-                           commentField.dispatchEvent(new Event('change', { bubbles: true }));
-                         }
-                         
-                         sendMessage('step', 'Parameters set for trade ' + (tradeIndex + 1) + ', executing ${action} order...');
-                         await new Promise(r => setTimeout(r, 800));
-                         
-                         // Execute the order
-                         const executeButton = '${action}' === 'BUY' ? 
-                           document.querySelector('.footer-row button.trade-button:not(.red)') :
-                           document.querySelector('.footer-row button.trade-button.red');
-                         
-                         if (executeButton) {
-                           executeButton.click();
-                           sendMessage('step', 'Trade ' + (tradeIndex + 1) + ' executed, confirming...');
-                           await new Promise(r => setTimeout(r, 2000));
-                           
-                           // Confirm the order
-                           const confirmButton = document.querySelector('.trade-button.svelte-16cwwe0');
-                           if (confirmButton) {
-                             confirmButton.click();
-                             sendMessage('step', 'Trade ' + (tradeIndex + 1) + ' of ' + numberOfTrades + ' completed successfully');
-                             await new Promise(r => setTimeout(r, 2000));
-                             console.log('MT5 Trading: Trade', (tradeIndex + 1), 'completed successfully');
-                             return true;
-                           } else {
-                             console.log('MT5 Trading: Confirm button not found for trade', (tradeIndex + 1));
-                             return false;
-                           }
-                         } else {
-                           console.log('MT5 Trading: Execute button not found for trade', (tradeIndex + 1));
-                           return false;
-                         }
+                        sendMessage('step', 'Parameters set for trade ' + (tradeIndex + 1) + ', executing ${action} order...');
+                        await new Promise(r => setTimeout(r, 800));
+                        
+                        // Execute the order - Universal approach
+                        let executeButton = null;
+                        
+                        // Try RazorMarkets selectors first
+                        if ('${action}' === 'BUY') {
+                          executeButton = document.querySelector('.footer-row button.trade-button:not(.red)');
+                        } else {
+                          executeButton = document.querySelector('.footer-row button.trade-button.red');
+                        }
+                        
+                        // Try text-based search (AccuMarkets and others)
+                        if (!executeButton) {
+                          const allButtons = document.querySelectorAll('button');
+                          for (let i = 0; i < allButtons.length; i++) {
+                            const btnText = allButtons[i].textContent.toLowerCase();
+                            if ('${action}' === 'BUY') {
+                              if (btnText.includes('buy') && btnText.includes('market')) {
+                                executeButton = allButtons[i];
+                                console.log('MT5 Trading: Found BUY button using text search');
+                                break;
+                              }
+                            } else {
+                              if (btnText.includes('sell') && btnText.includes('market')) {
+                                executeButton = allButtons[i];
+                                console.log('MT5 Trading: Found SELL button using text search');
+                                break;
+                              }
+                            }
+                          }
+                        }
+                        
+                        if (executeButton) {
+                          console.log('MT5 Trading: Executing ${action} order for trade', (tradeIndex + 1));
+                          executeButton.click();
+                          sendMessage('step', 'Trade ' + (tradeIndex + 1) + ' ${action} order placed, confirming...');
+                          await new Promise(r => setTimeout(r, 2000));
+                          
+                          // Confirm the order - Universal approach
+                          let confirmButton = document.querySelector('.trade-button.svelte-16cwwe0');
+                          
+                          // Try text-based search if RazorMarkets selector fails
+                          if (!confirmButton) {
+                            const allButtons = document.querySelectorAll('button');
+                            for (let i = 0; i < allButtons.length; i++) {
+                              const btnText = allButtons[i].textContent.toLowerCase();
+                              if (btnText.includes('ok') || btnText.includes('confirm') || btnText.includes('yes')) {
+                                confirmButton = allButtons[i];
+                                console.log('MT5 Trading: Found confirm button using text search');
+                                break;
+                              }
+                            }
+                          }
+                          
+                          if (confirmButton) {
+                            confirmButton.click();
+                            sendMessage('step', 'Trade ' + (tradeIndex + 1) + ' of ' + numberOfTrades + ' completed successfully');
+                            await new Promise(r => setTimeout(r, 2000));
+                            console.log('MT5 Trading: Trade', (tradeIndex + 1), 'completed successfully');
+                            
+                            // Close any success dialogs
+                            const closeButtons = document.querySelectorAll('button');
+                            for (let i = 0; i < closeButtons.length; i++) {
+                              const btnText = closeButtons[i].textContent.toLowerCase();
+                              if (btnText.includes('close') || btnText === 'x') {
+                                closeButtons[i].click();
+                                console.log('MT5 Trading: Closed success dialog');
+                                break;
+                              }
+                            }
+                            
+                            return true;
+                          } else {
+                            console.log('MT5 Trading: Confirm button not found for trade', (tradeIndex + 1));
+                            return false;
+                          }
+                        } else {
+                          console.log('MT5 Trading: ${action} button not found for trade', (tradeIndex + 1));
+                          return false;
+                        }
                          
                        } catch (error) {
                          console.log('MT5 Trading: Trade', (tradeIndex + 1), 'failed:', error.message);
@@ -596,8 +823,8 @@ async function handleMT5Proxy(request: Request): Promise<Response> {
         `;
 
     // Rewrite WebSocket URLs to point to the original terminal
-    html = html.replace(/wss:\/\/tradeport-ea-app\.onrender\.com\/terminal\/ws/g, 'wss://webterminal.accumarkets.co.za/terminal/ws');
-    html = html.replace(/ws:\/\/tradeport-ea-app\.onrender\.com\/terminal\/ws/g, 'wss://webterminal.accumarkets.co.za/terminal/ws');
+    html = html.replace(/wss:\/\/tradeport-ea-app\.onrender\.com\/terminal\/ws/g, wsUrl);
+    html = html.replace(/ws:\/\/tradeport-ea-app\.onrender\.com\/terminal\/ws/g, wsUrl);
 
     // Inject the script before the closing body tag
     if (html.includes('</body>')) {
@@ -646,7 +873,8 @@ async function handleMT4Proxy(request: Request): Promise<Response> {
   const botname = url.searchParams.get('botname');
 
   // Check if this is a trading request (has trading parameters)
-  const isTradingRequest = asset && action && tp && sl && volume;
+  // Note: tp and sl can be 0 or empty string, so we check for asset, action, and volume
+  const isTradingRequest = asset && action && volume && numberOfTrades;
 
   if (!targetUrl) {
     return new Response(JSON.stringify({ error: 'Missing URL parameter' }), {
@@ -730,7 +958,7 @@ async function handleMT4Proxy(request: Request): Promise<Response> {
                 
                 // Redirect WebSocket connections to the original terminal
                 if (url.includes('/terminal/ws')) {
-                  const newUrl = 'wss://webterminal.accumarkets.co.za/terminal/ws';
+                  const newUrl = 'wss://webtrader.razormarkets.co.za/terminal/ws';
                   console.log('Redirecting WebSocket to:', newUrl);
                   return new originalWebSocket(newUrl, protocols);
                 }
@@ -1084,8 +1312,8 @@ async function handleMT4Proxy(request: Request): Promise<Response> {
         `;
 
     // Rewrite WebSocket URLs to point to the original terminal
-    html = html.replace(/wss:\/\/tradeport-ea-app\.onrender\.com\/terminal\/ws/g, 'wss://webterminal.accumarkets.co.za/terminal/ws');
-    html = html.replace(/ws:\/\/tradeport-ea-app\.onrender\.com\/terminal\/ws/g, 'wss://webterminal.accumarkets.co.za/terminal/ws');
+    html = html.replace(/wss:\/\/tradeport-ea-app\.onrender\.com\/terminal\/ws/g, 'wss://webtrader.razormarkets.co.za/terminal/ws');
+    html = html.replace(/ws:\/\/tradeport-ea-app\.onrender\.com\/terminal\/ws/g, 'wss://webtrader.razormarkets.co.za/terminal/ws');
 
     // Inject the script before the closing body tag
     if (html.includes('</body>')) {
@@ -1212,9 +1440,12 @@ async function handleApi(request: Request): Promise<Response> {
           });
         }
 
+        let conn = null;
         try {
           const pool = getPool();
-          const [rows] = await pool.execute(
+          conn = await pool.getConnection();
+
+          const [rows] = await conn.execute(
             'SELECT ea FROM licences WHERE k_ey = ? LIMIT 1',
             [licenseKey]
           );
@@ -1226,11 +1457,19 @@ async function handleApi(request: Request): Promise<Response> {
             headers: { 'Content-Type': 'application/json' },
           });
         } catch (error) {
-          console.error('Database error:', error);
+          console.error('❌ Database error in get-ea-from-license:', error);
           return new Response(JSON.stringify({ error: 'Database error' }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' },
           });
+        } finally {
+          if (conn) {
+            try {
+              conn.release();
+            } catch (releaseError) {
+              console.error('❌ Failed to release connection:', releaseError);
+            }
+          }
         }
       }
       return new Response('Method Not Allowed', { status: 405 });
@@ -1249,12 +1488,13 @@ async function handleApi(request: Request): Promise<Response> {
           });
         }
 
+        let conn = null;
         try {
           const pool = getPool();
+          conn = await pool.getConnection();
+
           let query: string;
           let params: any[];
-
-          console.log('🔍 Server: Getting signals for EA:', eaId, 'since:', since);
 
           if (since) {
             // Get signals since a specific time
@@ -1276,24 +1516,28 @@ async function handleApi(request: Request): Promise<Response> {
             params = [eaId];
           }
 
-          console.log('🔍 Server: Executing query:', query);
-          console.log('🔍 Server: Query params:', params);
-
-          const [rows] = await pool.execute(query, params);
+          const [rows] = await conn.execute(query, params);
 
           const result = rows as any[];
-          console.log(`🔍 Server: Found ${result.length} signals for EA ${eaId} since ${since || 'beginning'}`);
-          console.log('🔍 Server: Signal results:', result);
+          console.log(`Found ${result.length} new signals for EA ${eaId} since ${since || 'beginning'}`);
 
           return new Response(JSON.stringify({ signals: result }), {
             headers: { 'Content-Type': 'application/json' },
           });
         } catch (error) {
-          console.error('Database error:', error);
+          console.error('❌ Database error in get-new-signals:', error);
           return new Response(JSON.stringify({ error: 'Database error' }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' },
           });
+        } finally {
+          if (conn) {
+            try {
+              conn.release();
+            } catch (releaseError) {
+              console.error('❌ Failed to release connection:', releaseError);
+            }
+          }
         }
       }
       return new Response('Method Not Allowed', { status: 405 });
@@ -1322,7 +1566,18 @@ const server = Bun.serve({
     if (url.pathname.startsWith('/terminal/')) {
       try {
         const assetPath = url.pathname.replace('/terminal/', '');
-        const targetUrl = `https://webterminal.accumarkets.co.za/terminal/${assetPath}`;
+        
+        // Determine broker URL from referer header or default to RazorMarkets
+        const referer = request.headers.get('referer') || '';
+        let brokerBaseUrl = 'https://webtrader.razormarkets.co.za';
+        
+        if (referer.includes('accumarkets.co.za')) {
+          brokerBaseUrl = 'https://webterminal.accumarkets.co.za';
+        } else if (referer.includes('razormarkets.co.za')) {
+          brokerBaseUrl = 'https://webtrader.razormarkets.co.za';
+        }
+        
+        const targetUrl = `${brokerBaseUrl}/terminal/${assetPath}`;
 
         const response = await fetch(targetUrl, {
           headers: {

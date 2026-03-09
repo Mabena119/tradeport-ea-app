@@ -922,6 +922,13 @@ export function TradingWebView({ visible, signal, onClose }: TradingWebViewProps
   }, [signal, tradeConfig, credentials, eaName]);
 
   // Get WebView URL for trading based on platform
+  // MT5 Broker URL mapping
+  const MT5_BROKER_URLS: Record<string, string> = {
+    'RazorMarkets-Live': 'https://webtrader.razormarkets.co.za/terminal/',
+    'AccuMarkets-Live': 'https://webterminal.accumarkets.co.za/terminal/',
+  };
+
+  // Get WebView URL for trading based on platform
   const getWebViewUrl = useCallback(() => {
     if (!tradeConfig || !credentials) return '';
 
@@ -936,10 +943,16 @@ export function TradingWebView({ visible, signal, onClose }: TradingWebViewProps
     }
     // If direction is 'BOTH', keep the signal action
 
+    // Determine MT5 broker URL based on server name
+    let mt5Url = 'https://webtrader.razormarkets.co.za/terminal/'; // Default
+    if (tradeConfig.platform === 'MT5' && credentials.server) {
+      mt5Url = MT5_BROKER_URLS[credentials.server] || MT5_BROKER_URLS['RazorMarkets-Live'];
+    }
+
     const params = new URLSearchParams({
       url: tradeConfig.platform === 'MT4'
         ? 'https://metatraderweb.app/trade?version=4'
-        : 'https://webterminal.accumarkets.co.za/terminal',
+        : mt5Url,
       login: credentials.login,
       password: credentials.password,
       server: credentials.server,
@@ -961,6 +974,8 @@ export function TradingWebView({ visible, signal, onClose }: TradingWebViewProps
       platform: tradeConfig.platform,
       proxyEndpoint: proxyEndpoint,
       finalUrl: finalUrl,
+      broker: tradeConfig.platform === 'MT5' ? credentials.server : 'N/A',
+      brokerUrl: tradeConfig.platform === 'MT5' ? mt5Url : 'N/A',
       params: Object.fromEntries(params.entries())
     });
 
