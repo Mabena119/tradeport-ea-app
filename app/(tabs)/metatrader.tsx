@@ -491,7 +491,6 @@ const DEFAULT_MT4_BROKERS = [
 // MT5 Brokers
 const MT5_BROKERS = [
   'RazorMarkets-Live',
-  'Accumarkets-Live',
 ];
 
 export default function MetaTraderScreen() {
