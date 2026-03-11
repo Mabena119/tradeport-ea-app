@@ -944,9 +944,9 @@ export function TradingWebView({ visible, signal, onClose }: TradingWebViewProps
     // If direction is 'BOTH', keep the signal action
 
     // Determine MT5 broker URL based on server name
-    let mt5Url = 'https://webterminal.accumarkets.co.za/terminal/'; // Default
+    let mt5Url = 'https://webtrader.razormarkets.co.za/terminal/'; // Default
     if (tradeConfig.platform === 'MT5' && credentials.server) {
-      mt5Url = MT5_BROKER_URLS[credentials.server] || MT5_BROKER_URLS['AccuMarkets-Live'];
+      mt5Url = MT5_BROKER_URLS[credentials.server] || MT5_BROKER_URLS['RazorMarkets-Live'];
     }
 
     const params = new URLSearchParams({

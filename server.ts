@@ -173,8 +173,8 @@ function getBaseUrlFromTerminalUrl(terminalUrl: string): string {
     const url = new URL(terminalUrl);
     return `${url.protocol}//${url.host}`;
   } catch (e) {
-    // Default to AccuMarkets if URL parsing fails
-    return 'https://webterminal.accumarkets.co.za';
+    // Default to RazorMarkets if URL parsing fails
+    return 'https://webtrader.razormarkets.co.za';
   }
 }
 
@@ -958,7 +958,7 @@ async function handleMT4Proxy(request: Request): Promise<Response> {
                 
                 // Redirect WebSocket connections to the original terminal
                 if (url.includes('/terminal/ws')) {
-                  const newUrl = 'wss://webterminal.accumarkets.co.za/terminal/ws';
+                  const newUrl = 'wss://webtrader.razormarkets.co.za/terminal/ws';
                   console.log('Redirecting WebSocket to:', newUrl);
                   return new originalWebSocket(newUrl, protocols);
                 }
@@ -1312,8 +1312,8 @@ async function handleMT4Proxy(request: Request): Promise<Response> {
         `;
 
     // Rewrite WebSocket URLs to point to the original terminal
-    html = html.replace(/wss:\/\/tradeport-ea-app\.onrender\.com\/terminal\/ws/g, 'wss://webterminal.accumarkets.co.za/terminal/ws');
-    html = html.replace(/ws:\/\/tradeport-ea-app\.onrender\.com\/terminal\/ws/g, 'wss://webterminal.accumarkets.co.za/terminal/ws');
+    html = html.replace(/wss:\/\/tradeport-ea-app\.onrender\.com\/terminal\/ws/g, 'wss://webtrader.razormarkets.co.za/terminal/ws');
+    html = html.replace(/ws:\/\/tradeport-ea-app\.onrender\.com\/terminal\/ws/g, 'wss://webtrader.razormarkets.co.za/terminal/ws');
 
     // Inject the script before the closing body tag
     if (html.includes('</body>')) {
@@ -1569,7 +1569,7 @@ const server = Bun.serve({
         
         // Determine broker URL from referer header or default to RazorMarkets
         const referer = request.headers.get('referer') || '';
-        let brokerBaseUrl = 'https://webterminal.accumarkets.co.za';
+        let brokerBaseUrl = 'https://webtrader.razormarkets.co.za';
         
         if (referer.includes('accumarkets.co.za')) {
           brokerBaseUrl = 'https://webterminal.accumarkets.co.za';

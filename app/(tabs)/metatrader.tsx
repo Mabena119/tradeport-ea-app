@@ -488,8 +488,9 @@ const DEFAULT_MT4_BROKERS = [
   'TradeFX-SA-Live',
 ];
 
-// MT5 Brokers - Accumarkets Only
+// MT5 Brokers
 const MT5_BROKERS = [
+  'RazorMarkets-Live',
   'Accumarkets-Live',
 ];
 
@@ -1804,6 +1805,25 @@ export default function MetaTraderScreen() {
   const handleLinkAccount = async () => {
     if (!login.trim() || !password.trim() || !server.trim()) {
       Alert.alert('Missing Information', 'Please fill in all fields to continue.');
+      return;
+    }
+
+    // Validate login is numeric (MT5/MT4 account IDs are numbers)
+    if (!/^\d+$/.test(login.trim())) {
+      Alert.alert('Invalid Login', 'Account login must be a numeric ID (e.g. 3181945).');
+      return;
+    }
+
+    // Validate password is not too short
+    if (password.trim().length < 4) {
+      Alert.alert('Invalid Password', 'Password must be at least 4 characters.');
+      return;
+    }
+
+    // Validate server is selected
+    const validServers = activeTab === 'MT5' ? MT5_BROKERS : mt4Brokers;
+    if (!validServers.includes(server.trim())) {
+      Alert.alert('Invalid Server', 'Please select a valid broker server from the list.');
       return;
     }
 
