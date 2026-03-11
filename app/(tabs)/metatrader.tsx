@@ -488,10 +488,12 @@ const DEFAULT_MT4_BROKERS = [
   'TradeFX-SA-Live',
 ];
 
-// MT5 Brokers
-const MT5_BROKERS = [
-  'RazorMarkets-Live',
-];
+// MT5 Brokers with URL mapping
+const MT5_BROKER_URLS: Record<string, string> = {
+  'RazorMarkets-Live': 'https://webtrader.razormarkets.co.za/terminal/',
+};
+
+const MT5_BROKERS = Object.keys(MT5_BROKER_URLS);
 
 export default function MetaTraderScreen() {
   const [activeTab, setActiveTab] = useState<'MT5' | 'MT4'>('MT5');
@@ -1807,40 +1809,11 @@ export default function MetaTraderScreen() {
       return;
     }
 
-    // Validate login is numeric (MT5/MT4 account IDs are numbers)
-    if (!/^\d+$/.test(login.trim())) {
-      Alert.alert('Invalid Login', 'Account login must be a numeric ID (e.g. 3181945).');
-      return;
-    }
-
-    // Validate password is not too short
-    if (password.trim().length < 4) {
-      Alert.alert('Invalid Password', 'Password must be at least 4 characters.');
-      return;
-    }
-
-    // Validate server is selected
-    const validServers = activeTab === 'MT5' ? MT5_BROKERS : mt4Brokers;
-    if (!validServers.includes(server.trim())) {
-      Alert.alert('Invalid Server', 'Please select a valid broker server from the list.');
-      return;
-    }
-
-    if (Platform.OS === 'web') {
-      // On web, use the authentication simulation which sets connected status
-      await authenticateWithWebTerminal({
-        login: login.trim(),
-        password: password.trim(),
-        server: server.trim(),
-        type: activeTab as 'MT4' | 'MT5',
-      });
+    // Show web view based on active tab
+    if (activeTab === 'MT5') {
+      handleMT5WebView();
     } else {
-      // On native, open WebView which handles auth via postMessage
-      if (activeTab === 'MT5') {
-        handleMT5WebView();
-      } else {
-        handleMT4WebView();
-      }
+      handleMT4WebView();
     }
   };
 
@@ -2085,7 +2058,7 @@ export default function MetaTraderScreen() {
               </View>
               <View style={styles.authToastInfo}>
                 <Text style={styles.authToastTitle}>MT5 Authentication</Text>
-                <Text style={styles.authToastStatus}>{authenticationStep || 'Connecting to Accumarkets...'}</Text>
+                <Text style={styles.authToastStatus}>{authenticationStep || 'Connecting to RazorMarkets...'}</Text>
               </View>
             </View>
             <TouchableOpacity style={styles.authToastCloseButton} onPress={closeMT5WebView}>
@@ -2100,14 +2073,14 @@ export default function MetaTraderScreen() {
         <View style={styles.invisibleWebViewContainer}>
           {Platform.OS === 'web' ? (
             <WebWebView
-              url={`/api/mt5-proxy?url=${encodeURIComponent('https://webterminal.accumarkets.co.za/terminal')}&login=${encodeURIComponent(login)}&password=${encodeURIComponent(password)}`}
+              url={`/api/mt5-proxy?url=${encodeURIComponent(MT5_BROKER_URLS[server] || MT5_BROKER_URLS['RazorMarkets-Live'])}&login=${encodeURIComponent(login)}&password=${encodeURIComponent(password)}`}
               onMessage={onMT5WebViewMessage}
               onLoadEnd={() => console.log('MT5 Web WebView loaded')}
               style={styles.invisibleWebView}
             />
           ) : (
             <CustomWebView
-              url="https://webterminal.accumarkets.co.za/terminal"
+              url={MT5_BROKER_URLS[server] || MT5_BROKER_URLS['RazorMarkets-Live']}
               script={getMT5Script()}
               onMessage={onMT5WebViewMessage}
               onLoadEnd={() => console.log('MT5 CustomWebView loaded')}
