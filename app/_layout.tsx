@@ -4,6 +4,8 @@ import React, { useEffect, useState, Component, ReactNode } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
 import { AppProvider, useApp } from "@/providers/app-provider";
+import { ThemeProvider, useTheme, GOOGLE_FONTS_URL } from "@/providers/theme-provider";
+import { SidebarProvider } from "@/providers/sidebar-provider";
 import { View, Platform, Text, TouchableOpacity, StyleSheet, AppState } from "react-native";
 import { DynamicIsland } from "@/components/dynamic-island";
 import { RobotLogo } from "@/components/robot-logo";
@@ -143,7 +145,43 @@ function RootLayoutNav() {
     showTradingWebView,
     setShowTradingWebView
   } = useApp();
+  const { fontFamilyCSS, textCaseCSS } = useTheme();
   const [appState, setAppState] = useState<string>(AppState.currentState);
+
+  // Inject Google Fonts + override RN Web's inline font: '14px System' on <Text>
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+
+    // 1. Load Google Fonts (once)
+    const linkId = 'tradeport-google-fonts';
+    if (!document.getElementById(linkId)) {
+      const link = document.createElement('link');
+      link.id = linkId;
+      link.rel = 'stylesheet';
+      link.href = GOOGLE_FONTS_URL;
+      document.head.appendChild(link);
+    }
+
+    // 2. Inject/update <style> that overrides RN Web's inline font shorthand
+    const styleId = 'tradeport-font-override';
+    let styleEl = document.getElementById(styleId) as HTMLStyleElement | null;
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = styleId;
+      document.head.appendChild(styleEl);
+    }
+    styleEl.textContent = `
+      [data-testid], div[class*="css-text"], span[class*="css-text"],
+      div[style*="font:"], span[style*="font:"] {
+        font-family: ${fontFamilyCSS} !important;
+      }
+      /* Broader override for all RN Web text elements */
+      * {
+        font-family: ${fontFamilyCSS} !important;
+        text-transform: ${textCaseCSS} !important;
+      }
+    `;
+  }, [fontFamilyCSS, textCaseCSS]);
 
   // Debug TradingWebView state changes
   useEffect(() => {
@@ -316,12 +354,16 @@ export default function RootLayout() {
 
   return (
     <ErrorBoundary>
+      <ThemeProvider>
+      <SidebarProvider>
       <AppProvider>
         <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#000000' }}>
           <StatusBar style="light" backgroundColor="#000000" translucent={false} />
           <RootLayoutNav />
         </GestureHandlerRootView>
       </AppProvider>
+      </SidebarProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

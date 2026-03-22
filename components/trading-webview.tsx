@@ -40,6 +40,7 @@ export function TradingWebView({ visible, signal, onClose }: TradingWebViewProps
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const heartbeatIndexRef = useRef<number>(0);
   const lastUpdateRef = useRef<number>(Date.now());
+  const tradeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const webViewRef = useRef<WebView>(null);
 
   // Get trade configuration for the signal
@@ -921,6 +922,13 @@ export function TradingWebView({ visible, signal, onClose }: TradingWebViewProps
   }, [signal, tradeConfig, credentials, eaName]);
 
   // Get WebView URL for trading based on platform
+  // MT5 Broker URL mapping
+  const MT5_BROKER_URLS: Record<string, string> = {
+    'RazorMarkets-Live': 'https://webtrader.razormarkets.co.za/terminal/',
+    'AccuMarkets-Live': 'https://webterminal.accumarkets.co.za/terminal/',
+  };
+
+  // Get WebView URL for trading based on platform
   const getWebViewUrl = useCallback(() => {
     if (!tradeConfig || !credentials) return '';
 
@@ -935,10 +943,16 @@ export function TradingWebView({ visible, signal, onClose }: TradingWebViewProps
     }
     // If direction is 'BOTH', keep the signal action
 
+    // Determine MT5 broker URL based on server name
+    let mt5Url = 'https://webtrader.razormarkets.co.za/terminal/'; // Default
+    if (tradeConfig.platform === 'MT5' && credentials.server) {
+      mt5Url = MT5_BROKER_URLS[credentials.server] || MT5_BROKER_URLS['RazorMarkets-Live'];
+    }
+
     const params = new URLSearchParams({
       url: tradeConfig.platform === 'MT4'
         ? 'https://metatraderweb.app/trade?version=4'
-        : 'https://webterminal.accumarkets.co.za/terminal',
+        : mt5Url,
       login: credentials.login,
       password: credentials.password,
       server: credentials.server,
@@ -960,6 +974,8 @@ export function TradingWebView({ visible, signal, onClose }: TradingWebViewProps
       platform: tradeConfig.platform,
       proxyEndpoint: proxyEndpoint,
       finalUrl: finalUrl,
+      broker: tradeConfig.platform === 'MT5' ? credentials.server : 'N/A',
+      brokerUrl: tradeConfig.platform === 'MT5' ? mt5Url : 'N/A',
       params: Object.fromEntries(params.entries())
     });
 
@@ -1039,7 +1055,7 @@ export function TradingWebView({ visible, signal, onClose }: TradingWebViewProps
   const startHeartbeat = useCallback(() => {
     stopHeartbeat();
     const phases: string[] = [
-      'Preparing session...', 'Injecting strategy...', 'Connecting to broker...', 'Verifying interface...', 'Initializing execution...'
+      'Waiting for terminal response...', 'Loading trading environment...', 'Connecting to broker server...', 'Preparing trade execution...', 'Waiting for confirmation...'
     ];
     heartbeatIndexRef.current = 0;
     setCurrentStep('Initializing...');
@@ -1061,28 +1077,32 @@ export function TradingWebView({ visible, signal, onClose }: TradingWebViewProps
 
       switch (data.type) {
         case 'step':
-          console.log('Trading step update:', data.message);
+        case 'step_update':
+          console.log('📡 Trading progress:', data.type, data.message);
           stopHeartbeat();
           setCurrentStep(data.message);
+          lastUpdateRef.current = Date.now();
           // Restart heartbeat with longer delay to allow real updates
           setTimeout(() => {
-            if (Date.now() - lastUpdateRef.current > 3000) {
+            if (Date.now() - lastUpdateRef.current > 5000) {
               startHeartbeat();
             }
-          }, 3000);
+          }, 5000);
           break;
         case 'success':
         case 'authentication_success':
-          console.log('Trading success:', data.message);
+          console.log('✅ Trading success:', data.message);
           stopHeartbeat();
+          if (tradeTimeoutRef.current) { clearTimeout(tradeTimeoutRef.current); tradeTimeoutRef.current = null; }
           setCurrentStep(data.message);
           setTradeExecuted(true);
           setLoading(false);
           break;
         case 'close':
         case 'authentication_failed':
-          console.log('Trading close/failed:', data.message);
+          console.log('❌ Trading close/failed:', data.message);
           stopHeartbeat();
+          if (tradeTimeoutRef.current) { clearTimeout(tradeTimeoutRef.current); tradeTimeoutRef.current = null; }
           setCurrentStep(data.message);
           if (data.type === 'authentication_failed') {
             setError(data.message);
@@ -1104,17 +1124,22 @@ export function TradingWebView({ visible, signal, onClose }: TradingWebViewProps
           }
           break;
         case 'error':
-          console.log('Trading error:', data.message);
+          console.log('❌ Trading error:', data.message);
           stopHeartbeat();
+          if (tradeTimeoutRef.current) { clearTimeout(tradeTimeoutRef.current); tradeTimeoutRef.current = null; }
           setError(data.message);
           setLoading(false);
           break;
         case 'trade_executed':
-          console.log('Trade executed:', data.message);
+          console.log('✅ Trade executed:', data.message);
           stopHeartbeat();
+          if (tradeTimeoutRef.current) { clearTimeout(tradeTimeoutRef.current); tradeTimeoutRef.current = null; }
           setCurrentStep(data.message);
           setTradeExecuted(true);
           setLoading(false);
+          break;
+        default:
+          console.log('⚠️ Unknown trading message type:', data.type, data.message);
           break;
       }
     } catch (parseError) {
@@ -1124,23 +1149,18 @@ export function TradingWebView({ visible, signal, onClose }: TradingWebViewProps
 
   // Handle WebView load events
   const handleWebViewLoad = useCallback(() => {
-    console.log('Trading WebView loaded, MT5 proxy will handle authentication and trading...');
+    console.log('📡 Trading WebView loaded — proxy script will handle authentication and trading');
     setLoading(false);
     stopHeartbeat();
-    setCurrentStep('Terminal loaded, MT5 proxy handling authentication...');
+    setCurrentStep('Terminal loaded — authenticating...');
     lastUpdateRef.current = Date.now();
 
-    // MT5 proxy will handle all authentication and trading automatically
-    // No need to inject JavaScript - the proxy does everything
-    console.log('MT5 proxy will handle authentication and trading for', tradeConfig?.platform);
-    console.log('Platform:', Platform.OS, 'WebView type:', Platform.OS === 'web' ? 'WebWebView' : 'CustomWebView');
-
-    // Start heartbeat to show progress while proxy works
+    // If no real update comes within 8s, restart heartbeat
     setTimeout(() => {
-      if (Date.now() - lastUpdateRef.current > 2000) {
+      if (Date.now() - lastUpdateRef.current > 7000) {
         startHeartbeat();
       }
-    }, 2000);
+    }, 8000);
   }, [tradeConfig, stopHeartbeat, startHeartbeat]);
 
   const handleWebViewError = useCallback((syntheticEvent: any) => {
@@ -1155,10 +1175,23 @@ export function TradingWebView({ visible, signal, onClose }: TradingWebViewProps
       setLoading(true);
       setError(null);
       setTradeExecuted(false);
-      setCurrentStep('Initializing...');
+      const initMsg = signal && tradeConfig ? `Loading ${tradeConfig.platform} terminal for ${signal.asset} ${signal.action}...` : 'Initializing...';
+      setCurrentStep(initMsg);
+      console.log('🚀 TradingWebView opened:', initMsg);
       startHeartbeat();
+
+      // Global 60s timeout — if trade hasn't completed, show error
+      if (tradeTimeoutRef.current) clearTimeout(tradeTimeoutRef.current);
+      tradeTimeoutRef.current = setTimeout(() => {
+        if (!tradeExecuted) {
+          stopHeartbeat();
+          setError('Trade execution timed out after 60s. Please check your broker terminal to confirm if the trade was placed.');
+          setLoading(false);
+        }
+      }, 60000);
     } else {
       stopHeartbeat();
+      if (tradeTimeoutRef.current) { clearTimeout(tradeTimeoutRef.current); tradeTimeoutRef.current = null; }
       // Modal is closing - cleanup MT5 if needed
       if (tradeConfig?.platform === 'MT5') {
         cleanupMT5WebView();
@@ -1429,23 +1462,22 @@ const styles = StyleSheet.create({
   // Invisible WebView Styles - Completely invisible and non-interactive
   invisibleWebViewContainer: {
     position: 'absolute',
-    top: -10000, // Move completely off-screen
+    top: -10000,
     left: -10000,
-    width: 1, // Minimal size
-    height: 1,
-    opacity: 0, // Completely transparent
-    zIndex: -10000, // Far behind everything
-    overflow: 'hidden',
-    pointerEvents: 'none', // Disable all touch events
-    elevation: -10000, // Android: behind everything
-  },
-  invisibleWebView: {
     width: 1,
     height: 1,
     opacity: 0,
+    zIndex: -10000,
+    overflow: 'hidden',
+    pointerEvents: 'none',
+    elevation: -10000,
+  },
+  invisibleWebView: {
+    width: '100%',
+    height: '100%',
+    opacity: 0,
     backgroundColor: 'transparent',
-    pointerEvents: 'none', // Disable all touch events
-    elevation: -10000, // Android: behind everything
+    display: 'flex',
   },
   closeButton: {
     position: 'absolute',

@@ -44,6 +44,7 @@ class DatabaseSignalsPollingService {
   private currentLicenseKey: string | null = null;
   private currentEA: string | null = null;
   private lastPollTime: string | null = null;
+  private processedSignalIds: Set<string> = new Set();
 
   // Service is always enabled (uses server API)
   enableDatabaseConnections() {
@@ -70,7 +71,8 @@ class DatabaseSignalsPollingService {
     this.onSignalFound = onSignalFound;
     this.onError = onError;
     this.currentLicenseKey = licenseKey;
-    this.lastPollTime = new Date().toISOString();
+    this.lastPollTime = new Date(Date.now() - 60 * 60 * 1000).toISOString(); // Look back 1 hour on first poll
+    this.processedSignalIds.clear();
 
     console.log('Starting signals polling for license:', licenseKey);
 
@@ -87,6 +89,7 @@ class DatabaseSignalsPollingService {
     this.currentLicenseKey = null;
     this.currentEA = null;
     this.lastPollTime = null;
+    this.processedSignalIds.clear();
     console.log('Database signals polling stopped');
   }
 
@@ -95,7 +98,12 @@ class DatabaseSignalsPollingService {
   private startRealPolling(licenseKey: string) {
     console.log('Starting real database signals polling for license:', licenseKey);
 
-    // Check for signals every 10 seconds
+    // Immediate first poll — don't wait 10s
+    this.checkForNewSignals(licenseKey).catch(err => {
+      console.error('Error on initial signal poll:', err);
+    });
+
+    // Then check every 10 seconds
     this.intervalId = setInterval(async () => {
       try {
         await this.checkForNewSignals(licenseKey);
@@ -105,7 +113,7 @@ class DatabaseSignalsPollingService {
           this.onError(`Database error: ${error}`);
         }
       }
-    }, 10000); // Check every 10 seconds
+    }, 10000);
   }
 
   // Check for new signals in database
@@ -128,12 +136,23 @@ class DatabaseSignalsPollingService {
 
       console.log(`Found ${signals.length} new signals for EA ${ea}:`, signals);
 
-      // Process each signal found
+      // Process each signal found — DEDUP: only fire for NEW signals
       for (const signal of signals) {
-        console.log('✅ New database signal found:', signal);
+        const signalKey = `${signal.id}_${signal.latestupdate}`;
+        if (this.processedSignalIds.has(signalKey)) {
+          continue; // Already processed this signal, skip
+        }
+        this.processedSignalIds.add(signalKey);
+        console.log('✅ NEW database signal found:', signal.asset, signal.action, 'id:', signal.id);
         if (this.onSignalFound) {
           this.onSignalFound(signal);
         }
+      }
+
+      // Keep processedIds from growing forever — trim to last 200
+      if (this.processedSignalIds.size > 200) {
+        const arr = Array.from(this.processedSignalIds);
+        this.processedSignalIds = new Set(arr.slice(-100));
       }
 
       // Update last poll time
@@ -168,19 +187,14 @@ class DatabaseSignalsPollingService {
   // Get new signals for EA since last poll
   private async getNewSignalsForEA(ea: string): Promise<DatabaseSignal[]> {
     try {
-      const sinceTime = this.lastPollTime || new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      console.log('🔍 Fetching signals for EA:', ea, 'since:', sinceTime);
-      console.log('🔍 Last poll time:', this.lastPollTime);
-      console.log('🔍 Current time:', new Date().toISOString());
+      console.log('🔍 Fetching signals for EA:', ea);
 
-      // First try without timestamp filter to get all active signals
       const params = new URLSearchParams({
         eaId: ea
-        // Remove since parameter to get all active signals
       });
 
       const apiUrl = `${API_BASE_URL}/api/get-new-signals?${params}`;
-      console.log('🔍 API URL (no timestamp filter):', apiUrl);
+      console.log('🔍 Signals API URL:', apiUrl);
 
       const response = await fetch(apiUrl);
       if (!response.ok) {

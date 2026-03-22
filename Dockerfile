@@ -10,10 +10,9 @@ ENV EXPO_NO_TELEMETRY=1
 
 WORKDIR /app
 
-# Install dependencies first (better layer cache)
+# Install dependencies (ajv@8 in package.json fixes codegen module issue)
 COPY package.json bun.lock ./
-# Ensure devDependencies (e.g., @expo/cli) are installed for the build step
-RUN NODE_ENV=development bun install --frozen-lockfile
+RUN NODE_ENV=development bun install
 
 # Copy the rest of the source
 COPY . .
@@ -24,7 +23,7 @@ RUN node ./node_modules/.bin/expo export --platform web
 # Run post-build script to set up PWA manifest and icons
 RUN node scripts/post-build.js
 
-# Remove build tools and Node to slim image (keep nodejs for post-build script)
+# Remove build tools and Node to slim image
 RUN apk del python3 make g++
 
 # Create non-root user for security
@@ -35,12 +34,8 @@ RUN adduser -S nextjs -u 1001
 RUN chown -R nextjs:nodejs /app
 USER nextjs
 
-# Serve the static site (Render injects PORT at runtime)
-
 # Health check - optimized for faster startup
 HEALTHCHECK --interval=15s --timeout=2s --start-period=3s --retries=2 \
   CMD curl -f http://localhost:$PORT/health || exit 1
 
 CMD ["bun", "run", "serve:dist"]
-
-

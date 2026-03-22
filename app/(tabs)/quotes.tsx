@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Animated } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Animated, Platform, RefreshControl } from 'react-native';
 import { ArrowLeft, Circle, RefreshCw } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useApp } from '@/providers/app-provider';
+import { useTheme } from '@/providers/theme-provider';
+import { PageBackground } from '@/components/page-background';
 import { Symbol as ApiSymbol, apiService } from '@/services/api';
 
 interface Quote {
@@ -31,6 +33,13 @@ const mockQuotes: Quote[] = [
 
 export default function QuotesScreen() {
   const { eas, activeSymbols, mt4Symbols, mt5Symbols } = useApp();
+  const { theme: thm, glassMode } = useTheme();
+  const a = thm.accentRgb;
+  const ac = thm.accent;
+  const isNeon = glassMode === 'neon';
+  const isLiquid = glassMode === 'liquid';
+  const isCmd = glassMode === 'commander';
+  const cc = ac;
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [apiSymbols, setApiSymbols] = useState<ApiSymbol[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -39,6 +48,13 @@ export default function QuotesScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const primaryEA = eas.length > 0 ? eas[0] : null;
+  const primaryEAImage = (() => {
+    if (!primaryEA || !primaryEA.userData || !primaryEA.userData.owner) return null;
+    const raw = (primaryEA.userData.owner.logo || '').toString().trim();
+    if (!raw) return null;
+    if (/^https?:\/\//i.test(raw)) return raw;
+    return 'https://tradeportea.com/admin/uploads/' + raw.replace(/^\/+/, '');
+  })();
   const hasActiveQuotes = activeSymbols.length > 0 || mt4Symbols.length > 0 || mt5Symbols.length > 0;
   const hasConnectedEA = primaryEA && primaryEA.status === 'connected' && primaryEA.phoneSecretKey;
 
@@ -228,7 +244,8 @@ export default function QuotesScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, Platform.OS === 'web' && { backgroundImage: isNeon ? 'linear-gradient(135deg, rgba(' + a + ', 0.9) 0%, rgba(' + a + ', 0.5) 30%, rgba(' + a + ', 0.1) 65%, rgba(0,0,0,0.95) 90%, #000 100%)' : isLiquid ? 'linear-gradient(160deg, #1a1a1e 0%, #111113 40%, #0a0a0c 100%)' : isCmd ? 'linear-gradient(170deg, rgba(30,10,10,0.6) 0%, #050505 40%, #000 100%)' : 'linear-gradient(160deg, rgba(' + a + ', 0.08) 0%, #050505 40%, #000 100%)' }]}>
+      <PageBackground eaImage={primaryEAImage} />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
@@ -237,49 +254,24 @@ export default function QuotesScreen() {
 
         <View style={styles.headerContent}>
           <View style={styles.titleContainer}>
-            <Text style={styles.headerTitle}>QUOTES</Text>
+            <Text style={[styles.headerTitle, { color: cc }]}>QUOTES</Text>
             {primaryEA && (
               <View style={styles.statusContainer}>
-                <Circle
-                  color={hasActiveQuotes ? '#00FF00' : '#666666'}
-                  fill={hasActiveQuotes ? '#00FF00' : 'transparent'}
-                  size={8}
-                />
+                <Circle color={hasActiveQuotes ? '#00FF00' : '#666666'} fill={hasActiveQuotes ? '#00FF00' : 'transparent'} size={8} />
                 <Text style={[styles.statusText, { color: hasActiveQuotes ? '#00FF00' : '#666666' }]}>
                   {hasActiveQuotes ? 'ACTIVE' : 'INACTIVE'}
                 </Text>
               </View>
             )}
           </View>
-          {primaryEA && (
-            <Text style={styles.botName} numberOfLines={2} ellipsizeMode="tail">{primaryEA.name}</Text>
-          )}
-          {apiSymbols.length > 0 && (
-            <Text style={styles.symbolCount}>{apiSymbols.length} symbols available</Text>
-          )}
+          {primaryEA && <Text style={styles.botName} numberOfLines={2} ellipsizeMode="tail">{primaryEA.name}</Text>}
+          {apiSymbols.length > 0 && <Text style={styles.symbolCount}>{apiSymbols.length} symbols available</Text>}
         </View>
 
         {hasConnectedEA && (
-          <TouchableOpacity
-            style={[styles.refreshButton, refreshing && styles.refreshButtonDisabled]}
-            onPress={handleRefresh}
-            disabled={refreshing}
-            activeOpacity={refreshing ? 1 : 0.7}
-          >
-            <Animated.View
-              style={{
-                transform: [{
-                  rotate: rotateAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: ['0deg', '360deg'],
-                  })
-                }]
-              }}
-            >
-              <RefreshCw
-                color={refreshing ? '#666666' : '#FFFFFF'}
-                size={20}
-              />
+          <TouchableOpacity style={[styles.refreshButton, refreshing && styles.refreshButtonDisabled]} onPress={handleRefresh} disabled={refreshing} activeOpacity={refreshing ? 1 : 0.7}>
+            <Animated.View style={{ transform: [{ rotate: rotateAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }] }}>
+              <RefreshCw color={refreshing ? '#666666' : '#FFFFFF'} size={20} />
             </Animated.View>
           </TouchableOpacity>
         )}
@@ -289,24 +281,24 @@ export default function QuotesScreen() {
       <View style={styles.content}>
         {loading && !refreshing ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator testID="quotes-loading" size="large" color="#00FF00" />
+            <ActivityIndicator testID="quotes-loading" size="large" color={cc} />
             <Text style={styles.loadingText}>Loading symbols...</Text>
           </View>
         ) : error ? (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>{error}</Text>
             {hasConnectedEA ? (
-              <TouchableOpacity style={styles.retryButton} onPress={handleRetry}>
+              <TouchableOpacity style={[styles.retryButton, Platform.OS === 'web' && { boxShadow: '0 4px 16px rgba(' + a + ', 0.2)' }]} onPress={handleRetry}>
                 <Text style={styles.retryButtonText}>Retry</Text>
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity style={styles.retryButton} onPress={() => router.push('/license')}>
+              <TouchableOpacity style={[styles.retryButton, Platform.OS === 'web' && { boxShadow: '0 4px 16px rgba(' + a + ', 0.2)' }]} onPress={() => router.push('/license')}>
                 <Text style={styles.retryButtonText}>Connect EA</Text>
               </TouchableOpacity>
             )}
           </View>
         ) : (
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchSymbols(true)} tintColor={cc} colors={[cc]} />}>
             {quotesWithActiveStatus.length === 0 ? (
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyText}>No symbols available</Text>
@@ -317,48 +309,30 @@ export default function QuotesScreen() {
                 <TouchableOpacity
                   testID={`quote-item-${quote.symbol}`}
                   key={quote.symbol}
-                  style={[
-                    styles.quoteCard,
-                    quote.isActive && styles.activeQuoteCard
-                  ]}
+                  style={[styles.quoteCard, quote.isActive && styles.activeQuoteCard, Platform.OS === 'web' && (isNeon ? { background: 'radial-gradient(ellipse 120% 50% at 20% 20%, rgba(255,255,255,0.12) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.06) 0%, rgba(0,0,0,0.65) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.2), 0 4px 8px rgba(0,0,0,0.3), 0 12px 24px rgba(0,0,0,0.25), 0 0 0 0.5px rgba(255,255,255,0.06)' } : isLiquid ? { background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.4) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', borderColor: 'rgba(' + a + ', 0.4)', borderWidth: '1.5px', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15), 0 0 8px rgba(' + a + ', 0.5), 0 0 20px rgba(' + a + ', 0.35), 0 0 40px rgba(' + a + ', 0.2)' } : isCmd ? { background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderColor: ac, borderWidth: '2px', boxShadow: '0 0 10px rgba(' + a + ', 0.3), 0 0 20px rgba(' + a + ', 0.15), 0 4px 14px rgba(0,0,0,0.4)' } : { background: 'linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.5) 100%)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.1), 0 4px 12px rgba(0,0,0,0.35), 0 0 24px rgba(' + a + ', 0.25), 0 0 48px rgba(' + a + ', 0.1)' })]}
                   onPress={() => handleQuoteTap(quote.symbol)}
                   activeOpacity={0.7}
                 >
                   <View style={styles.quoteHeader}>
                     <View style={styles.symbolContainer}>
                       <Text style={styles.symbol}>{quote.symbol}</Text>
-                      {quote.isActive && (
-                        <Circle
-                          color="#00FF00"
-                          fill="#00FF00"
-                          size={8}
-                          style={styles.activeIndicator}
-                        />
-                      )}
+                      {quote.isActive && <Circle color="#00FF00" fill="#00FF00" size={8} style={styles.activeIndicator} />}
                     </View>
-
                   </View>
-
                   <View style={styles.priceContainer}>
                     <View style={styles.priceColumn}>
                       <Text style={styles.priceLabel}>LOT SIZE</Text>
                       <Text style={styles.priceValue}>{formatLotSize(quote.lotSize)}</Text>
                     </View>
-
                     <View style={styles.priceColumn}>
                       <Text style={styles.priceLabel}>PLATFORM</Text>
                       <Text style={styles.platformValue}>{quote.platform}</Text>
                     </View>
-
                     <View style={styles.priceColumn}>
                       <Text style={styles.priceLabel}>DIRECTION</Text>
-                      <Text style={[
-                        styles.directionValue,
-                        { color: quote.direction === 'BUY' ? '#00FF88' : quote.direction === 'SELL' ? '#FF4444' : '#FFAA00' }
-                      ]}>{quote.direction}</Text>
+                      <Text style={[styles.directionValue, { color: quote.direction === 'BUY' ? '#00FF88' : quote.direction === 'SELL' ? '#FF4444' : '#FFAA00' }]}>{quote.direction}</Text>
                     </View>
                   </View>
-
                 </TouchableOpacity>
               ))
             )}
@@ -372,193 +346,64 @@ export default function QuotesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
-    ...(Platform.OS === 'web' && {
-      backgroundImage: 'linear-gradient(135deg, rgba(255, 26, 26, 0.95) 0%, rgba(255, 26, 26, 0.85) 10%, rgba(255, 26, 26, 0.75) 20%, rgba(255, 26, 26, 0.65) 30%, rgba(255, 26, 26, 0.55) 40%, rgba(255, 26, 26, 0.45) 50%, rgba(255, 26, 26, 0.35) 60%, rgba(255, 26, 26, 0.25) 70%, rgba(255, 26, 26, 0.15) 80%, rgba(255, 26, 26, 0.08) 90%, rgba(255, 26, 26, 0.03) 95%, rgba(0, 0, 0, 1) 100%)',
-    }),
+    backgroundColor: '#050505',
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#FF0000',
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 20, paddingVertical: 16,
+    borderBottomWidth: 0.5, borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   backButton: {
-    marginRight: 16,
-    padding: 4,
+    marginRight: 16, padding: 8, borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
   },
-  headerContent: {
-    flex: 1,
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  headerTitle: {
-    color: '#FF0000',
-    fontSize: 18,
-    fontWeight: 'bold',
-    letterSpacing: 1,
-    marginRight: 12,
-  },
-  statusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statusText: {
-    fontSize: 10,
-    fontWeight: '600',
-    marginLeft: 4,
-    letterSpacing: 0.5,
-  },
-  botName: {
-    color: '#CCCCCC',
-    fontSize: 12,
-    fontWeight: '500',
-    flex: 1,
-    flexWrap: 'wrap',
-    textAlign: 'center',
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 16,
-  },
+  headerContent: { flex: 1 },
+  titleContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
+  headerTitle: { fontSize: 18, fontWeight: '800', letterSpacing: 1.5, marginRight: 12 },
+  statusContainer: { flexDirection: 'row', alignItems: 'center' },
+  statusText: { fontSize: 10, fontWeight: '600', marginLeft: 4, letterSpacing: 0.5 },
+  botName: { color: '#CCCCCC', fontSize: 12, fontWeight: '500', textAlign: 'center' },
+  content: { flex: 1, paddingHorizontal: 20, paddingTop: 16 },
   refreshButton: {
-    padding: 8,
-    marginLeft: 8,
-    borderRadius: 20,
+    padding: 10, marginLeft: 8, borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
   },
-  refreshButtonDisabled: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  symbolCount: {
-    color: '#888888',
-    fontSize: 10,
-    fontWeight: '400',
-    marginTop: 2,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  loadingText: {
-    color: '#CCCCCC',
-    fontSize: 16,
-    marginTop: 16,
-    fontWeight: '500',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: 20,
-  },
-  errorText: {
-    color: '#FF4444',
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 20,
-    lineHeight: 24,
-  },
+  refreshButtonDisabled: { backgroundColor: 'rgba(255, 255, 255, 0.03)' },
+  symbolCount: { color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: '400', marginTop: 2 },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 60 },
+  loadingText: { color: '#CCCCCC', fontSize: 16, marginTop: 16, fontWeight: '500' },
+  errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 60, paddingHorizontal: 20 },
+  errorText: { color: '#FF4444', fontSize: 16, textAlign: 'center', marginBottom: 20, lineHeight: 24 },
   retryButton: {
-    backgroundColor: '#1A1A1A',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.08)', paddingHorizontal: 28, paddingVertical: 14,
+    borderRadius: 16, borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.15)',
   },
-  retryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  emptyText: {
-    color: '#CCCCCC',
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    color: '#888888',
-    fontSize: 14,
-    textAlign: 'center',
-  },
+  retryButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
+  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 60 },
+  emptyText: { color: '#CCCCCC', fontSize: 18, fontWeight: '600', marginBottom: 8 },
+  emptySubtext: { color: 'rgba(255,255,255,0.4)', fontSize: 14, textAlign: 'center' },
   quoteCard: {
-    backgroundColor: 'transparent',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 26, 26, 0.9)',
-  },
-  quoteHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  symbolContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  symbol: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
-  },
-  activeIndicator: {
-    marginLeft: 8,
+    backgroundColor: 'rgba(44, 44, 46, 0.65)', borderRadius: 22, padding: 18, marginBottom: 14,
+    borderWidth: 0.5, borderColor: 'rgba(255, 255, 255, 0.12)',
+    ...(Platform.OS !== 'web' && {
+      shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.35, shadowRadius: 16, elevation: 6,
+    }),
   },
   activeQuoteCard: {
-    borderColor: '#00FF00',
-    borderWidth: 1,
+    borderColor: 'rgba(0, 255, 0, 0.4)', borderWidth: 1,
+    ...(Platform.OS === 'web' && { boxShadow: '0 0 20px rgba(0, 255, 0, 0.1)' }),
   },
-
-  priceContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  priceColumn: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  priceLabel: {
-    color: '#888888',
-    fontSize: 10,
-    fontWeight: '500',
-    marginBottom: 4,
-    letterSpacing: 0.5,
-  },
-  priceValue: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-    fontFamily: 'monospace',
-  },
-  platformValue: {
-    color: '#CCCCCC',
-    fontSize: 14,
-    fontWeight: '500',
-    fontFamily: 'monospace',
-  },
-  directionValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    fontFamily: 'monospace',
-  },
-
+  quoteHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+  symbolContainer: { flexDirection: 'row', alignItems: 'center' },
+  symbol: { color: '#FFFFFF', fontSize: 18, fontWeight: '700', letterSpacing: 0.5 },
+  activeIndicator: { marginLeft: 8 },
+  priceContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+  priceColumn: { alignItems: 'center', flex: 1 },
+  priceLabel: { color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: '600', marginBottom: 6, letterSpacing: 0.8 },
+  priceValue: { color: '#FFFFFF', fontSize: 16, fontWeight: '600', fontFamily: 'monospace' },
+  platformValue: { color: '#CCCCCC', fontSize: 14, fontWeight: '500', fontFamily: 'monospace' },
+  directionValue: { fontSize: 14, fontWeight: '600', fontFamily: 'monospace' },
 });

@@ -111,13 +111,15 @@ const WebWebView: React.FC<WebWebViewProps> = ({
   // Handle messages from the iframe
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      if (iframeRef.current && event.source === iframeRef.current.contentWindow) {
-        try {
-          const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-          console.log('Web WebView message received:', data);
+      // Accept messages from our iframe OR any nested frames within it
+      try {
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        
+        // Only process messages that look like our trading/auth messages
+        if (data && data.type && (data.type === 'step' || data.type === 'step_update' || data.type === 'success' || data.type === 'error' || data.type === 'close' || data.type === 'authentication_success' || data.type === 'authentication_failed' || data.type === 'trade_executed')) {
+          console.log('📡 WebView message received:', data.type, data.message);
 
           if (onMessage) {
-            // Convert web iframe message format to React Native WebView format
             const rnEvent = {
               nativeEvent: {
                 data: typeof event.data === 'string' ? event.data : JSON.stringify(event.data)
@@ -125,9 +127,9 @@ const WebWebView: React.FC<WebWebViewProps> = ({
             };
             onMessage(rnEvent);
           }
-        } catch (error) {
-          console.log('Error parsing web iframe message:', error);
         }
+      } catch (error) {
+        // Not a JSON message or not from our iframe — ignore silently
       }
     };
 

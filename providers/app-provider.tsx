@@ -1,5 +1,5 @@
 import createContextHook from '@nkzw/create-context-hook';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform, Alert } from 'react-native';
 import { LicenseData } from '@/services/api';
@@ -127,6 +127,18 @@ export const [AppProvider, useApp] = createContextHook<AppState>(() => {
   const [showTradingWebView, setShowTradingWebView] = useState<boolean>(false);
   const [databaseSignal, setDatabaseSignal] = useState<DatabaseSignal | null>(null);
   const [isDatabaseSignalsPolling, setIsDatabaseSignalsPolling] = useState<boolean>(false);
+
+  // Refs for latest symbol arrays — used in database signal handler to avoid stale closures
+  const activeSymbolsRef = useRef<ActiveSymbol[]>([]);
+  const mt4SymbolsRef = useRef<MT4Symbol[]>([]);
+  const mt5SymbolsRef = useRef<MT5Symbol[]>([]);
+  const mt4AccountRef = useRef<MT4Account | null>(null);
+  const mt5AccountRef = useRef<MT5Account | null>(null);
+  useEffect(() => { activeSymbolsRef.current = activeSymbols; }, [activeSymbols]);
+  useEffect(() => { mt4SymbolsRef.current = mt4Symbols; }, [mt4Symbols]);
+  useEffect(() => { mt5SymbolsRef.current = mt5Symbols; }, [mt5Symbols]);
+  useEffect(() => { mt4AccountRef.current = mt4Account; }, [mt4Account]);
+  useEffect(() => { mt5AccountRef.current = mt5Account; }, [mt5Account]);
 
   // Load persisted data on mount
   useEffect(() => {
@@ -715,6 +727,30 @@ export const [AppProvider, useApp] = createContextHook<AppState>(() => {
             // Update new signal for dynamic island
             console.log('🎯 Setting new signal for dynamic island:', signalLog);
             setNewSignal(signalLog);
+
+            // ===== TRIGGER TRADING — check if signal is for an active symbol =====
+            const symbolName = signal.asset;
+            const isActiveInLegacy = activeSymbolsRef.current.some(s => s.symbol === symbolName);
+            const isActiveInMT4 = mt4SymbolsRef.current.some(s => s.symbol === symbolName);
+            const isActiveInMT5 = mt5SymbolsRef.current.some(s => s.symbol === symbolName);
+
+            console.log('🎯 Database signal — checking active symbols:', {
+              symbolName,
+              isActiveInLegacy,
+              isActiveInMT4,
+              isActiveInMT5,
+              activeSymbols: activeSymbolsRef.current.map(s => s.symbol),
+              mt4Symbols: mt4SymbolsRef.current.map(s => s.symbol),
+              mt5Symbols: mt5SymbolsRef.current.map(s => s.symbol)
+            });
+
+            if (isActiveInLegacy || isActiveInMT4 || isActiveInMT5) {
+              console.log('✅ Database signal — TRIGGERING TRADE:', symbolName, signal.action);
+              setTradingSignal(signalLog);
+              setShowTradingWebView(true);
+            } else {
+              console.log('⚠️ Database signal received but symbol not in active list:', symbolName);
+            }
           };
 
           const onDatabaseError = (error: string) => {

@@ -68,13 +68,16 @@ iconFiles.forEach(file => {
   }
 });
 
-// Copy service worker to dist folder
+// Copy service worker to dist folder with build-time cache bust
 const swSrcPath = path.join(__dirname, '..', 'public', 'sw.js');
 const swDestPath = path.join(distPath, 'sw.js');
 
 if (fs.existsSync(swSrcPath)) {
-  fs.copyFileSync(swSrcPath, swDestPath);
-  console.log('Copied service worker to dist/');
+  let swContent = fs.readFileSync(swSrcPath, 'utf8');
+  const buildTimestamp = Date.now();
+  swContent = swContent.replace('Date.now()', `${buildTimestamp}`);
+  fs.writeFileSync(swDestPath, swContent);
+  console.log(`Copied service worker to dist/ with build stamp ${buildTimestamp}`);
 }
 
 // Update index.html to include manifest and Apple meta tags

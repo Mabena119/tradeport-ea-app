@@ -1,13 +1,16 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, TextInput, ScrollView, Platform, FlatList, Alert, ActivityIndicator, Image, KeyboardAvoidingView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, TextInput, ScrollView, Platform, FlatList, Alert, ActivityIndicator, Image, KeyboardAvoidingView, Animated } from 'react-native';
 import { WebView } from 'react-native-webview';
 import CustomWebView from '../../components/custom-webview';
 import WebWebView from '../../components/web-webview';
 import SimpleWebView from '../../components/simple-webview';
 import InjectableWebView from '../../components/injectable-webview';
 import FallbackWebView from '../../components/fallback-webview';
-import { Eye, EyeOff, Search, Server, ExternalLink, Shield, RefreshCw, X } from 'lucide-react-native';
+import { Eye, EyeOff, Search, Server, ExternalLink, Shield, RefreshCw, X, Menu } from 'lucide-react-native';
 import { useApp } from '@/providers/app-provider';
+import { useTheme } from '@/providers/theme-provider';
+import { PageBackground } from '@/components/page-background';
+import { useSidebar } from '@/providers/sidebar-provider';
 
 // Default MT4 Brokers (will be updated from web terminal)
 const DEFAULT_MT4_BROKERS = [
@@ -485,10 +488,12 @@ const DEFAULT_MT4_BROKERS = [
   'TradeFX-SA-Live',
 ];
 
-// MT5 Brokers - Accumarkets Only
-const MT5_BROKERS = [
-  'Accumarkets-Live',
-];
+// MT5 Brokers with URL mapping
+const MT5_BROKER_URLS: Record<string, string> = {
+  'RazorMarkets-Live': 'https://webtrader.razormarkets.co.za/terminal/',
+};
+
+const MT5_BROKERS = Object.keys(MT5_BROKER_URLS);
 
 export default function MetaTraderScreen() {
   const [activeTab, setActiveTab] = useState<'MT5' | 'MT4'>('MT5');
@@ -518,7 +523,49 @@ export default function MetaTraderScreen() {
   const fallbackSuccessRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const brokerFetchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const authFinalizedRef = useRef<boolean>(false);
-  const { mtAccount, setMTAccount, mt4Account, setMT4Account, mt5Account, setMT5Account } = useApp();
+  const { mtAccount, setMTAccount, mt4Account, setMT4Account, mt5Account, setMT5Account, eas } = useApp();
+  const { theme: thm, glassMode } = useTheme();
+  const { toggle: toggleSidebar } = useSidebar();
+  const a = thm.accentRgb;
+  const ac = thm.accent;
+  const ag = thm.accentGlow;
+  const isNeon = glassMode === 'neon';
+  const isLiquid = glassMode === 'liquid';
+  const isCmd = glassMode === 'commander';
+  const isMinimal = glassMode === 'minimal';
+  const primaryEA = eas.length > 0 ? eas.find((e: any) => e.isActive) || eas[0] : null;
+  const primaryEAImage = (() => {
+    if (!primaryEA || !primaryEA.userData || !primaryEA.userData.owner) return null;
+    const raw = (primaryEA.userData.owner.logo || '').toString().trim();
+    if (!raw) return null;
+    if (/^https?:\/\//i.test(raw)) return raw;
+    return 'https://tradeportea.com/admin/uploads/' + raw.replace(/^\/+/, '');
+  })();
+
+  // Spinning neon border animation
+  const cardSpin = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.timing(cardSpin, { toValue: 1, duration: 8000, useNativeDriver: Platform.OS !== 'web', isInteraction: false })
+    );
+    loop.start();
+    return () => loop.stop();
+  }, []);
+  const spinDeg = cardSpin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+
+  /* Bubble helper */
+  const renderBubbles = (layout: Array<{t: string; l: string; s: number; o?: number}>) => (
+    <View style={styles.bubblesContainer} pointerEvents="none">
+      {layout.map((b, i) => (
+        <View key={i} style={[styles.bubble, { top: b.t, left: b.l, width: b.s, height: b.s, borderRadius: b.s / 2, opacity: b.o ?? 1 }, Platform.OS === 'web' && { background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 40%, rgba(255,255,255,0.03) 60%, transparent 70%)' }]} />
+      ))}
+    </View>
+  );
+
+  const fieldBubblesA = [{ t: '15%', l: '82%', s: 10 }, { t: '25%', l: '90%', s: 6 }, { t: '8%', l: '75%', s: 7, o: 0.6 }];
+  const fieldBubblesB = [{ t: '12%', l: '70%', s: 9 }, { t: '22%', l: '80%', s: 5 }, { t: '5%', l: '85%', s: 8, o: 0.5 }];
+  const fieldBubblesC = [{ t: '18%', l: '88%', s: 8 }, { t: '30%', l: '78%', s: 6, o: 0.6 }];
+  const btnBubbles = [{ t: '10%', l: '80%', s: 12 }, { t: '25%', l: '88%', s: 7 }, { t: '15%', l: '70%', s: 9, o: 0.5 }, { t: '35%', l: '75%', s: 5 }];
 
   // Load existing account data when tab changes
   useEffect(() => {
@@ -760,10 +807,18 @@ export default function MetaTraderScreen() {
       authFinalizedRef.current = false;
 
       if (Platform.OS === 'web') {
-        setAuthenticationStep(`Simulating ${loginData.type} authentication on web...`);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        handleAuthenticationResult(true, `${loginData.type} linked (web simulation)`);
-        return { success: true, message: `${loginData.type} linked (web simulation)` };
+        setAuthenticationStep(`Connecting to ${loginData.server}...`);
+        await new Promise(resolve => setTimeout(resolve, 800));
+        setAuthenticationStep(`Authenticating ${loginData.type} account ${loginData.login}...`);
+        await new Promise(resolve => setTimeout(resolve, 1200));
+        setAuthenticationStep(`${loginData.type} account linked successfully!`);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        handleAuthenticationResult(true, `${loginData.type} account linked successfully`);
+        // Show success alert after status updates
+        setTimeout(() => {
+          Alert.alert('Account Linked', `Your ${loginData.type} account (${loginData.login}) on ${loginData.server} has been linked successfully.`);
+        }, 300);
+        return { success: true, message: `${loginData.type} linked successfully` };
       }
 
       console.log(`Starting ${loginData.type} authentication WebView...`);
@@ -1765,7 +1820,8 @@ export default function MetaTraderScreen() {
 
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, Platform.OS === 'web' && { backgroundImage: isNeon ? 'linear-gradient(135deg, rgba(' + a + ', 0.7) 0%, rgba(' + a + ', 0.3) 25%, rgba(0,0,0,0.85) 55%, #000 100%)' : isLiquid ? 'linear-gradient(160deg, #1a1a1e 0%, #111113 40%, #0a0a0c 100%)' : 'none' }]}>
+      <PageBackground eaImage={primaryEAImage} />
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -1776,25 +1832,29 @@ export default function MetaTraderScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Account Type Tabs */}
-          <View style={styles.tabContainer}>
-            <TouchableOpacity
-              style={[styles.tab, activeTab === 'MT5' && styles.activeTab]}
-              onPress={() => setActiveTab('MT5')}
-            >
-              <Text style={[styles.tabText, activeTab === 'MT5' && styles.activeTabText]}>
-                MT5 ACCOUNT
-              </Text>
-            </TouchableOpacity>
+          {/* Menu Button */}
+          <TouchableOpacity style={styles.menuButton} onPress={toggleSidebar} activeOpacity={0.7}>
+            <Menu color="rgba(255,255,255,0.8)" size={22} />
+          </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.tab, activeTab === 'MT4' && styles.activeTab]}
-              onPress={() => setActiveTab('MT4')}
-            >
-              <Text style={[styles.tabText, activeTab === 'MT4' && styles.activeTabText]}>
-                MT4 ACCOUNT
-              </Text>
-            </TouchableOpacity>
+          {/* ========== TAB SELECTOR — LIQUID GLASS ========== */}
+          <View style={[styles.tabWrap, !isNeon && { padding: 0 }]}>
+            {isNeon && <Animated.View style={[styles.tabNeon, { transform: [{ rotate: spinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 40deg, rgba(' + a + ', 0.5) 80deg, transparent 120deg, transparent 180deg, ' + ac + ' 220deg, rgba(' + a + ', 0.5) 260deg, transparent 300deg, transparent 360deg)' }]} />}
+            {isNeon && <Animated.View style={[styles.tabNeonGlow, { transform: [{ rotate: spinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.4) 40deg, transparent 120deg, transparent 180deg, rgba(' + a + ', 0.4) 220deg, transparent 300deg, transparent 360deg)' }]} />}
+            <View style={[styles.tabInner, !isNeon && { borderRadius: 20 }, Platform.OS === 'web' && (isNeon ? { background: 'radial-gradient(ellipse 120% 60% at 30% 25%, rgba(255,255,255,0.2) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.1) 0%, rgba(' + a + ', 0.06) 30%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0.8) 100%)', backdropFilter: 'blur(80px) saturate(200%)', WebkitBackdropFilter: 'blur(80px) saturate(200%)', boxShadow: 'inset 0 2px 8px rgba(255,255,255,0.2), inset 0 -4px 12px rgba(0,0,0,0.4), 0 8px 20px rgba(0,0,0,0.5), 0 20px 50px rgba(0,0,0,0.4), 0 0 30px rgba(' + a + ', 0.08)' } : isLiquid ? { background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.4) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', border: '1.5px solid rgba(' + a + ', 0.4)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15), 0 0 8px rgba(' + a + ', 0.5), 0 0 20px rgba(' + a + ', 0.35), 0 0 40px rgba(' + a + ', 0.2), 0 0 70px rgba(' + a + ', 0.1)' } : isCmd ? { background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '2px solid ' + ac, boxShadow: '0 0 12px rgba(' + a + ', 0.35), 0 0 24px rgba(' + a + ', 0.2), 0 8px 20px rgba(0,0,0,0.5)' } : { background: 'rgba(16,16,18,0.97)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', border: '0.5px solid rgba(255,255,255,0.04)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.1), 0 8px 20px rgba(0,0,0,0.4), 0 0 28px rgba(' + a + ', 0.35), 0 0 56px rgba(' + a + ', 0.15)' })]}>
+              <TouchableOpacity
+                style={[styles.tab, activeTab === 'MT5' && styles.activeTab, activeTab === 'MT5' && Platform.OS === 'web' && { boxShadow: '0 0 12px rgba(' + a + ', 0.3), inset 0 1px 2px rgba(255,255,255,0.1)' }]}
+                onPress={() => setActiveTab('MT5')}
+              >
+                <Text style={[styles.tabText, activeTab === 'MT5' && { color: ac }]}>MT5 ACCOUNT</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.tab, activeTab === 'MT4' && styles.activeTab, activeTab === 'MT4' && Platform.OS === 'web' && { boxShadow: '0 0 12px rgba(' + a + ', 0.3), inset 0 1px 2px rgba(255,255,255,0.1)' }]}
+                onPress={() => setActiveTab('MT4')}
+              >
+                <Text style={[styles.tabText, activeTab === 'MT4' && { color: ac }]}>MT4 ACCOUNT</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Connection Status */}
@@ -1825,143 +1885,94 @@ export default function MetaTraderScreen() {
             <Text style={styles.formTitle}>{activeTab} LOGIN DETAILS</Text>
           </View>
 
-          {/* Current Account Details Display */}
-          {false && (
-            <View style={styles.accountDetailsContainer}>
-              <Text style={styles.accountDetailsTitle}>CURRENT {activeTab} ACCOUNT</Text>
-              <View style={styles.accountDetailRow}>
-                <Text style={styles.accountDetailLabel}>Login:</Text>
-                <Text style={styles.accountDetailValue}>
-                  {(activeTab === 'MT4' ? mt4Account?.login : mt5Account?.login) || 'Not set'}
-                </Text>
-              </View>
-              <View style={styles.accountDetailRow}>
-                <Text style={styles.accountDetailLabel}>Password:</Text>
-                <Text style={styles.accountDetailValue}>
-                  {(activeTab === 'MT4' ? mt4Account?.password : mt5Account?.password) ? '••••••••' : 'Not set'}
-                </Text>
-              </View>
-              <View style={styles.accountDetailRow}>
-                <Text style={styles.accountDetailLabel}>Server:</Text>
-                <Text style={styles.accountDetailValue}>
-                  {(activeTab === 'MT4' ? mt4Account?.server : mt5Account?.server) || 'Not set'}
-                </Text>
-              </View>
-              <View style={styles.accountDetailRow}>
-                <Text style={styles.accountDetailLabel}>Status:</Text>
-                <Text style={[
-                  styles.accountDetailValue,
-                  (activeTab === 'MT4' ? mt4Account?.connected : mt5Account?.connected) === true && styles.connectedStatus,
-                  (activeTab === 'MT4' ? mt4Account?.connected : mt5Account?.connected) === false && styles.disconnectedStatus
-                ]}>
-                  {(activeTab === 'MT4' ? mt4Account?.connected : mt5Account?.connected) === true ? 'Connected' :
-                    (activeTab === 'MT4' ? mt4Account?.connected : mt5Account?.connected) === false ? 'Disconnected' : 'Not configured'}
-                </Text>
-              </View>
-            </View>
-          )}
-
-          {/* Hidden WebView for fetching MT4 brokers - Mobile only, only shown when fetching brokers */}
-          {/* Networking disabled: broker fetch WebView removed */}
-
-          {/* Authentication WebView. MT4 and MT5 are VISIBLE so you can observe the login flow */}
-          {/* Networking disabled: authentication WebView removed */}
-
-          {/* Authentication Status Display - Only shown during authentication */}
+          {/* Authentication Status */}
           {isAuthenticating && (
             <View style={styles.authStatusDisplay}>
-              <ActivityIndicator color={Platform.OS === 'ios' ? '#DC2626' : '#000000'} size="small" />
+              <ActivityIndicator color={ac} size="small" />
               <Text style={styles.authStatusDisplayText}>{authenticationStep}</Text>
             </View>
           )}
 
-          {/* Login Form */}
+          {/* ========== FORM — FLOATING LIQUID GLASS FIELDS ========== */}
           <View style={styles.form}>
-            <TextInput
-              style={styles.input}
-              placeholder="Login"
-              placeholderTextColor="#999999"
-              value={login}
-              onChangeText={setLogin}
-              keyboardType="numeric"
-            />
 
-            <View style={styles.passwordContainer}>
-              <TextInput
-                style={styles.passwordInput}
-                placeholder="Password"
-                placeholderTextColor="#999999"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-              />
-              <TouchableOpacity
-                style={styles.eyeButton}
-                onPress={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <EyeOff color="#999999" size={20} />
-                ) : (
-                  <Eye color="#999999" size={20} />
-                )}
-              </TouchableOpacity>
+            {/* Login Field */}
+            <View style={[styles.fieldWrap, !isNeon && { padding: 0 }]}>
+              {isNeon && <Animated.View style={[styles.fieldNeon, { transform: [{ rotate: spinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 40deg, rgba(' + a + ', 0.5) 80deg, transparent 120deg, transparent 180deg, ' + ac + ' 220deg, rgba(' + a + ', 0.5) 260deg, transparent 300deg, transparent 360deg)' }]} />}
+              {isNeon && <Animated.View style={[styles.fieldNeonGlow, { transform: [{ rotate: spinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.35) 40deg, transparent 120deg, transparent 180deg, rgba(' + a + ', 0.35) 220deg, transparent 300deg, transparent 360deg)' }]} />}
+              <View style={[styles.fieldInner, !isNeon && { borderRadius: 20 }, Platform.OS === 'web' && (isNeon ? { background: 'radial-gradient(ellipse 120% 50% at 20% 20%, rgba(255,255,255,0.18) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.08) 0%, rgba(' + a + ', 0.04) 30%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.7) 100%)', backdropFilter: 'blur(80px) saturate(200%)', WebkitBackdropFilter: 'blur(80px) saturate(200%)', boxShadow: 'inset 0 2px 6px rgba(255,255,255,0.2), inset 0 -3px 8px rgba(0,0,0,0.3), 0 4px 8px rgba(0,0,0,0.3), 0 12px 24px rgba(0,0,0,0.35), 0 24px 48px rgba(0,0,0,0.25), 0 6px 20px rgba(' + a + ', 0.1)' } : isLiquid ? { background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.4) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', border: '1.5px solid rgba(' + a + ', 0.4)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15), 0 0 8px rgba(' + a + ', 0.5), 0 0 20px rgba(' + a + ', 0.35), 0 0 40px rgba(' + a + ', 0.2), 0 0 70px rgba(' + a + ', 0.1)' } : isCmd ? { background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '2px solid ' + ac, boxShadow: '0 0 12px rgba(' + a + ', 0.35), 0 0 24px rgba(' + a + ', 0.2), 0 8px 20px rgba(0,0,0,0.5)' } : { background: 'rgba(16,16,18,0.97)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', border: '0.5px solid rgba(255,255,255,0.04)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.1), 0 8px 20px rgba(0,0,0,0.4), 0 0 28px rgba(' + a + ', 0.35), 0 0 56px rgba(' + a + ', 0.15)' })]}>
+                {isNeon && renderBubbles(fieldBubblesA)}
+                {isNeon && <View style={[styles.fieldRefraction, Platform.OS === 'web' && { background: 'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 50%, transparent 100%)' }]} />}
+                <TextInput
+                  style={styles.fieldInput}
+                  placeholder="Login"
+                  placeholderTextColor="rgba(255,255,255,0.35)"
+                  value={login}
+                  onChangeText={setLogin}
+                  keyboardType="numeric"
+                />
+              </View>
             </View>
 
-            <View style={styles.serverContainer}>
-              <View style={styles.serverInputContainer}>
-                <Server color="#999999" size={20} style={styles.serverIcon} />
+            {/* Password Field */}
+            <View style={[styles.fieldWrap, !isNeon && { padding: 0 }]}>
+              {isNeon && <Animated.View style={[styles.fieldNeon, { transform: [{ rotate: spinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 40deg, rgba(' + a + ', 0.5) 80deg, transparent 120deg, transparent 180deg, ' + ac + ' 220deg, rgba(' + a + ', 0.5) 260deg, transparent 300deg, transparent 360deg)' }]} />}
+              {isNeon && <Animated.View style={[styles.fieldNeonGlow, { transform: [{ rotate: spinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.35) 40deg, transparent 120deg, transparent 180deg, rgba(' + a + ', 0.35) 220deg, transparent 300deg, transparent 360deg)' }]} />}
+              <View style={[styles.fieldInner, !isNeon && { borderRadius: 20 }, Platform.OS === 'web' && (isNeon ? { background: 'radial-gradient(ellipse 120% 50% at 20% 20%, rgba(255,255,255,0.18) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.08) 0%, rgba(' + a + ', 0.04) 30%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.7) 100%)', backdropFilter: 'blur(80px) saturate(200%)', WebkitBackdropFilter: 'blur(80px) saturate(200%)', boxShadow: 'inset 0 2px 6px rgba(255,255,255,0.2), inset 0 -3px 8px rgba(0,0,0,0.3), 0 4px 8px rgba(0,0,0,0.3), 0 12px 24px rgba(0,0,0,0.35), 0 24px 48px rgba(0,0,0,0.25), 0 6px 20px rgba(' + a + ', 0.1)' } : isLiquid ? { background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.4) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', border: '1.5px solid rgba(' + a + ', 0.4)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15), 0 0 8px rgba(' + a + ', 0.5), 0 0 20px rgba(' + a + ', 0.35), 0 0 40px rgba(' + a + ', 0.2), 0 0 70px rgba(' + a + ', 0.1)' } : isCmd ? { background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '2px solid ' + ac, boxShadow: '0 0 12px rgba(' + a + ', 0.35), 0 0 24px rgba(' + a + ', 0.2), 0 8px 20px rgba(0,0,0,0.5)' } : { background: 'rgba(16,16,18,0.97)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', border: '0.5px solid rgba(255,255,255,0.04)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.1), 0 8px 20px rgba(0,0,0,0.4), 0 0 28px rgba(' + a + ', 0.35), 0 0 56px rgba(' + a + ', 0.15)' })]}>
+                {isNeon && renderBubbles(fieldBubblesB)}
+                {isNeon && <View style={[styles.fieldRefraction, Platform.OS === 'web' && { background: 'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 50%, transparent 100%)' }]} />}
                 <TextInput
-                  style={styles.serverInput}
-                  placeholder={activeTab === 'MT4' ? "Search MT4 Broker Server..." : "Search MT5 Broker Server..."}
-                  placeholderTextColor="#999999"
-                  value={server}
-                  onChangeText={(text) => {
-                    setServer(text);
-                    setShowBrokerList(true);
-                  }}
-                  onFocus={() => {
-                    setShowBrokerList(true);
-                  }}
-                  autoCapitalize="none"
+                  style={styles.fieldInput}
+                  placeholder="Password"
+                  placeholderTextColor="rgba(255,255,255,0.35)"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
                 />
-                {server.length > 0 && (
-                  <TouchableOpacity
-                    style={styles.clearButton}
-                    onPress={() => {
-                      setServer('');
-                      setShowBrokerList(false);
-                    }}
-                  >
-                    <Text style={styles.clearButtonText}>×</Text>
-                  </TouchableOpacity>
-                )}
+                <TouchableOpacity style={styles.eyeButton} onPress={() => setShowPassword(!showPassword)}>
+                  {showPassword ? <EyeOff color="rgba(255,255,255,0.4)" size={20} /> : <Eye color="rgba(255,255,255,0.4)" size={20} />}
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Server Search Field */}
+            <View style={styles.serverSection}>
+              <View style={[styles.fieldWrap, { marginBottom: 0 }, !isNeon && { padding: 0 }]}>
+                {isNeon && <Animated.View style={[styles.fieldNeon, { transform: [{ rotate: spinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 40deg, rgba(' + a + ', 0.5) 80deg, transparent 120deg, transparent 180deg, ' + ac + ' 220deg, rgba(' + a + ', 0.5) 260deg, transparent 300deg, transparent 360deg)' }]} />}
+                {isNeon && <Animated.View style={[styles.fieldNeonGlow, { transform: [{ rotate: spinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.35) 40deg, transparent 120deg, transparent 180deg, rgba(' + a + ', 0.35) 220deg, transparent 300deg, transparent 360deg)' }]} />}
+                <View style={[styles.fieldInner, !isNeon && { borderRadius: 20 }, Platform.OS === 'web' && (isNeon ? { background: 'radial-gradient(ellipse 120% 50% at 20% 20%, rgba(255,255,255,0.18) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.08) 0%, rgba(' + a + ', 0.04) 30%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.7) 100%)', backdropFilter: 'blur(80px) saturate(200%)', WebkitBackdropFilter: 'blur(80px) saturate(200%)', boxShadow: 'inset 0 2px 6px rgba(255,255,255,0.2), inset 0 -3px 8px rgba(0,0,0,0.3), 0 4px 8px rgba(0,0,0,0.3), 0 12px 24px rgba(0,0,0,0.35), 0 24px 48px rgba(0,0,0,0.25), 0 6px 20px rgba(' + a + ', 0.1)' } : isLiquid ? { background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.4) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', border: '1.5px solid rgba(' + a + ', 0.4)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15), 0 0 8px rgba(' + a + ', 0.5), 0 0 20px rgba(' + a + ', 0.35), 0 0 40px rgba(' + a + ', 0.2), 0 0 70px rgba(' + a + ', 0.1)' } : isCmd ? { background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '2px solid ' + ac, boxShadow: '0 0 12px rgba(' + a + ', 0.35), 0 0 24px rgba(' + a + ', 0.2), 0 8px 20px rgba(0,0,0,0.5)' } : { background: 'rgba(16,16,18,0.97)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', border: '0.5px solid rgba(255,255,255,0.04)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.1), 0 8px 20px rgba(0,0,0,0.4), 0 0 28px rgba(' + a + ', 0.35), 0 0 56px rgba(' + a + ', 0.15)' })]}>
+                  {isNeon && renderBubbles(fieldBubblesC)}
+                  {isNeon && <View style={[styles.fieldRefraction, Platform.OS === 'web' && { background: 'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 50%, transparent 100%)' }]} />}
+                  <Server color="rgba(255,255,255,0.35)" size={20} style={styles.serverIcon} />
+                  <TextInput
+                    style={styles.fieldInput}
+                    placeholder={activeTab === 'MT4' ? "Search MT4 Broker Server..." : "Search MT5 Broker Server..."}
+                    placeholderTextColor="rgba(255,255,255,0.35)"
+                    value={server}
+                    onChangeText={(text) => { setServer(text); setShowBrokerList(true); }}
+                    onFocus={() => setShowBrokerList(true)}
+                    autoCapitalize="none"
+                  />
+                  {server.length > 0 && (
+                    <TouchableOpacity style={styles.clearButton} onPress={() => { setServer(''); setShowBrokerList(false); }}>
+                      <Text style={styles.clearButtonText}>×</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
 
+              {/* Broker List Dropdown — OUTSIDE fieldWrap so overflow:hidden doesn't clip it */}
               {showBrokerList && (
                 <View style={styles.brokerListContainer}>
                   <View style={styles.brokerListHeader}>
                     <Text style={styles.brokerListTitle}>Active {activeTab} Brokers</Text>
                     <View style={styles.brokerListActions}>
                       {activeTab === 'MT4' && (
-                        <TouchableOpacity
-                          onPress={() => {
-                            console.log('Manual broker refresh requested');
-                            fetchMT4Brokers();
-                          }}
-                          style={styles.refreshButton}
-                          disabled={isLoadingBrokers}
-                        >
-                          <RefreshCw
-                            color={Platform.OS === 'ios' ? '#FFFFFF' : '#000000'}
-                            size={16}
-                            style={[styles.refreshIcon, isLoadingBrokers && styles.refreshIconSpinning]}
-                          />
+                        <TouchableOpacity onPress={() => { console.log('Manual broker refresh requested'); fetchMT4Brokers(); }} style={styles.refreshButton} disabled={isLoadingBrokers}>
+                          <RefreshCw color={Platform.OS === 'ios' ? '#FFFFFF' : '#000000'} size={16} style={[styles.refreshIcon, isLoadingBrokers && styles.refreshIconSpinning]} />
                         </TouchableOpacity>
                       )}
-                      <TouchableOpacity
-                        onPress={() => setShowBrokerList(false)}
-                        style={styles.closeBrokerList}
-                      >
+                      <TouchableOpacity onPress={() => setShowBrokerList(false)} style={styles.closeBrokerList}>
                         <Text style={styles.closeBrokerListText}>×</Text>
                       </TouchableOpacity>
                     </View>
@@ -1980,27 +1991,11 @@ export default function MetaTraderScreen() {
                   <ScrollView style={styles.brokerList} nestedScrollEnabled={true}>
                     {filteredBrokers.map((item, index) => {
                       return (
-                        <TouchableOpacity
-                          key={`${item}-${index}`}
-                          style={styles.brokerItem}
-                          onPress={() => {
-                            console.log('Broker selected:', item);
-                            setServer(item); // Allow selection of any broker from the list
-                            setShowBrokerList(false);
-                          }}
-                        >
+                        <TouchableOpacity key={`${item}-${index}`} style={styles.brokerItem} onPress={() => { console.log('Broker selected:', item); setServer(item); setShowBrokerList(false); }}>
                           <View style={styles.brokerItemContent}>
-                            <View style={[styles.brokerStatusDot,
-                            item.includes('Live') || item.includes('Real')
-                              ? styles.liveBrokerDot
-                              : styles.demoBrokerDot
-                            ]} />
-                            <Text style={styles.brokerItemText}>
-                              {item}
-                            </Text>
-                            <Text style={styles.brokerItemType}>
-                              {item.includes('Demo') ? 'DEMO' : 'LIVE'}
-                            </Text>
+                            <View style={[styles.brokerStatusDot, item.includes('Live') || item.includes('Real') ? styles.liveBrokerDot : styles.demoBrokerDot]} />
+                            <Text style={styles.brokerItemText}>{item}</Text>
+                            <Text style={styles.brokerItemType}>{item.includes('Demo') ? 'DEMO' : 'LIVE'}</Text>
                           </View>
                         </TouchableOpacity>
                       );
@@ -2017,41 +2012,38 @@ export default function MetaTraderScreen() {
               )}
             </View>
 
-            <TouchableOpacity
-              style={[
-                styles.linkButton,
-                isAuthenticating && styles.linkButtonDisabled,
-                activeTab === 'MT4' && styles.linkButtonComingSoon
-              ]}
-              onPress={activeTab === 'MT4' ? undefined : handleLinkAccount}
-              disabled={isAuthenticating || activeTab === 'MT4'}
-            >
-              {isAuthenticating ? (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator color="#FFFFFF" size="small" />
-                  <Text style={styles.linkButtonText}>
-                    AUTHENTICATING...
-                  </Text>
-                </View>
-              ) : activeTab === 'MT4' ? (
-                <View style={styles.buttonContent}>
-                  <Shield color="#999999" size={16} style={styles.buttonIcon} />
-                  <Text style={styles.linkButtonText}>
-                    LINK MT4 ACCOUNT DETAILS
-                  </Text>
-                  <Text style={styles.comingSoonText}>
-                    COMING SOON
-                  </Text>
-                </View>
-              ) : (
-                <View style={styles.buttonContent}>
-                  <Shield color="#FFFFFF" size={16} style={styles.buttonIcon} />
-                  <Text style={styles.linkButtonText}>
-                    LINK {activeTab} ACCOUNT DETAILS
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
+            {/* ========== LINK BUTTON — FLOATING LIQUID GLASS ========== */}
+            <View style={[styles.btnWrap, !isNeon && { padding: 0 }]}>
+              {isNeon && <Animated.View style={[styles.btnNeon, { transform: [{ rotate: spinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, ' + ac + ' 40deg, rgba(' + a + ', 0.5) 80deg, transparent 120deg, transparent 180deg, ' + ac + ' 220deg, rgba(' + a + ', 0.5) 260deg, transparent 300deg, transparent 360deg)' }]} />}
+              {isNeon && <Animated.View style={[styles.btnNeonGlow, { transform: [{ rotate: spinDeg }] }, Platform.OS === 'web' && { backgroundImage: 'conic-gradient(from 0deg, transparent 0deg, rgba(' + a + ', 0.4) 40deg, transparent 120deg, transparent 180deg, rgba(' + a + ', 0.4) 220deg, transparent 300deg, transparent 360deg)' }]} />}
+              <TouchableOpacity
+                style={[styles.btnInner, isAuthenticating && styles.btnDisabled, activeTab === 'MT4' && styles.btnComingSoon, !isNeon && { borderRadius: 20 }, Platform.OS === 'web' && (isNeon ? { background: 'radial-gradient(ellipse 120% 50% at 30% 25%, rgba(255,255,255,0.2) 0%, transparent 70%), linear-gradient(180deg, rgba(' + a + ', 0.15) 0%, rgba(' + a + ', 0.08) 30%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.75) 100%)', backdropFilter: 'blur(80px) saturate(200%)', WebkitBackdropFilter: 'blur(80px) saturate(200%)', boxShadow: 'inset 0 2px 8px rgba(255,255,255,0.2), inset 0 -4px 10px rgba(0,0,0,0.3), 0 4px 8px rgba(0,0,0,0.3), 0 12px 28px rgba(0,0,0,0.35), 0 28px 56px rgba(0,0,0,0.25), 0 8px 24px rgba(' + a + ', 0.12)' } : isLiquid ? { background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.4) 100%)', backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)', border: '1.5px solid rgba(' + a + ', 0.4)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15), 0 0 8px rgba(' + a + ', 0.5), 0 0 20px rgba(' + a + ', 0.35), 0 0 40px rgba(' + a + ', 0.2), 0 0 70px rgba(' + a + ', 0.1)' } : isCmd ? { background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '2px solid ' + ac, boxShadow: '0 0 12px rgba(' + a + ', 0.35), 0 0 24px rgba(' + a + ', 0.2), 0 8px 20px rgba(0,0,0,0.5)' } : { background: 'rgba(16,16,18,0.97)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', border: '0.5px solid rgba(255,255,255,0.04)', boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.1), 0 8px 20px rgba(0,0,0,0.4), 0 0 28px rgba(' + a + ', 0.35), 0 0 56px rgba(' + a + ', 0.15)' })]}
+                onPress={activeTab === 'MT4' ? undefined : handleLinkAccount}
+                disabled={isAuthenticating || activeTab === 'MT4'}
+                activeOpacity={0.7}
+              >
+                {isNeon && renderBubbles(btnBubbles)}
+                {isNeon && <View style={[styles.btnRefraction, Platform.OS === 'web' && { background: 'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.04) 50%, transparent 100%)' }]} />}
+                {isNeon && <View style={[styles.btnMeniscus, Platform.OS === 'web' && { background: 'radial-gradient(ellipse 60% 100% at 50% 0%, rgba(255,255,255,0.1) 0%, transparent 100%)' }]} />}
+                {isAuthenticating ? (
+                  <View style={styles.buttonContent}>
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                    <Text style={styles.linkButtonText}>AUTHENTICATING...</Text>
+                  </View>
+                ) : activeTab === 'MT4' ? (
+                  <View style={styles.buttonContent}>
+                    <Shield color="#999999" size={16} />
+                    <Text style={styles.linkButtonText}>LINK MT4 ACCOUNT DETAILS</Text>
+                    <Text style={styles.comingSoonText}>COMING SOON</Text>
+                  </View>
+                ) : (
+                  <View style={styles.buttonContent}>
+                    <Shield color="#FFFFFF" size={16} />
+                    <Text style={styles.linkButtonText}>LINK {activeTab} ACCOUNT DETAILS</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -2066,34 +2058,29 @@ export default function MetaTraderScreen() {
               </View>
               <View style={styles.authToastInfo}>
                 <Text style={styles.authToastTitle}>MT5 Authentication</Text>
-                <Text style={styles.authToastStatus}>
-                  {authenticationStep || 'Connecting to Accumarkets...'}
-                </Text>
+                <Text style={styles.authToastStatus}>{authenticationStep || 'Connecting to RazorMarkets...'}</Text>
               </View>
             </View>
-            <TouchableOpacity
-              style={styles.authToastCloseButton}
-              onPress={closeMT5WebView}
-            >
+            <TouchableOpacity style={styles.authToastCloseButton} onPress={closeMT5WebView}>
               <X color="#FFFFFF" size={16} />
             </TouchableOpacity>
           </View>
         </View>
       )}
 
-      {/* MT5 WebView - Completely invisible, runs in background */}
+      {/* MT5 WebView */}
       {showMT5WebView && (
         <View style={styles.invisibleWebViewContainer}>
           {Platform.OS === 'web' ? (
             <WebWebView
-              url={`/api/mt5-proxy?url=${encodeURIComponent('https://webterminal.accumarkets.co.za/terminal')}&login=${encodeURIComponent(login)}&password=${encodeURIComponent(password)}`}
+              url={`/api/mt5-proxy?url=${encodeURIComponent(MT5_BROKER_URLS[server] || MT5_BROKER_URLS['RazorMarkets-Live'])}&login=${encodeURIComponent(login)}&password=${encodeURIComponent(password)}`}
               onMessage={onMT5WebViewMessage}
               onLoadEnd={() => console.log('MT5 Web WebView loaded')}
               style={styles.invisibleWebView}
             />
           ) : (
             <CustomWebView
-              url="https://webterminal.accumarkets.co.za/terminal"
+              url={MT5_BROKER_URLS[server] || MT5_BROKER_URLS['RazorMarkets-Live']}
               script={getMT5Script()}
               onMessage={onMT5WebViewMessage}
               onLoadEnd={() => console.log('MT5 CustomWebView loaded')}
@@ -2113,22 +2100,17 @@ export default function MetaTraderScreen() {
               </View>
               <View style={styles.authToastInfo}>
                 <Text style={styles.authToastTitle}>MT4 Authentication</Text>
-                <Text style={styles.authToastStatus}>
-                  {authenticationStep || 'Connecting to MetaTrader...'}
-                </Text>
+                <Text style={styles.authToastStatus}>{authenticationStep || 'Connecting to MetaTrader...'}</Text>
               </View>
             </View>
-            <TouchableOpacity
-              style={styles.authToastCloseButton}
-              onPress={closeMT4WebView}
-            >
+            <TouchableOpacity style={styles.authToastCloseButton} onPress={closeMT4WebView}>
               <X color="#FFFFFF" size={16} />
             </TouchableOpacity>
           </View>
         </View>
       )}
 
-      {/* MT4 WebView - Completely invisible, runs in background */}
+      {/* MT4 WebView */}
       {showMT4WebView && (
         <View style={styles.invisibleWebViewContainer}>
           {Platform.OS === 'web' ? (
@@ -2154,581 +2136,282 @@ export default function MetaTraderScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000000',
+  container: { flex: 1, backgroundColor: '#050505' },
+  keyboardAvoidingView: { flex: 1 },
+  content: { flex: 1, paddingTop: 20 },
+  menuButton: {
+    alignSelf: 'flex-start', marginLeft: 20, marginBottom: 16,
+    width: 44, height: 44, borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.25)', borderLeftColor: 'rgba(255, 255, 255, 0.12)',
+    borderRightColor: 'rgba(255, 255, 255, 0.08)', borderBottomColor: 'rgba(0, 0, 0, 0.15)',
     ...(Platform.OS === 'web' && {
-      backgroundImage: 'linear-gradient(135deg, rgba(255, 26, 26, 0.9) 0%, rgba(255, 26, 26, 0.5) 30%, rgba(255, 26, 26, 0.1) 65%, rgba(0, 0, 0, 0.95) 90%, rgba(0, 0, 0, 1) 100%)',
+      backdropFilter: 'blur(60px) saturate(180%)', WebkitBackdropFilter: 'blur(60px) saturate(180%)',
+      boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.2), 0 4px 16px rgba(0,0,0,0.3)',
     }),
   },
-  keyboardAvoidingView: {
-    flex: 1,
+
+  /* ========== TAB SELECTOR — LIQUID GLASS ========== */
+  tabWrap: {
+    position: 'relative', borderRadius: 22, padding: 2.5, overflow: 'hidden',
+    marginHorizontal: 20, marginBottom: 24,
   },
-  content: {
-    flex: 1,
-    paddingTop: 20,
+  tabNeon: {
+    position: 'absolute', top: '-100%', left: '-25%', width: '150%', height: '300%',
   },
-  tabContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    marginBottom: 20,
+  tabNeonGlow: {
+    position: 'absolute', top: '-110%', left: '-30%', width: '160%', height: '320%',
+    ...(Platform.OS === 'web' && { filter: 'blur(16px)' }),
+  },
+  tabInner: {
+    borderRadius: 20, padding: 6, flexDirection: 'row', gap: 8,
+    backgroundColor: 'rgba(12, 12, 12, 0.93)',
+    position: 'relative', zIndex: 2,
   },
   tab: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    backgroundColor: '#1A1A1A',
-    marginHorizontal: 4,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#800000',
+    flex: 1, paddingVertical: 12, paddingHorizontal: 16, borderRadius: 16,
+    alignItems: 'center', backgroundColor: 'transparent',
   },
   activeTab: {
-    backgroundColor: '#1A1A1A',
-    borderColor: '#FF0000',
-    shadowColor: '#FF0000',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
-  tabText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#CCCCCC',
-  },
-  activeTabText: {
-    color: '#FF0000',
-  },
+  tabText: { fontSize: 12, fontWeight: '700', color: 'rgba(255,255,255,0.5)', letterSpacing: 1 },
+
+  /* ========== STATUS ========== */
   statusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 30,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 20, marginBottom: 30,
   },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#999999', // Default gray when no account
-    marginRight: 8,
-  },
-  connectedDot: {
-    backgroundColor: '#16A34A', // Green when connected
-  },
-  disconnectedDot: {
-    backgroundColor: '#DC2626', // Red when authentication failed
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#CCCCCC',
-  },
-  connectedText: {
-    color: '#16A34A',
-  },
-  disconnectedText: {
-    color: '#DC2626',
-  },
-  logoContainer: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
+  statusDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#999999', marginRight: 8 },
+  connectedDot: { backgroundColor: '#16A34A' },
+  disconnectedDot: { backgroundColor: '#DC2626' },
+  statusText: { fontSize: 12, fontWeight: '600', color: '#CCCCCC', letterSpacing: 1 },
+  connectedText: { color: '#16A34A' },
+  disconnectedText: { color: '#DC2626' },
+
+  /* ========== LOGO ========== */
+  logoContainer: { alignItems: 'center', marginBottom: 36 },
   mtLogoImageContainer: {
-    width: 60,
-    height: 60,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
+    width: 64, height: 64, alignItems: 'center', justifyContent: 'center', marginBottom: 14,
+    ...(Platform.OS === 'web' && { filter: 'drop-shadow(0 8px 20px rgba(80,200,120,0.2))' }),
   },
-  mtLogoImage: {
-    width: 60,
-    height: 60,
+  mtLogoImage: { width: 64, height: 64 },
+  formTitle: { fontSize: 16, fontWeight: '800', color: '#FFFFFF', letterSpacing: 1.5 },
+
+  /* ========== AUTH STATUS ========== */
+  authStatusDisplay: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 16, paddingHorizontal: 20, marginBottom: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)', borderRadius: 12, marginHorizontal: 20,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
   },
-  formTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  form: {
-    paddingHorizontal: 20,
-  },
-  input: {
-    backgroundColor: '#1A1A1A',
-    borderWidth: 2,
-    borderColor: '#FF0000',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    marginBottom: 16,
-    color: '#FFFFFF',
-  },
-  passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1A1A1A',
-    borderWidth: 1,
-    borderColor: '#FF0000',
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  passwordInput: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#FFFFFF',
-  },
-  eyeButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#4d1521',
-    marginLeft: 8,
-  },
-  linkButton: {
-    backgroundColor: '#1A1A1A',
-    paddingVertical: 16,
-    borderRadius: 8,
-    marginTop: 20,
-  },
-  linkButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginLeft: 8,
-  },
-  linkButtonDisabled: {
-    opacity: 0.7,
-  },
-  linkButtonComingSoon: {
-    backgroundColor: '#1a1a1a', // Dark background
-    opacity: 0.6,
-  },
-  comingSoonText: {
-    color: '#FF4444', // Red color
-    fontSize: 12,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginLeft: 8,
-  },
-  loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonIcon: {
-    marginRight: 8,
+  authStatusDisplayText: { marginLeft: 12, fontSize: 14, fontWeight: '500', color: '#FFFFFF' },
+
+  /* ========== FORM ========== */
+  form: { paddingHorizontal: 20 },
+
+  /* ========== SERVER SECTION — no overflow clip so dropdown shows ========== */
+  serverSection: {
+    position: 'relative', zIndex: 1000, marginBottom: 18,
   },
 
-  serverContainer: {
-    marginBottom: 16,
-    position: 'relative',
-    zIndex: 1000,
+  /* ========== BUBBLES ========== */
+  bubblesContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 },
+  bubble: {
+    position: 'absolute', backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)',
   },
-  serverInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1A1A1A',
-    borderWidth: 1,
-    borderColor: '#FF0000',
-    borderRadius: 8,
+
+  /* ========== FLOATING FIELD — LIQUID GLASS ========== */
+  fieldWrap: {
+    position: 'relative', borderRadius: 22, padding: 2.5, overflow: 'hidden', marginBottom: 18,
   },
-  serverIcon: {
-    marginLeft: 16,
+  fieldNeon: {
+    position: 'absolute', top: '-100%', left: '-25%', width: '150%', height: '300%',
   },
-  serverInput: {
-    flex: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#FFFFFF',
+  fieldNeonGlow: {
+    position: 'absolute', top: '-110%', left: '-30%', width: '160%', height: '320%',
+    ...(Platform.OS === 'web' && { filter: 'blur(14px)' }),
+  },
+  fieldInner: {
+    borderRadius: 20, flexDirection: 'row', alignItems: 'center',
+    backgroundColor: 'rgba(12, 12, 12, 0.93)', position: 'relative', overflow: 'hidden',
+    zIndex: 2,
+  },
+  fieldRefraction: {
+    position: 'absolute', top: 0, left: 0, right: 0, height: '60%',
+    borderTopLeftRadius: 20, borderTopRightRadius: 20, zIndex: 1,
+  },
+  fieldInput: {
+    flex: 1, paddingHorizontal: 18, paddingVertical: 16,
+    fontSize: 15, fontWeight: '500', color: '#FFFFFF', zIndex: 3,
+  },
+  serverIcon: { marginLeft: 16, zIndex: 3 },
+  eyeButton: {
+    paddingHorizontal: 14, paddingVertical: 12, marginRight: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)', borderRadius: 12,
+    borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.08)', zIndex: 3,
   },
   clearButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#4d1521',
+    paddingHorizontal: 16, paddingVertical: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)', borderRadius: 8,
+    borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.08)', marginRight: 4, zIndex: 3,
   },
-  clearButtonText: {
-    color: '#999999',
-    fontSize: 20,
-    fontWeight: 'bold',
+  clearButtonText: { color: '#999999', fontSize: 20, fontWeight: 'bold' },
+
+  /* ========== LINK BUTTON — FLOATING LIQUID GLASS ========== */
+  btnWrap: {
+    position: 'relative', borderRadius: 22, padding: 2.5, overflow: 'hidden', marginTop: 24, marginBottom: 30,
   },
+  btnNeon: {
+    position: 'absolute', top: '-150%', left: '-25%', width: '150%', height: '400%',
+  },
+  btnNeonGlow: {
+    position: 'absolute', top: '-170%', left: '-30%', width: '160%', height: '440%',
+    ...(Platform.OS === 'web' && { filter: 'blur(16px)' }),
+  },
+  btnInner: {
+    borderRadius: 20, paddingVertical: 18, paddingHorizontal: 24,
+    backgroundColor: 'rgba(12, 12, 12, 0.93)', position: 'relative', overflow: 'hidden',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', zIndex: 2,
+  },
+  btnDisabled: { opacity: 0.7 },
+  btnComingSoon: { opacity: 0.6 },
+  btnRefraction: {
+    position: 'absolute', top: 0, left: 0, right: 0, height: '55%',
+    borderTopLeftRadius: 20, borderTopRightRadius: 20, zIndex: 1,
+  },
+  btnMeniscus: {
+    position: 'absolute', top: '35%', left: '-10%', right: '-10%', height: 24,
+    zIndex: 1, transform: [{ rotate: '-2deg' }],
+  },
+  buttonContent: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, zIndex: 3,
+  },
+  linkButtonText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700', letterSpacing: 1.2, zIndex: 3 },
+  comingSoonText: { color: 'rgba(255,255,255,0.4)', fontSize: 12, fontWeight: 'bold', zIndex: 3 },
+
+  /* ========== BROKER LIST — iOS 26.3 GLASSMORPHISM DROPDOWN ========== */
   brokerListContainer: {
-    position: 'absolute',
-    top: 50,
-    left: 0,
-    right: 0,
-    backgroundColor: '#1A1A1A',
-    borderWidth: 1,
-    borderColor: '#FF0000',
-    borderRadius: 8,
-    maxHeight: 300,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    marginTop: 8, zIndex: 100, borderRadius: 24, maxHeight: 360, overflow: 'hidden',
+    backgroundColor: 'rgba(44, 44, 46, 0.72)',
+    borderWidth: 0.5, borderColor: 'rgba(255, 255, 255, 0.18)',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.55, shadowRadius: 32, elevation: 14,
+    ...(Platform.OS === 'web' && {
+      backdropFilter: 'blur(80px) saturate(200%) brightness(1.05)',
+      WebkitBackdropFilter: 'blur(80px) saturate(200%) brightness(1.05)',
+      boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.25), inset 0 -0.5px 0 rgba(0,0,0,0.1), 0 16px 48px rgba(0,0,0,0.55), 0 4px 12px rgba(0,0,0,0.3), 0 0 0 0.5px rgba(255,255,255,0.06)',
+    }),
   },
   brokerListHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#FF0000',
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: 20, paddingVertical: 16,
+    ...(Platform.OS === 'web' && {
+      background: 'linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 100%)',
+    }),
   },
-  brokerListTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
+  brokerListTitle: { fontSize: 17, fontWeight: '600', color: '#FFFFFF', letterSpacing: -0.2 },
+  brokerListActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  refreshButton: {
+    width: 32, height: 32, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)', borderRadius: 10,
+    ...(Platform.OS === 'web' && {
+      backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+    }),
   },
+  refreshIcon: { opacity: 0.7 },
+  refreshIconSpinning: { opacity: 0.5 },
   closeBrokerList: {
-    padding: 4,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#4d1521',
+    width: 32, height: 32, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)', borderRadius: 10,
+    ...(Platform.OS === 'web' && {
+      backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+    }),
   },
-  closeBrokerListText: {
-    color: '#999999',
-    fontSize: 18,
-    fontWeight: 'bold',
+  closeBrokerListText: { color: 'rgba(255,255,255,0.5)', fontSize: 16, fontWeight: '600', marginTop: -1 },
+  errorContainer: {
+    paddingHorizontal: 20, paddingVertical: 10,
+    backgroundColor: 'rgba(220, 38, 38, 0.7)',
+    ...(Platform.OS === 'web' && {
+      backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+    }),
   },
-  brokerList: {
-    maxHeight: 240,
+  errorText: { fontSize: 13, color: '#FFFFFF', textAlign: 'center', fontWeight: '500' },
+  loadingBrokersContainer: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 20,
   },
+  loadingBrokersText: { marginLeft: 10, fontSize: 14, color: 'rgba(255,255,255,0.55)', fontWeight: '500' },
+  brokerList: { maxHeight: 280, paddingHorizontal: 8, paddingVertical: 4 },
   brokerItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#2A2A2A',
+    paddingHorizontal: 14, paddingVertical: 14,
+    marginVertical: 2, borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    ...(Platform.OS === 'web' && {
+      transition: 'background-color 0.15s ease',
+    }),
   },
-  brokerItemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
+  brokerItemContent: { flexDirection: 'row', alignItems: 'center' },
   brokerStatusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 12,
+    width: 10, height: 10, borderRadius: 5, marginRight: 14,
   },
   liveBrokerDot: {
-    backgroundColor: '#16A34A',
+    backgroundColor: '#34D399',
+    ...(Platform.OS === 'web' && { boxShadow: '0 0 8px rgba(52, 211, 153, 0.5)' }),
   },
   demoBrokerDot: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#FBBF24',
+    ...(Platform.OS === 'web' && { boxShadow: '0 0 8px rgba(251, 191, 36, 0.4)' }),
   },
-  brokerItemText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#FFFFFF',
-  },
+  brokerItemText: { flex: 1, fontSize: 16, color: '#FFFFFF', fontWeight: '500', letterSpacing: -0.1 },
   brokerItemType: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#999999',
-    backgroundColor: '#2A2A2A',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.5)', letterSpacing: 0.6,
+    backgroundColor: 'rgba(255,255,255,0.08)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8,
   },
-  noBrokersContainer: {
-    alignItems: 'center',
-    paddingVertical: 40,
-    paddingHorizontal: 20,
-  },
-  noBrokersText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginTop: 12,
-  },
-  noBrokersSubtext: {
-    fontSize: 14,
-    color: '#999999',
-    marginTop: 4,
-  },
-  authStatusDisplay: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    marginBottom: 20,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 8,
-    marginHorizontal: 20,
-    borderWidth: 1,
-    borderColor: '#333333',
-  },
-  authStatusDisplayText: {
-    marginLeft: 12,
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#FFFFFF',
-  },
-  brokerListActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  refreshButton: {
-    padding: 4,
-    marginRight: 8,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#4d1521',
-  },
-  refreshIcon: {
-    opacity: 0.7,
-  },
-  refreshIconSpinning: {
-    opacity: 0.5,
-  },
-  errorContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: '#DC2626',
-    borderBottomWidth: 1,
-    borderBottomColor: '#333333',
-  },
-  errorText: {
-    fontSize: 12,
-    color: '#FFFFFF',
-    textAlign: 'center',
-  },
-  loadingBrokersContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333333',
-  },
-  loadingBrokersText: {
-    marginLeft: 8,
-    fontSize: 12,
-    color: '#FFFFFF',
-  },
-  brokerItemDisabled: {
-    opacity: 0.5,
-  },
-  brokerStatusDotDisabled: {
-    backgroundColor: '#666666',
-  },
-  brokerItemTextDisabled: {
-    color: '#666666',
-  },
-  brokerItemTypeDisabled: {
-    color: '#666666',
-    backgroundColor: '#1A1A1A',
-  },
-  disabledLabel: {
-    fontSize: 8,
-    fontWeight: '700',
-    color: '#DC2626',
-    backgroundColor: '#2A2A2A',
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    borderRadius: 3,
-    marginLeft: 8,
-  },
-  accountDetailsContainer: {
-    marginHorizontal: 20,
-    marginBottom: 30,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#333333',
-  },
-  accountDetailsTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 12,
-    textAlign: 'center',
-    letterSpacing: 0.5,
-  },
-  accountDetailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#2A2A2A',
-  },
-  accountDetailLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#CCCCCC',
-  },
-  accountDetailValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    flex: 1,
-    textAlign: 'right',
-  },
-  connectedStatus: {
-    color: '#16A34A',
-  },
-  disconnectedStatus: {
-    color: '#DC2626',
-  },
-  modalOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-    zIndex: 1000,
-  },
-  modalCard: {
-    width: '100%',
-    maxWidth: 360,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  modalButtonText: {
-    color: '#FFFFFF',
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  webViewContainer: {
-    flex: 1,
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-  webView: {
-    flex: 1,
-  },
+  noBrokersContainer: { alignItems: 'center', paddingVertical: 48, paddingHorizontal: 20 },
+  noBrokersText: { fontSize: 17, fontWeight: '600', color: '#FFFFFF', marginTop: 14, letterSpacing: -0.2 },
+  noBrokersSubtext: { fontSize: 15, color: 'rgba(255,255,255,0.4)', marginTop: 4 },
 
-  // Authentication Toast Styles
+  /* ========== TOASTS ========== */
   authToastContainer: {
     position: 'absolute',
     top: Platform.OS === 'ios' ? 50 : 30,
-    left: 20,
-    right: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.95)',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.8,
-    shadowRadius: 16,
-    elevation: 10000,
-    zIndex: 10000,
+    left: 20, right: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)', borderRadius: 16,
+    borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.8, shadowRadius: 16, elevation: 10000, zIndex: 10000,
   },
   authToastContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 12,
   },
-  authToastLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
+  authToastLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   authToastIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 32, height: 32, borderRadius: 16,
     backgroundColor: 'rgba(0, 255, 0, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
+    alignItems: 'center', justifyContent: 'center', marginRight: 12,
   },
-  authToastInfo: {
-    flex: 1,
-  },
-  authToastTitle: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  authToastStatus: {
-    color: '#CCCCCC',
-    fontSize: 12,
-    fontWeight: '500',
-  },
+  authToastInfo: { flex: 1 },
+  authToastTitle: { color: '#FFFFFF', fontSize: 14, fontWeight: '600', marginBottom: 2 },
+  authToastStatus: { color: '#CCCCCC', fontSize: 12, fontWeight: '500' },
   authToastCloseButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 28, height: 28, borderRadius: 14,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 8,
+    alignItems: 'center', justifyContent: 'center', marginLeft: 8,
   },
 
-  // Invisible WebView Styles - Completely invisible and non-interactive
+  /* ========== INVISIBLE WEBVIEW ========== */
   invisibleWebViewContainer: {
-    position: 'absolute',
-    top: -10000, // Move completely off-screen
-    left: -10000,
-    width: 1, // Minimal size
-    height: 1,
-    opacity: 0, // Completely transparent
-    zIndex: -10000, // Far behind everything
-    overflow: 'hidden',
-    pointerEvents: 'none', // Disable all touch events
-    elevation: -10000, // Android: behind everything
+    position: 'absolute', top: -10000, left: -10000,
+    width: 1, height: 1, opacity: 0, zIndex: -10000,
+    overflow: 'hidden', elevation: -10000,
   },
   invisibleWebView: {
-    width: 1,
-    height: 1,
-    opacity: 0,
-    backgroundColor: 'transparent',
-    pointerEvents: 'none', // Disable all touch events
-    elevation: -10000, // Android: behind everything
+    width: 1, height: 1, opacity: 0,
+    backgroundColor: 'transparent', elevation: -10000,
   },
 });

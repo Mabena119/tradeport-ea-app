@@ -1,52 +1,33 @@
 import { Tabs } from "expo-router";
-import { Home, Settings, TrendingUp } from "lucide-react-native";
 import React from "react";
+import { View, StyleSheet } from "react-native";
 import { useApp } from "@/providers/app-provider";
+import { Sidebar } from "@/components/sidebar";
 
 export default function TabLayout() {
   const { isFirstTime } = useApp();
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: isFirstTime ? {
-          display: 'none',
-        } : {
-          backgroundColor: 'rgba(0, 0, 0, 0.95)',
-          borderTopColor: '#FF1A1A',
-          borderTopWidth: 2,
-          backdropFilter: 'blur(20px)',
-        },
-        tabBarActiveTintColor: '#FF1A1A',
-        tabBarInactiveTintColor: '#808080',
-        tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: '600',
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "HOME",
-          tabBarIcon: ({ color }) => <Home color={color} size={20} />,
+    <View style={styles.container}>
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarStyle: { display: 'none' },
         }}
-      />
-      <Tabs.Screen
-        name="quotes"
-        options={{
-          title: "QUOTES",
-          tabBarIcon: ({ color }) => <TrendingUp color={color} size={20} />,
-        }}
-      />
-      <Tabs.Screen
-        name="metatrader"
-        options={{
-          title: "METATRADER",
-          tabBarIcon: ({ color }) => <Settings color={color} size={20} />,
-        }}
-      />
-    </Tabs>
+      >
+        <Tabs.Screen name="index" />
+        <Tabs.Screen name="metatrader" />
+        <Tabs.Screen name="settings" />
+        <Tabs.Screen name="quotes" options={{ tabBarButton: () => null }} />
+      </Tabs>
+      {!isFirstTime && <Sidebar />}
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+});
