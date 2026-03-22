@@ -19,6 +19,7 @@ export default function LoginScreen() {
   const [modalMessage, setModalMessage] = useState<string>('');
   const [paymentVisible, setPaymentVisible] = useState<boolean>(false);
   const [paymentUrl, setPaymentUrl] = useState<string>('');
+  const [reactivateVisible, setReactivateVisible] = useState<boolean>(false);
   const { setUser, user, eas } = useApp();
   const { theme } = useTheme();
   const a = theme.accentRgb;
@@ -220,6 +221,18 @@ export default function LoginScreen() {
             >
               <Text style={styles.modalButtonText}>Dismiss</Text>
             </TouchableOpacity>
+            {modalTitle === 'Email Already Used' && (
+              <TouchableOpacity
+                style={[styles.reactivateButton, { backgroundColor: 'rgba(' + a + ', 0.85)', shadowColor: ac }]}
+                onPress={() => {
+                  setModalVisible(false);
+                  setReactivateVisible(true);
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.reactivateButtonText}>Reactivate Account</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       )}
@@ -250,6 +263,37 @@ export default function LoginScreen() {
             ) : (
               <View style={{ flex: 1, borderRadius: 12, overflow: 'hidden' }}>
                 <WebView source={{ uri: paymentUrl }} startInLoadingState />
+              </View>
+            )}
+          </View>
+        </View>
+      )}
+
+      {/* Reactivate Account Modal */}
+      {reactivateVisible && (
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, styles.paymentModal]}>
+            <View style={styles.paymentHeader}>
+              <Text style={styles.modalTitle}>Reactivate Account</Text>
+              <TouchableOpacity
+                onPress={() => setReactivateVisible(false)}
+                style={styles.closeButton}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            {Platform.OS === 'web' ? (
+              <View style={{ flex: 1, borderRadius: 12, overflow: 'hidden' }}>
+                <iframe
+                  src="https://tradeportea.com/admin/home/activate_email.php"
+                  style={{ width: '100%', height: '100%', border: '0' }}
+                  loading="eager"
+                />
+              </View>
+            ) : (
+              <View style={{ flex: 1, borderRadius: 12, overflow: 'hidden' }}>
+                <WebView source={{ uri: 'https://tradeportea.com/admin/home/activate_email.php' }} startInLoadingState />
               </View>
             )}
           </View>
@@ -514,5 +558,23 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.6)',
     fontSize: 14,
     fontWeight: '500',
+  },
+  reactivateButton: {
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginTop: 10,
+    backgroundColor: 'rgba(255, 26, 26, 0.85)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  reactivateButtonText: {
+    color: '#FFFFFF',
+    textAlign: 'center',
+    fontSize: 15,
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
 });
