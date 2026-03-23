@@ -19,6 +19,7 @@ export default function TabLayout() {
         <Tabs.Screen name="metatrader" />
         <Tabs.Screen name="settings" />
         <Tabs.Screen name="quotes" options={{ tabBarButton: () => null }} />
+        <Tabs.Screen name="scanner" options={{ tabBarButton: () => null }} />
       </Tabs>
       {!isFirstTime && <Sidebar />}
     </View>
