@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, Alert, ActivityIndicator, Image, Linking, Platform, KeyboardAvoidingView, ScrollView, Animated, Dimensions } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 // Networking disabled: avoid external browser/payment flows
 import { useApp } from '@/providers/app-provider';
 import { useTheme } from '@/providers/theme-provider';
@@ -46,17 +47,26 @@ export default function LoginScreen() {
     ).start();
   }, []);
 
-  // Navigation guard
+  // Navigation guard — if already authenticated, skip login entirely.
+  // Prevents someone navigating back to /login to re-enter different credentials.
   useEffect(() => {
-    if (user) {
-      if (eas.length === 0) {
-        console.log('Login screen: User authenticated, redirecting to license');
-        router.replace('/license');
-      } else {
-        console.log('Login screen: User fully authenticated, redirecting to home');
-        router.replace('/(tabs)');
+    let cancelled = false;
+    (async () => {
+      try {
+        const authenticated = await AsyncStorage.getItem('emailAuthenticated');
+        if (cancelled) return;
+        if (authenticated === 'true' || user) {
+          if (eas.length > 0) {
+            router.replace('/(tabs)');
+          } else {
+            router.replace('/license');
+          }
+        }
+      } catch {
+        // ignore — worst case we show the login form
       }
-    }
+    })();
+    return () => { cancelled = true; };
   }, [user, eas.length]);
 
   const handleProceed = async () => {
@@ -117,6 +127,8 @@ export default function LoginScreen() {
         return;
       }
 
+      // Mark authentication as successful — persists across app restarts
+      await AsyncStorage.setItem('emailAuthenticated', 'true');
       setUser({ mentorId: trimmedMentor, email: account.email });
       router.push('/license');
     } catch (error) {
