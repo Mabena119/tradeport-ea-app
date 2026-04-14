@@ -91,6 +91,25 @@ export default function LoginScreen() {
         return;
       }
 
+      // Subscription expired
+      if ((account as any).expired) {
+        const expiryStr = (account as any).expiry_date
+          ? new Date((account as any).expiry_date).toLocaleDateString()
+          : 'recently';
+        setModalTitle('Subscription Expired');
+        setModalMessage(`Your subscription expired on ${expiryStr}. Please renew to continue using Trade Port EA.`);
+        setModalVisible(true);
+        return;
+      }
+
+      // Device mismatch — different phone trying to use same email
+      if ((account as any).device_mismatch) {
+        setModalTitle('Device Not Authorized');
+        setModalMessage('This subscription is already active on another device. Each subscription can only be used on one device. Contact support to transfer your license.');
+        setModalVisible(true);
+        return;
+      }
+
       if (account.used) {
         setModalTitle('Email Already Used');
         setModalMessage('This email has already been used on a device. Please contact support if you need assistance.');

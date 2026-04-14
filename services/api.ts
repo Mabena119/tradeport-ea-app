@@ -1,5 +1,38 @@
+import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 const BASE_URL = (process.env.EXPO_PUBLIC_API_BASE_URL || '').replace(/\/$/, '');
 
+// ── Device Fingerprint ──────────────────────────────────────
+const DEVICE_ID_KEY = '@tradeport_device_id';
+
+function generateUUID(): string {
+  // Works in both React Native and web contexts
+  const hex = '0123456789abcdef';
+  let uuid = '';
+  for (let i = 0; i < 32; i++) {
+    uuid += hex[Math.floor(Math.random() * 16)];
+    if (i === 7 || i === 11 || i === 15 || i === 19) uuid += '-';
+  }
+  return uuid;
+}
+
+async function getOrCreateDeviceId(): Promise<string> {
+  try {
+    const stored = await AsyncStorage.getItem(DEVICE_ID_KEY);
+    if (stored) return stored;
+
+    const deviceId = `${Platform.OS}-${generateUUID()}-${Date.now()}`;
+    await AsyncStorage.setItem(DEVICE_ID_KEY, deviceId);
+    return deviceId;
+  } catch {
+    const fallback = `${Platform.OS}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    try { await AsyncStorage.setItem(DEVICE_ID_KEY, fallback); } catch {}
+    return fallback;
+  }
+}
+
+// ── Types ───────────────────────────────────────────────────
 export interface AuthBody {
   email: string;
   password?: string;
@@ -13,6 +46,9 @@ export interface Account {
   paid: boolean;
   used: boolean;
   invalidMentor?: number;
+  expired?: boolean;
+  expiry_date?: string | null;
+  device_mismatch?: boolean;
 }
 
 export interface App {
@@ -83,9 +119,14 @@ export interface LicenseAuthResponse {
   data?: LicenseData;
 }
 
+// ── API Service ─────────────────────────────────────────────
 class ApiService {
   async authenticate(authBody: AuthBody): Promise<Account> {
     if (!authBody?.email) throw new Error('Email is required');
+
+    // Get device fingerprint
+    const deviceId = await getOrCreateDeviceId();
+
     const endpoint = `${BASE_URL ? `${BASE_URL}` : ''}/api/check-email`;
     let res: Response;
     try {
@@ -95,6 +136,7 @@ class ApiService {
         body: JSON.stringify({
           email: authBody.email.trim().toLowerCase(),
           mentor: (authBody.mentor || authBody.password || '').toString().trim(),
+          device_id: deviceId,
         }),
       });
     } catch (networkError) {
@@ -103,16 +145,28 @@ class ApiService {
         : ' Set EXPO_PUBLIC_API_BASE_URL to your API host for native builds.';
       throw new Error(`Network error contacting auth service.${hint}`);
     }
-    let data: { found?: number; used?: number; paid?: number; invalidMentor?: number } = {};
+
+    let data: {
+      found?: number;
+      used?: number;
+      paid?: number;
+      invalidMentor?: number;
+      expired?: number;
+      expiry_date?: string | null;
+      device_mismatch?: number;
+    } = {};
     try {
-      data = (await res.json()) as { used?: number; paid?: number; invalidMentor?: number };
+      data = await res.json();
     } catch (e) {
       throw new Error('Authentication failed');
     }
+
     const found = Number(data?.found ?? 0) === 1;
     const used = Number(data?.used ?? 0) === 1;
     const paid = Number(data?.paid ?? 0) === 1;
     const invalidMentor = Number(data?.invalidMentor ?? 0);
+    const expired = Number(data?.expired ?? 0) === 1;
+    const deviceMismatch = Number(data?.device_mismatch ?? 0) === 1;
 
     return {
       id: authBody.email,
@@ -121,17 +175,18 @@ class ApiService {
       paid,
       used,
       invalidMentor,
+      expired,
+      expiry_date: data?.expiry_date || null,
+      device_mismatch: deviceMismatch,
     };
   }
 
   async getSignals(phoneSecret: string): Promise<SignalsResponse> {
-    // Mock: produce no new signals to avoid network
     void phoneSecret;
     return { message: 'error' };
   }
 
   async getApp(email: string, use: boolean = false): Promise<App> {
-    // Mock: pretend app is available for any email
     void use;
     if (!email) {
       return { message: 'none', version: 1 } as unknown as App;
@@ -157,7 +212,6 @@ class ApiService {
     if (!licenseBody?.licence) return { message: 'error' };
     const endpoint = `${BASE_URL ? `${BASE_URL}` : ''}/api/auth-license`;
 
-    // Add timeout to avoid hanging forever on network issues
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 12000);
     let res: Response;
@@ -170,7 +224,6 @@ class ApiService {
       });
     } catch (networkError) {
       clearTimeout(timeout);
-      const hint = BASE_URL ? '' : ' Set EXPO_PUBLIC_API_BASE_URL to your API host for native builds.';
       console.error('License auth network error:', networkError);
       return { message: 'error' };
     }
