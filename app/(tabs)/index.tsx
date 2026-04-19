@@ -4,6 +4,7 @@ import { Play, Square, TrendingUp, Trash2, Plus, Menu, BarChart3 } from 'lucide-
 import { router } from 'expo-router';
 import { RobotLogo } from '@/components/robot-logo';
 import { PageBackground } from '@/components/page-background';
+import TradeChatWidget from '@/components/trade-chat-widget';
 
 import { useApp } from '@/providers/app-provider';
 import { useTheme } from '@/providers/theme-provider';
@@ -535,6 +536,9 @@ export default function HomeScreen() {
           </View>
         </View>
       )}
+
+      {/* Trade Assistant chat — floating natural-language trade entry */}
+      <TradeChatWidget glowColor={theme.accent} />
     </SafeAreaView>
   );
 }
