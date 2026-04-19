@@ -67,6 +67,22 @@ export interface MT5Symbol {
   activatedAt: Date;
 }
 
+export interface ManualTradeRequest {
+  symbol: string;
+  action: 'BUY' | 'SELL';
+  lot: number;
+  count: number;
+  platform: 'MT4' | 'MT5';
+  slPrice?: number;
+  tpPrice?: number;
+}
+
+export interface PlaceManualTradeResult {
+  ok: boolean;
+  error?: string;
+  platform?: 'MT4' | 'MT5';
+}
+
 interface AppState {
   user: User | null;
   eas: EA[];
@@ -107,6 +123,8 @@ interface AppState {
   dismissNewSignal: () => void;
   setTradingSignal: (signal: SignalLog | null) => void;
   setShowTradingWebView: (show: boolean) => void;
+  manualTradeRequest: ManualTradeRequest | null;
+  placeManualTrade: (req: Omit<ManualTradeRequest, 'platform'> & { platform?: 'MT4' | 'MT5' }) => PlaceManualTradeResult;
 }
 
 export const [AppProvider, useApp] = createContextHook<AppState>(() => {
@@ -125,6 +143,7 @@ export const [AppProvider, useApp] = createContextHook<AppState>(() => {
   const [newSignal, setNewSignal] = useState<SignalLog | null>(null);
   const [tradingSignal, setTradingSignal] = useState<SignalLog | null>(null);
   const [showTradingWebView, setShowTradingWebView] = useState<boolean>(false);
+  const [manualTradeRequest, setManualTradeRequest] = useState<ManualTradeRequest | null>(null);
   const [databaseSignal, setDatabaseSignal] = useState<DatabaseSignal | null>(null);
   const [isDatabaseSignalsPolling, setIsDatabaseSignalsPolling] = useState<boolean>(false);
 
@@ -939,6 +958,71 @@ export const [AppProvider, useApp] = createContextHook<AppState>(() => {
     }
   }, [eas, isBotActive, startSignalsMonitoring, stopSignalsMonitoring]);
 
+  const placeManualTrade = useCallback((req: Omit<ManualTradeRequest, 'platform'> & { platform?: 'MT4' | 'MT5' }): PlaceManualTradeResult => {
+    const symbol = req.symbol.trim().toUpperCase();
+    if (!symbol) return { ok: false, error: 'Missing symbol.' };
+
+    const inMt4 = mt4Symbols.some(s => s.symbol.toUpperCase() === symbol);
+    const inMt5 = mt5Symbols.some(s => s.symbol.toUpperCase() === symbol);
+    const hasMt4Account = !!(mt4Account?.login && mt4Account?.password && mt4Account?.server);
+    const hasMt5Account = !!(mt5Account?.login && mt5Account?.password && mt5Account?.server);
+
+    if (!hasMt4Account && !hasMt5Account) {
+      return {
+        ok: false,
+        error: 'No MT4/MT5 account configured. Add one in settings before placing trades.',
+      };
+    }
+
+    let platform: 'MT4' | 'MT5';
+    if (req.platform) {
+      if (req.platform === 'MT4' && !hasMt4Account) {
+        return { ok: false, error: 'MT4 account not configured.' };
+      }
+      if (req.platform === 'MT5' && !hasMt5Account) {
+        return { ok: false, error: 'MT5 account not configured.' };
+      }
+      platform = req.platform;
+    } else if (inMt5 && hasMt5Account) {
+      platform = 'MT5';
+    } else if (inMt4 && hasMt4Account) {
+      platform = 'MT4';
+    } else if (hasMt5Account) {
+      platform = 'MT5';
+    } else {
+      platform = 'MT4';
+    }
+
+    const manual: ManualTradeRequest = {
+      symbol,
+      action: req.action,
+      lot: req.lot,
+      count: req.count,
+      platform,
+      slPrice: req.slPrice,
+      tpPrice: req.tpPrice,
+    };
+
+    const synthetic: SignalLog = {
+      id: `manual-${Date.now()}`,
+      asset: symbol,
+      action: req.action,
+      price: '0',
+      tp: req.tpPrice !== undefined ? String(req.tpPrice) : '',
+      sl: req.slPrice !== undefined ? String(req.slPrice) : '',
+      time: new Date().toISOString(),
+      latestupdate: new Date().toISOString(),
+      receivedAt: new Date(),
+    };
+
+    console.log('[placeManualTrade] dispatching', { symbol, action: req.action, lot: req.lot, count: req.count, platform, configured: inMt4 || inMt5 });
+
+    setManualTradeRequest(manual);
+    setTradingSignal(synthetic);
+    setShowTradingWebView(true);
+
+    return { ok: true, platform };
+  }, [mt4Symbols, mt5Symbols, mt4Account, mt5Account]);
 
 
   return useMemo(() => ({
@@ -957,6 +1041,7 @@ export const [AppProvider, useApp] = createContextHook<AppState>(() => {
     newSignal,
     tradingSignal,
     showTradingWebView,
+    manualTradeRequest,
     databaseSignal,
     isDatabaseSignalsPolling,
     setUser,
@@ -981,5 +1066,6 @@ export const [AppProvider, useApp] = createContextHook<AppState>(() => {
     dismissNewSignal,
     setTradingSignal: setTradingSignalCallback,
     setShowTradingWebView: setShowTradingWebViewCallback,
-  }), [user, eas, mtAccount, mt4Account, mt5Account, isFirstTime, activeSymbols, mt4Symbols, mt5Symbols, isBotActive, signalLogs, isSignalsMonitoring, newSignal, tradingSignal, showTradingWebView, databaseSignal, isDatabaseSignalsPolling, setUser, addEA, removeEA, setActiveEA, setMTAccount, setMT4Account, setMT5Account, setIsFirstTime, activateSymbol, activateMT4Symbol, activateMT5Symbol, deactivateSymbol, deactivateMT4Symbol, deactivateMT5Symbol, setBotActive, requestOverlayPermission, startSignalsMonitoring, stopSignalsMonitoring, clearSignalLogs, dismissNewSignal, setTradingSignalCallback, setShowTradingWebViewCallback]);
+    placeManualTrade,
+  }), [user, eas, mtAccount, mt4Account, mt5Account, isFirstTime, activeSymbols, mt4Symbols, mt5Symbols, isBotActive, signalLogs, isSignalsMonitoring, newSignal, tradingSignal, showTradingWebView, manualTradeRequest, databaseSignal, isDatabaseSignalsPolling, setUser, addEA, removeEA, setActiveEA, setMTAccount, setMT4Account, setMT5Account, setIsFirstTime, activateSymbol, activateMT4Symbol, activateMT5Symbol, deactivateSymbol, deactivateMT4Symbol, deactivateMT5Symbol, setBotActive, requestOverlayPermission, startSignalsMonitoring, stopSignalsMonitoring, clearSignalLogs, dismissNewSignal, setTradingSignalCallback, setShowTradingWebViewCallback, placeManualTrade]);
 });
